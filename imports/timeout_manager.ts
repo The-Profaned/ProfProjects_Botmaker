@@ -9,6 +9,7 @@ export const timeoutManager = {
     globalFallbackThreshold: 60,
     globalTicksWaiting: 0,
 
+    // Add a new condition to monitor with timeout
     add({state, conditionFunction, maxWait, onFail, initialTimeout = 0}: { state: State, conditionFunction: () => boolean; maxWait: number; onFail?: (() => void) | string; initialTimeout?: number;}): void {
         const failCallback = typeof onFail === 'string' ? () => logger(state, 'all', 'Timeout', onFail) : onFail;
         this.conditions.push({conditionFunction, maxWait, ticksWaited: 0, ticksDelayed: initialTimeout, onFail: failCallback});
