@@ -130,10 +130,11 @@ export const projectileFunctions = {
     // Get the prayer key for an NPC attack animation ID
   getPrayerKeyForAnimation: (animationId: number): "protMelee" | "protMage" | "protRange" | undefined => {
     const animationToPrayerMap: Record<number, "protMelee" | "protMage" | "protRange"> = {
-        // Example mappings:
+        /* Example mappings:
         1234: "protMelee",
         5678: "protMage",
         9012: "protRange",
+        */
     };
     return animationToPrayerMap[animationId];
   },
