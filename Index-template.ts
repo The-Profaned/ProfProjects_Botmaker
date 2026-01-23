@@ -51,10 +51,13 @@ export const onGameTick = () => {
   }
 };
 
+// Script Initialized Notification
 const scriptInitialized = () => bot.printGameMessage('Script initialized.');
 
+// On End of Script
 export const onEnd = () => generalFunctions.endScript(state);
 
+// Script Decision Manager
 const stateManager = () => {
   logger(state, 'debug', 'stateManager', `${state.mainState}`);
   switch(state.mainState) {

@@ -2,71 +2,16 @@
 import { prayerFunctions, prayers } from "./prayer_functions.js";
 import { projectileFunctions } from "../imports/projectile_functions.js";
 import { logger } from "../imports/logger.js";
-import { State } from "./types";
+import { State } from "./types.js";
 
 // Player-related utility functions
 export const playerFunctions = {
     // Check if player is currently in dialogue
     playerInDialogue: true,
     
-    // Track projectiles and their states
-    trackedProjectiles: new Map<number, { id: number, distance: number, hasHit: boolean }>(),
-    
-    // Initialize event listeners for projectile tracking
+    // Initialize projectile and NPC animation tracking
     initializeProjectileTracking: (state: State): void => {
-        bot.events.register("ProjectileMoved", (event: any) => {
-            playerFunctions.updateProjectileDistance(state, event);
-        }, 0);
-        
-        bot.events.register("ProjectileDisplaced", (event: any) => {
-            playerFunctions.removeProjectile(state, event);
-        }, 0);
-    },
-    
-    // Update projectile distance or add to tracking
-    updateProjectileDistance: (state: State, event: any): void => {
-        const projectile = event.getProjectile?.();
-        if (!projectile) return;
-        
-        const id = projectile.getId?.() ?? projectile.id;
-        const distance = playerFunctions.calculateProjectileDistance(projectile);
-        
-        if (distance === null) return;
-        
-        const maxDistance = 3;
-        if (distance <= maxDistance) {
-            if (!playerFunctions.trackedProjectiles.has(id)) {
-                playerFunctions.trackedProjectiles.set(id, { id, distance, hasHit: false });
-                logger(state, "debug", "updateProjectileDistance", `Tracking new projectile ${id} at distance ${distance}`);
-            } else {
-                playerFunctions.trackedProjectiles.get(id)!.distance = distance;
-            }
-        } else if (playerFunctions.trackedProjectiles.has(id)) {
-            playerFunctions.trackedProjectiles.delete(id);
-            logger(state, "debug", "updateProjectileDistance", `Projectile ${id} out of range`);
-        }
-    },
-    
-    // Calculate distance from projectile to player
-    calculateProjectileDistance: (projectile: any): number | null => {
-        const player = client?.getLocalPlayer?.();
-        const playerLoc = player?.getWorldLocation?.();
-        const projLoc = projectile?.getWorldLocation?.();
-        
-        if (!playerLoc || !projLoc) return null;
-        return projLoc.distanceTo(playerLoc);
-    },
-    
-    // Remove projectile from tracking
-    removeProjectile: (state: State, event: any): void => {
-        const projectile = event.getProjectile?.();
-        if (!projectile) return;
-        
-        const id = projectile.getId?.() ?? projectile.id;
-        if (playerFunctions.trackedProjectiles.has(id)) {
-            playerFunctions.trackedProjectiles.delete(id);
-            logger(state, "debug", "removeProjectile", `Projectile ${id} has hit/despawned`);
-        }
+        projectileFunctions.initializeProjectileTracking(state);
     },
     
     // Disable all protection prayers
@@ -78,12 +23,6 @@ export const playerFunctions = {
                 logger(state, "debug", "disableProtectionPrayers", `Toggled off ${prayer}`);
             }
         }
-    },
-    
-    // Get sorted projectiles by distance
-    getSortedProjectiles: (): Array<{ id: number; distance: number; hasHit: boolean }> => {
-        return Array.from(playerFunctions.trackedProjectiles.values())
-            .sort((a, b) => a.distance - b.distance);
     },
     
     // Activate prayer for closest projectile
@@ -106,10 +45,31 @@ export const playerFunctions = {
         
         return activated;
     },
+
+    // Activate prayer for closest NPC attack animation (pre-emptive)
+    activatePrayerForNpcAttack: (state: State, npcAttack: { npcIndex: number; animationId: number; distance: number }): boolean => {
+        const prayerKey = projectileFunctions.getPrayerKeyForAnimation(npcAttack.animationId);
+
+        if (!prayerKey) {
+            logger(state, "debug", "activatePrayerForNpcAttack", `No prayer mapping for NPC anim ${npcAttack.animationId}`);
+            return false;
+        }
+
+        if (prayerFunctions.checkPrayer(state, prayerKey)) {
+            logger(state, "debug", "activatePrayerForNpcAttack", `Already praying ${prayerKey} for NPC ${npcAttack.npcIndex}`);
+            return true;
+        }
+
+        const activated = prayerFunctions.togglePrayer(state, prayerKey);
+        logger(state, "debug", "activatePrayerForNpcAttack",`Activated ${prayerKey} for NPC ${npcAttack.npcIndex} anim ${npcAttack.animationId} at distance ${npcAttack.distance}`
+        );
+
+        return activated;
+    },
     
     // Handle prayer activation for closest projectile
     handleIncomingProjectiles: (state: State): boolean => {
-        const sortedProjectiles = playerFunctions.getSortedProjectiles();
+        const sortedProjectiles = projectileFunctions.getSortedProjectiles();
         
         if (sortedProjectiles.length === 0) {
             logger(state, "debug", "handleIncomingProjectiles", "No tracked projectiles within 3 tiles.");
@@ -122,4 +82,19 @@ export const playerFunctions = {
         
         return playerFunctions.activatePrayerForProjectile(state, sortedProjectiles[0]);
     },
-}
+
+    // Handle pre-emptive prayer activation for closest NPC attack animation
+    handleNpcAttackAnimations: (state: State): boolean => {
+        const sortedAttacks = projectileFunctions.getSortedNpcAttacks();
+
+        if (sortedAttacks.length === 0) {
+            logger(state, "debug", "handleNpcAttackAnimations", "No tracked NPC attack animations within range.");
+            return false;
+        }
+
+        logger(state, "debug", "handleNpcAttackAnimations", `NPC attack queue (${sortedAttacks.length}): ${sortedAttacks.map(a => `${a.npcIndex}:${a.animationId}(${a.distance}t)`).join(", ")}`
+        );
+
+        return playerFunctions.activatePrayerForNpcAttack(state, sortedAttacks[0]);
+    },
+};

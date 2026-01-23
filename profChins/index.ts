@@ -23,6 +23,8 @@ const scriptInitialized = () => bot.printGameMessage('Script initialized.');
 
 // On Start of Script
 export const onStart = () => logger(state, 'all', 'Script', `Starting ${state.scriptName}.`);
+
+// On Game Tick
 export const onGameTick = () => {
   bot.breakHandler.setBreakHandlerStatus(false);
   try {
@@ -37,12 +39,14 @@ export const onGameTick = () => {
   }
 };
 
+// On End of Script
 export const onEnd = () => generalFunctions.endScript(state);
 
+// Script Decision Manager
 const stateManager = () => {
   logger(state, 'debug', 'stateManager', `${state.mainState}`);
     switch(state.mainState) {
-        
+
     case 'start_state': {
       break;
     }
