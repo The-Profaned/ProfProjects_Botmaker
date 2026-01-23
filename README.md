@@ -125,6 +125,8 @@ The project uses:
 
 ## Development
 
+This repo was only made possible by @starkwolfx's amazing dedication at the start of working with botmaker and creating such an amazing git template that he allowed me to use. Without this the new setup wouldnt have been possible (atleast for months)
+
 This project uses TypeScript for type safety and better IntelliSense in VS Code.
 
 ## License

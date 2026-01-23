@@ -30,14 +30,35 @@ export const onStart = () => {
   }
 };
 
+// On Game Tick
+export const onGameTick = () => {
+  bot.breakHandler.setBreakHandlerStatus(false);
+  try {
+    if (state.uiCompleted) {
+      if (!state.scriptInitialized) scriptInitialized();
+      state.scriptInitialized = true;
+    } else {
+      return;
+    }
+    if (!generalFunctions.gameTick(state)) return;
+
+    // Enable break handler only when not banking, idle, not webwalking, and in main state
+    if (!bot.bank.isBanking() && bot.localPlayerIdle() && !bot.walking.isWebWalking() && state.mainState == 'start_state') bot.breakHandler.setBreakHandlerStatus(true);
+    stateManager();
+  } catch (error) {
+    logger(state, 'all', 'Script', (error as Error).toString());
+    bot.terminate();
+  }
+};
+
 const scriptInitialized = () => bot.printGameMessage('Script initialized.');
 
 export const onEnd = () => generalFunctions.endScript(state);
 
 const stateManager = () => {
   logger(state, 'debug', 'stateManager', `${state.mainState}`);
-
   switch(state.mainState) {
+    
     case 'start_state': {
       break;
     }

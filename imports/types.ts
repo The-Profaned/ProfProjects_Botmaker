@@ -13,6 +13,7 @@ export type State = {
     sub_State: string;
     uiCompleted?: boolean;
     useStaminas?: boolean;
+    bypassMouseClicks?: boolean;
 }
 
 // Location coordinates type definition
