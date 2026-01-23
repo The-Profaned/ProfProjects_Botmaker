@@ -16,7 +16,7 @@ const projectileTypeMap: Record<number, "magic" | "ranged" | "melee" | "other"> 
 
 export const projectileFunctions = {
  
-    // Get projectiles near the player within a specified distance
+    // Get projectiles near the player within a specified distance defaulting to 3 tiles
   projectilesNearPlayer: (state: State, maxDistance = 3) => {
     logger(state, "debug", "projectilesNearPlayer", `Scanning projectiles within ${maxDistance} tiles.`);
     const projectiles = client.getProjectiles ? client.getProjectiles().toArray() : [];
@@ -50,5 +50,10 @@ export const projectileFunctions = {
     }
     logger(state, "debug", "prayProjectile", `Toggling prayer for projectile id=${id}: ${prayerKey}`);
     return prayerFunctions.togglePrayer(state, prayerKey);
+  },
+
+  // Get the prayer key for a projectile ID
+  getPrayerKeyForProjectile: (projectileId: number): keyof typeof prayers | null => {
+    return projectilePrayerMap[projectileId] ?? null;
   },
 };
