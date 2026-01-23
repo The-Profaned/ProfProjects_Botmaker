@@ -1,4 +1,4 @@
-import { projectileFunctions } from "./projectile_Functions.js";
+import { projectileFunctions } from "../imports/projectile_functions.js";
 import { logger } from "../imports/logger.js";
 import { State } from "./types";
 
