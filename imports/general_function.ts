@@ -1,11 +1,13 @@
-//imports
+// imports
 import {debugFunctions} from './debug_functions.js';
 import { logger } from './logger.js';
-import {timeoutManager} from './timeout_manager.js';
+import { timeoutManager } from './timeout_manager.js';
 import { State } from './types.js';
 
+// General utility functions
 export const generalFunctions = {
 
+    // Handle game tick events
     gameTick: (state: State): boolean => {
         try { logger(state, 'debug', 'onGameTick', `Script game tick ${state.gameTick} ----------------`);
             state.gameTick++;
@@ -23,7 +25,8 @@ export const generalFunctions = {
         }
     },
 
-    onFailures: (state: State, failureLocation: string, failureMessage: string, failureResetState?: string) => { // Handle failures with counting and possible script termination
+    // Handle failures and manage failure counts
+    onFailures: (state: State, failureLocation: string, failureMessage: string, failureResetState?: string) => {
         const failureKey = `${failureLocation} - ${failureMessage}`;
         logger(state, 'debug', 'onFailures', failureMessage);
         state.failureCounts[failureKey] = state.lastFailureKey === failureKey ? (state.failureCounts[failureKey] || 1) + 1: 1;
@@ -35,13 +38,19 @@ export const generalFunctions = {
             bot.terminate();
             return;
         }
-        if (failResetState) state.mainState = failureResetState;
+        if (failureResetState) state.mainState = failureResetState;
     },
 
-    endScript: (state: State): void => { // Gracefully termination of the script + ends walking + unregisters all events
+    // Handle a failure occurrence
+    handleFailure: (state: State, failureLocation: string, failureMessage: string, failureResetState?: string) => {
+        generalFunctions.onFailures(state, failureLocation, failureMessage, failureResetState);
+    },
+
+    // End the script gracefully
+    endScript: (state: State): void => {
         bot.breakHandler.setBreakHandlerStatus(false);
-        bot.printGameMessage('Termination of ${state.scriptName}.');
-        bot.walking.webWalkcancel();
+        bot.printGameMessage(`Termination of ${state.scriptName}.`);
+        bot.walking.webWalkCancel();
         bot.events.unregisterAll();
     }
 };

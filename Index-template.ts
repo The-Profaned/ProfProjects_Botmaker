@@ -1,33 +1,52 @@
-/**
- * Index Template
- * Template file for creating index modules
- * 
- * This file serves as a template for creating index files that aggregate
- * and re-export modules from various parts of the project.
- */
+// Imports
+import { logger } from './imports/logger.js';
+import { createUi } from './imports/ui_functions.js';
+import { generalFunctions } from './imports/general_function.js';
 
-// Import modules from imports folder
-import * as types from './imports/types';
-import * as generalFunctions from './imports/general-function';
-import * as itemIds from './imports/item-ids';
-import * as objectIds from './imports/object-ids';
-import * as uiFunctions from './imports/ui-functions';
-import * as utilityFunctions from './imports/utility-functions';
-import * as locationFunctions from './imports/location-functions';
-import * as debugFunctions from './imports/debug-functions';
+// variables for script state
+const state = {
+  debugEnabled: false,
+  debugFullState: false,
+  failureCounts: {},
+  failureOrigin: '',
+  lastFailureKey: '',
+  mainState: 'start_state',
+  scriptInitialized: false,
+  scriptName: 'Script Name',
+  uiCompleted: false,
+  timeout: 0,
+  gameTick: 0,
+  sub_State: '',
+};
 
-// Import from profChins
-import * as profChins from './profChins/index';
+// On Start of Script
+export const onStart = () => {
+  try { 
+    createUi(state);
+    logger(state, 'all', 'script', `${state.scriptName} started.`);
+  } catch (error) {
+    logger(state, 'all', 'Script', (error as Error).toString());
+    bot.terminate();
+  }
+};
 
-// Re-export all modules
-export {
-  types,
-  generalFunctions,
-  itemIds,
-  objectIds,
-  uiFunctions,
-  utilityFunctions,
-  locationFunctions,
-  debugFunctions,
-  profChins,
+const scriptInitialized = () => bot.printGameMessage('Script initialized.');
+
+export const onEnd = () => generalFunctions.endScript(state);
+
+const stateManager = () => {
+  logger(state, 'debug', 'stateManager', `${state.mainState}`);
+
+  switch(state.mainState) {
+    case 'start_state': {
+      break;
+    }
+    case 'next_state': {
+      break;
+    }
+    default: {
+      state.mainState = 'start_state';
+        break;
+    }
+  }
 };

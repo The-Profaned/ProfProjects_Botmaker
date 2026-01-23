@@ -1,21 +1,22 @@
-export type State {
-    //primary
-    x
-    x
-    x
-    x
-    x
-    x
-    x
-    x
-    x
+// State type definition
+export type State = {
+    failureOrigin: string,
+    failureCounts: Record<string, number>,
+    debugEnabled: boolean;
+    debugFullState: boolean;
+    gameTick: number;
+    lastFailureKey: string;
+    mainState: string;
+    scriptName: string;
+    timeout: number;
+    scriptInitalized?: boolean;
+    sub_State: string;
+    uiCompleted?: boolean;
+    useStaminas?: boolean;
+}
 
-    //optional
-    x
-    x
-    x
-    x
-    x
-    x
-    
+// Location coordinates type definition
+export type LocationCoordinates = {
+    [location: string]: { 
+        [subLocation: string]: [number, number, number]}
 };

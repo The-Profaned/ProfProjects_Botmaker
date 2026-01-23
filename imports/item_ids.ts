@@ -1,11 +1,14 @@
+// Item ID's
 export const itemIds = {
  
 };
 
-export const itemGropuIds = {
+// Group Item ID's
+export const itemGroupIds = {
 
 };
 
+// Ground Item ID's
 export const itemGroundIds = {
 
 };

@@ -1,0 +1,14 @@
+{
+  "name": "profprojects-botmaker",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local workspace for OSRS BotMaker scripts",
+  "license": "UNLICENSED",
+  "scripts": {
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "devDependencies": {
+    "@deafwave/osrs-botmaker-types": "^0.7.13",
+    "typescript": "^5.9.3"
+  }
+}

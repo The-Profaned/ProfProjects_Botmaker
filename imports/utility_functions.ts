@@ -1,11 +1,8 @@
-/**
- * Utility Functions
- * Contains utility helper functions for common operations
- */
+// Utility functions
+export const utilityFunctions = {
 
-export const utilityFunctions (
+    // random integer between min and max (inclusive)
+    randInt: (min: number, max: number): number =>
+        Math.floor(Math.random() * (max - min + 1)) + min,
 
-    randInt: { // random integer between min and max (inclusive)
-        min: number, max: number}: number => Math.floor(Math.random() * (max - min + 1)) + min,
-
-);
+};

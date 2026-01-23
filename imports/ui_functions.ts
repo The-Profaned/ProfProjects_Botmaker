@@ -1,12 +1,7 @@
-/// <reference types="@deafwave/osrs-botmaker-types" />
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-//imports
+// imports
 import {State} from './types.js';
 
+// UI-related types and functions
 export type ColorScheme = {
     BACKGROUND: java.awt.Color;
     TEXT: java.awt.Color;
@@ -14,4 +9,5 @@ export type ColorScheme = {
     PANEL: java.awt.Color;
 }
 
+export function createUi(_state?: State): void {}
 

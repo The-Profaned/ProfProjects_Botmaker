@@ -1,4 +1,7 @@
+// Player-related utility functions
 export const playerFunctions = {
     
-    playerinDialogue: true // Check if player is in dialogue
-};
+    // Check if player is currently in dialogue
+    playerInDialogue: true, 
+    
+    };

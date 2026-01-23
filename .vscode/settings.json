@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "Push-Location": true,
+        "git clone": true
+    },
+    "files.exclude": {
+        "osrs-botmaker-typescript": true,
+        "temp_osrs_botmaker_repo": true,
+        "hidden_imports": true,
+        "node_modules": true
+    }
+}

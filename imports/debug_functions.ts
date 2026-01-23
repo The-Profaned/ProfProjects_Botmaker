@@ -1,19 +1,22 @@
-//imports
+// imports
 import {logger} from './logger.js';
 import {State} from './types.js';
 
-export const debugFunction = {
+// Standard Debug Function
+export const debugFunctions = { 
     stateDebugger: (state: State, prefix = ''): void => {
-        for (const [key, value] of Object.entries(object)) {
-            const type = typeof value;
-            if (type === 'string' || type === 'number' || type === 'boolean') {
-                logger(state, 'debug', 'stateDebugger', `${prefix}${key}: ${String(value)}`);
-            } else if (Array.isArray(value)) {
-                logger(state, 'debug', 'stateDebugger', `${prefix}${key} Length: ${value.length}`);
-            } else if (type == 'object' && value !== null) {
-                recurse(value as Record<string, unknown>, `${prefix}${key}.`)
-            }           
+        const recurse = (obj: Record<string, unknown>, pfx: string): void => {
+            for (const [key, value] of Object.entries(obj)) {
+                const type = typeof value;
+                if (type === 'string' || type === 'number' || type === 'boolean') {
+                    logger(state, 'debug', 'stateDebugger', `${pfx}${key}: ${String(value)}`);
+                } else if (Array.isArray(value)) {
+                    logger(state, 'debug', 'stateDebugger', `${pfx}${key} Length: ${value.length}`);
+                } else if (type === 'object' && value !== null) {
+                    recurse(value as Record<string, unknown>, `${pfx}${key}.`);
+                }
+            }
         };
-        recurse(state, prefix);
+        recurse(state as unknown as Record<string, unknown>, prefix);
     }
 };
