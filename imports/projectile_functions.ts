@@ -1,3 +1,4 @@
+// imports
 import { prayerFunctions, prayers } from "./prayer_functions.js";
 import { logger } from "../imports/logger.js";
 import { State } from "./types.js";
@@ -14,24 +15,10 @@ const projectileTypeMap: Record<number, "magic" | "ranged" | "melee" | "other"> 
   // example: 331: "ranged",
 };
 
-// Map NPC animation IDs to prayer keys (add your IDs here)
-const animationPrayerMap: Record<number, keyof typeof prayers> = {
-  // example: 7617: "protRange",
-  // example: 7618: "protMage",
-};
-
-// Map NPC animation IDs to attack type labels
-const animationTypeMap: Record<number, "magic" | "ranged" | "melee" | "other"> = {
-  // example: 7617: "ranged",
-  // example: 7618: "magic",
-};
-
+// Player-related projectile utility functions
 export const projectileFunctions = {
   // Track projectiles and their states
   trackedProjectiles: new Map<number, { id: number, distance: number, hasHit: boolean }>(),
-
-  // Track NPC attack animations
-  trackedNpcAttacks: new Map<number, { npcIndex: number; animationId: number; distance: number }>(),
 
   // Initialize event listeners for projectile tracking
   initializeProjectileTracking: (state: State): void => {
@@ -43,19 +30,6 @@ export const projectileFunctions = {
 
     bot.events.register( "ProjectileDisplaced", (event: any) => {
         projectileFunctions.removeProjectile(state, event);
-      },
-      0
-    );
-
-    // NPC animation-based pre-emptive prayer
-    bot.events.register("AnimationChanged", (event: any) => {
-        projectileFunctions.updateNpcAttackAnimation(state, event);
-      },
-      0
-    );
-
-    bot.events.register( "NpcDespawned", (event: any) => {
-        projectileFunctions.removeNpcAttack(state, event);
       },
       0
     );
@@ -153,57 +127,20 @@ export const projectileFunctions = {
     return projectilePrayerMap[projectileId] ?? null;
   },
 
-  // --- NPC animation pre-emptive tracking ---
-
-  updateNpcAttackAnimation: (state: State, event: any): void => {
-    const actor = event.getActor?.();
-    if (!actor?.isNpc?.()) return;
-
-    const npc = actor;
-    const animationId = event.getAnimationId?.() ?? npc.getAnimation?.();
-    if (!animationId) return;
-
-    const prayerKey = animationPrayerMap[animationId];
-    if (!prayerKey) {
-      // Not an attack animation we care about; clear any existing tracked attack for this npc
-      projectileFunctions.trackedNpcAttacks.delete(npc.getIndex?.() ?? -1);
-      return;
-    }
-
-    const player = client?.getLocalPlayer?.();
-    const playerLoc = player?.getWorldLocation?.();
-    const npcLoc = npc?.getWorldLocation?.();
-    if (!playerLoc || !npcLoc) return;
-
-    const distance = npcLoc.distanceTo(playerLoc);
-    const maxDistance = 10; // allow pre-empt within 10 tiles (adjust if needed)
-
-    const npcIndex = npc.getIndex?.() ?? -1;
-    if (distance <= maxDistance) {
-      projectileFunctions.trackedNpcAttacks.set(npcIndex, { npcIndex, animationId, distance });
-      logger( state, "debug", "updateNpcAttackAnimation", `Tracking npc ${npcIndex} anim=${animationId} at distance ${distance}`
-      );
-    } else if (projectileFunctions.trackedNpcAttacks.has(npcIndex)) {
-      projectileFunctions.trackedNpcAttacks.delete(npcIndex);
-      logger(state, "debug", "updateNpcAttackAnimation", `Npc ${npcIndex} out of range`);
-    }
+    // Get the prayer key for an NPC attack animation ID
+  getPrayerKeyForAnimation: (animationId: number): "protMelee" | "protMage" | "protRange" | undefined => {
+    const animationToPrayerMap: Record<number, "protMelee" | "protMage" | "protRange"> = {
+        // Example mappings:
+        1234: "protMelee",
+        5678: "protMage",
+        9012: "protRange",
+    };
+    return animationToPrayerMap[animationId];
   },
 
-  removeNpcAttack: (state: State, event: any): void => {
-    const npc = event.getNpc?.();
-    if (!npc) return;
-    const npcIndex = npc.getIndex?.() ?? -1;
-    if (projectileFunctions.trackedNpcAttacks.has(npcIndex)) {
-      projectileFunctions.trackedNpcAttacks.delete(npcIndex);
-      logger(state, "debug", "removeNpcAttack", `Npc ${npcIndex} despawned/removed`);
-    }
-  },
-
+  // Get sorted NPC attacks by distance (stubbed method)
   getSortedNpcAttacks: (): Array<{ npcIndex: number; animationId: number; distance: number }> => {
-    return Array.from(projectileFunctions.trackedNpcAttacks.values()).sort((a, b) => a.distance - b.distance);
-  },
-
-  getPrayerKeyForAnimation: (animationId: number): keyof typeof prayers | null => {
-    return animationPrayerMap[animationId] ?? null;
+    // TODO: Implement actual logic to return sorted NPC attacks
+    return [];
   },
 };
