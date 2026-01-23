@@ -11,39 +11,40 @@ This repository contains the source code and utilities for creating OSRS BotMake
 ```
 ProfProjects_Botmaker/
 ├── .vscode/
-│   └── settings.json              # VS Code workspace settings (files.exclude config)
-├── imports/                       # Shared utilities and functions
-│   ├── bank_functions.ts          # Bank interaction utilities
-│   ├── debug_functions.ts         # Debugging utilities
-│   ├── general_function.ts        # General utility functions
-│   ├── item_ids.ts                # Item identifier constants
-│   ├── location_functions.ts      # Location-based operations
-│   ├── logger.ts                  # Logging utility
-│   ├── npc_functions.ts           # NPC interaction functions
-│   ├── npc_Ids.ts                 # NPC identifier constants
-│   ├── object_ids.ts              # Object identifier constants
-│   ├── player_functions.ts        # Player-related functions
-│   ├── tile_functions.ts          # Tile and TileObject functions
-│   ├── timeout_manager.ts         # Timeout/delay management
-│   ├── types.ts                   # Type definitions (State, etc.)
-│   ├── ui_functions.ts            # UI interaction functions
-│   ├── utility_functions.ts       # Helper utilities
-│   └── placeholder*.ts            # Placeholder files for future features
-├── js_sources/                    # Compiled JavaScript output
-├── profChins/                     # ProfChins bot module
-│   └── index.ts                   # ProfChins entry point
-├── types/                         # Global type declarations
-│   └── global.d.ts                # Reference to @deafwave/osrs-botmaker-types
-├── node_modules/                  # NPM dependencies (hidden in workspace)
-├── osrs-botmaker-typescript/      # Cloned example repo (hidden in workspace)
-├── temp_osrs_botmaker_repo/       # Temporary clone folder (hidden in workspace)
-├── .gitattributes                 # Git attributes configuration
-├── .gitignore                     # Git ignore rules
-├── Index-template.ts              # Template for creating bot entry points
-├── package.json                   # NPM package configuration
-├── pnpm-lock.yaml                 # PNPM lock file
-├── tsconfig.json                  # TypeScript configuration
-└── README.md                      # This file
+│   └── settings.json
+├── imports/
+│   ├── bank_functions.ts
+│   ├── debug_functions.ts
+│   ├── general_function.ts
+│   ├── item_ids.ts
+│   ├── location_functions.ts
+│   ├── logger.ts
+│   ├── npc_functions.ts
+│   ├── npc_Ids.ts
+│   ├── object_ids.ts
+│   ├── player_functions.ts
+│   ├── projectile_functions.ts        
+│   ├── tile_functions.ts
+│   ├── timeout_manager.ts
+│   ├── types.ts
+│   ├── ui_functions.ts
+│   ├── utility_functions.ts
+│   └── placeholder*.ts
+├── js_sources/
+├── profChins/
+│   └── index.ts
+├── types/
+│   └── global.d.ts
+├── node_modules/                      # hidden
+├── osrs-botmaker-typescript/          # hidden
+├── temp_osrs_botmaker_repo/           # hidden
+├── .gitattributes
+├── .gitignore
+├── Index-template.ts
+├── package.json
+├── pnpm-lock.yaml
+├── tsconfig.json
+└── README.md
 ```
 
 ### Hidden Folders (in .gitignore & VS Code)
