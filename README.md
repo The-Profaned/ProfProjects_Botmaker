@@ -48,12 +48,15 @@ ProfProjects_Botmaker/
 └── README.md
 ```
 
-### Hidden Folders (in .gitignore & VS Code)
+### Hidden Folders & Files (in .gitignore & VS Code)
 
-The following folders are excluded from git tracking and hidden in the VS Code explorer:
+The following are excluded from git tracking and hidden in the VS Code explorer:
 - `node_modules/` - NPM dependencies
 - `osrs-botmaker-typescript/` - Cloned reference repository from GitHub
 - `temp_osrs_botmaker_repo/` - Temporary folder from initial repo pull
+- `package.json` - NPM package configuration
+- `pnpm-lock.yaml` - PNPM dependency lock file
+- `tsconfig.json` - TypeScript compiler configuration
 
 ## Getting Started
 
