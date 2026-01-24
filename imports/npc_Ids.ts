@@ -35,6 +35,7 @@ export const animationPrayerMap: Record<number, keyof typeof prayers> = {
         npcAnimationId: "protRange",
         npcAnimationId: "protMage",
         */
+
 };
 
 // Map NPC animation IDs to attack type labels
@@ -57,6 +58,9 @@ export const projectilePrayerMap: Record<number, keyof typeof prayers> = {
    example: npcProjectileId: "protMage",
   example: npcProjectileId: "protRange",
   */
+        2487 : "protRange",
+        2488 : "protMelee",
+        2489 : "protMage",
 };
 
 // Map projectile IDs to simple type labels
@@ -65,4 +69,7 @@ export const projectileTypeMap: Record<number, "magic" | "ranged" | "melee" | "o
    example: npcProjectileId: "magic",
   example: npcProjectileId: "ranged",
   */
+        2487 : "ranged",
+        2488 : "melee",
+        2489 : "magic",
 };

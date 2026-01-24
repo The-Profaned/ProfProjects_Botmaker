@@ -30,5 +30,5 @@ export const locationFunctions = {
         }
         logger(state, 'debug', 'wWalkTimeout', `Player is at ${targetDescription}.`);
         return true;
-    }
+    },
 };

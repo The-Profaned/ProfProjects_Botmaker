@@ -1,7 +1,10 @@
 // Imports
-import { logger } from './imports/logger.js';
-import { createUi } from './imports/ui_functions.js';
-import { generalFunctions } from './imports/general_function.js';
+import { logger } from '../imports/logger.js';
+import { createUi } from '../imports/ui_functions.js';
+import { generalFunctions } from '../imports/general_function.js';
+import { projectileFunctions } from 'imports/projectile_functions.js';
+import { playerFunctions } from 'imports/player_functions.js';
+import { npcIds, projectileTypeMap } from 'imports/npc_Ids.js';
 
 // variables for script state
 const state = {
@@ -12,7 +15,7 @@ const state = {
   lastFailureKey: '',
   mainState: 'start_state',
   scriptInitialized: false,
-  scriptName: 'Script Name',
+  scriptName: 'profLeviathan',
   uiCompleted: false,
   timeout: 0,
   gameTick: 0,
@@ -52,22 +55,35 @@ export const onGameTick = () => {
 };
 
 // Script Initialized Notification
-const scriptInitialized = () => bot.printGameMessage('Script initialized.');
+const scriptInitialized = () => {
+    bot.printGameMessage('Script initialized.');
+    projectileFunctions.initializeProjectileTracking(state);
+    logger(state, 'debug', 'scriptInitialized', 'Projectile tracking initialized.');
+};
 
 // On End of Script
 export const onEnd = () => generalFunctions.endScript(state);
 
 // Script Decision Manager
 const stateManager = () => {
-  logger(state, 'debug', 'stateManager', `${state.mainState}`);
+  logger(state, 'debug', 'stateManager', `${state.mainState} - ${state.sub_State}`);
   switch(state.mainState) {
     
     case 'start_state': {
-
+      
       break;
     }
-    case 'next_state': {
-
+    case 'pray_leviathan': {
+        
+    }
+      break;
+    case 'attack_leviathan': {
+        
+      break;
+    }
+    case 'safe_tile_move': {
+       // to be built at a later date due to api restrictions
+        
       break;
     }
     default: {
