@@ -27,14 +27,12 @@ export const projectileFunctions = {
   // Update projectile distance or add to tracking
   updateProjectileDistance: (state: State, event: any): void => {
     const projectile = event.getProjectile?.();
-    if (!projectile) return;
-
     const id = projectile.getId?.() ?? projectile.id;
     const distance = projectileFunctions.calculateProjectileDistance(projectile);
-
-    if (distance === null) return;
-
     const maxDistance = 3;
+
+    if (!projectile) return;
+    if (distance === null) return;
     if (distance <= maxDistance) {
       if (!projectileFunctions.trackedProjectiles.has(id)) {
         projectileFunctions.trackedProjectiles.set(id, { id, distance, hasHit: false });

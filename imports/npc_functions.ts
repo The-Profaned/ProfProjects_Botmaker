@@ -44,26 +44,23 @@ export const npcFunctions = {
   // Update NPC attack animation or add to tracking
   updateNpcAttackAnimation: (state: State, event: any): void => {
     const actor = event.getActor?.();
-    if (!actor?.isNpc?.()) return;
-
     const npc = actor;
     const animationId = event.getAnimationId?.() ?? npc.getAnimation?.();
-    if (!animationId) return;
-
     const prayerKey = animationPrayerMap[animationId];
+    const player = client?.getLocalPlayer?.();
+    const playerLoc = player?.getWorldLocation?.();
+    const npcLoc = npc?.getWorldLocation?.();
+    const distance = npcLoc.distanceTo(playerLoc);
+    const maxDistance = 10;
+    
+    if (!actor?.isNpc?.()) return;
+    if (!animationId) return;
     if (!prayerKey) {
       npcFunctions.trackedNpcAttacks.delete(npc.getIndex?.() ?? -1);
       return;
     }
 
-    const player = client?.getLocalPlayer?.();
-    const playerLoc = player?.getWorldLocation?.();
-    const npcLoc = npc?.getWorldLocation?.();
     if (!playerLoc || !npcLoc) return;
-
-    const distance = npcLoc.distanceTo(playerLoc);
-    const maxDistance = 10;
-
     const npcIndex = npc.getIndex?.() ?? -1;
     if (distance <= maxDistance) {
       npcFunctions.trackedNpcAttacks.set(npcIndex, { npcIndex, animationId, distance });

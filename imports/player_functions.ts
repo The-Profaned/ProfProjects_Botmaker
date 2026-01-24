@@ -14,6 +14,11 @@ export const playerFunctions = {
     initializeProjectileTracking: (state: State): void => {
         projectileFunctions.initializeProjectileTracking(state);
     },
+
+    // Initialize NPC attack animation tracking
+    initializeNpcAttackTracking: (state: State): void => {
+        npcFunctions.initializeNpcAttackTracking(state);
+    },
     
     // Disable all protection prayers
     disableProtectionPrayers: (state: State): void => {
@@ -29,6 +34,7 @@ export const playerFunctions = {
     // Activate prayer for closest projectile
     activatePrayerForProjectile: (state: State, projectile: any): boolean => {
         const prayerKey = projectileFunctions.getPrayerKeyForProjectile(projectile.id);
+        const activated = prayerFunctions.togglePrayer(state, prayerKey);
         
         if (!prayerKey) {
             logger(state, "debug", "activatePrayerForProjectile", `No prayer mapping for projectile ${projectile.id}`);
@@ -40,7 +46,6 @@ export const playerFunctions = {
             return true;
         }
         
-        const activated = prayerFunctions.togglePrayer(state, prayerKey);
         logger(state, "debug", "activatePrayerForProjectile", 
             `Activated ${prayerKey} for projectile ${projectile.id} at distance ${projectile.distance}`);
         
@@ -50,6 +55,7 @@ export const playerFunctions = {
     // Activate prayer for closest NPC attack animation (pre-emptive)
     activatePrayerForNpcAttack: (state: State, npcAttack: { npcIndex: number; animationId: number; distance: number }): boolean => {
         const prayerKey = npcFunctions.getPrayerKeyForAnimation(npcAttack.animationId);
+        const activated = prayerFunctions.togglePrayer(state, prayerKey);
 
         if (!prayerKey) {
             logger(state, "debug", "activatePrayerForNpcAttack", `No prayer mapping for NPC anim ${npcAttack.animationId}`);
@@ -61,7 +67,6 @@ export const playerFunctions = {
             return true;
         }
 
-        const activated = prayerFunctions.togglePrayer(state, prayerKey);
         logger(state, "debug", "activatePrayerForNpcAttack",`Activated ${prayerKey} for NPC ${npcAttack.npcIndex} anim ${npcAttack.animationId} at distance ${npcAttack.distance}`
         );
 
@@ -97,5 +102,56 @@ export const playerFunctions = {
         );
 
         return playerFunctions.activatePrayerForNpcAttack(state, sortedAttacks[0]);
+    },
+
+    // Attack target NPC by ID
+    attackTargetNpc: (state: State, npcId: number): boolean => {
+        const npc = npcFunctions.getClosestNPC([npcId]);
+        const player = client?.getLocalPlayer?.();
+        const interacting = player.getInteracting?.();
+
+        if (!npc) {
+            logger(state, "debug", "attackTargetNpc", `No NPC found with ID ${npcId}`);
+            return false;
+        }
+
+        if (!player) {
+            logger(state, "debug", "attackTargetNpc", "Player not found");
+            return false;
+        }
+
+        if (interacting && interacting === npc) {
+            logger(state, "debug", "attackTargetNpc", `Already attacking NPC ${npcId}`);
+            return true;
+        }
+
+        bot.npcs.interact(npc.getName?.(), "Attack");
+        logger(state, "debug", "attackTargetNpc", `Attacking NPC ${npcId} at ${npc.getWorldLocation()}`);
+        return true;
+    },
+
+    // Move player to specified safe tile coordinates
+    moveToSafeTile: (state: State, moveToSafeTile: {x: number, y: number}): boolean => {
+        const player = client?.getLocalPlayer?.();
+        const playerLoc = player.getWorldLocation?.();
+
+        if (!player) {
+            logger(state, "debug", "moveToSafeTile", "Player not found");
+            return false;
+        }
+
+        if (!playerLoc) {
+            logger(state, "debug", "moveToSafeTile", "Player location not found");
+            return false;
+        }
+
+        if (playerLoc.getX() === moveToSafeTile.x && playerLoc.getY() === moveToSafeTile.y) {
+            logger(state, "debug", "moveToSafeTile", `Already at safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`);
+            return true;
+        }
+        
+        bot.walking.walkToWorldPoint(moveToSafeTile.x, moveToSafeTile.y);
+        logger(state, "debug", "moveToSafeTile", `Moving to safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`);
+        return true;
     },
 };

@@ -9,6 +9,7 @@ export const npcIds = {
     leviathanPost : NpcID.LEVIATHAN_POST_12214,
     leviathanQuest1 : NpcID.LEVIATHAN_12215,
     leviathanQuest2 : NpcID.LEVIATHAN_12219,
+    abbyssalPathfinder : NpcID.ABYSSAL_PATHFINDER,
     zulrahSerp : NpcID.ZULRAH_2042,
     zulrahMag: NpcID.ZULRAH_2043,
     zulrahTanz: NpcID.ZULRAH_2044,
@@ -54,7 +55,7 @@ export const npcProjectileIds = {
 export const projectilePrayerMap: Record<number, keyof typeof prayers> = {
   /*
    example: npcProjectileId: "protMage",
-  example: npcProjectile: "protRange",
+  example: npcProjectileId: "protRange",
   */
 };
 
