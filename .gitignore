@@ -4,3 +4,6 @@ hidden_imports/
 temp_osrs_botmaker_repo/
 osrs-botmaker-typescript/
 node_modules/
+pnpm-lock.yaml/
+package.json/
+tsconfig.json/

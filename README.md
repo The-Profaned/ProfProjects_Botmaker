@@ -13,22 +13,23 @@ ProfProjects_Botmaker/
 ├── .vscode/
 │   └── settings.json
 ├── imports/
-│   ├── bank_functions.ts
-│   ├── debug_functions.ts
-│   ├── general_function.ts
-│   ├── item_ids.ts
-│   ├── location_functions.ts
-│   ├── logger.ts
-│   ├── npc_functions.ts
-│   ├── npc_Ids.ts
-│   ├── object_ids.ts
-│   ├── player_functions.ts
-│   ├── projectile_functions.ts        
-│   ├── tile_functions.ts
-│   ├── timeout_manager.ts
-│   ├── types.ts
-│   ├── ui_functions.ts
-│   ├── utility_functions.ts
+│   ├── bank_functions.ts              # Banking operations and item management
+│   ├── debug_functions.ts             # State debugging and inspection tools
+│   ├── general_function.ts            # Game tick handling, failure management, script termination
+│   ├── item_ids.ts                    # OSRS item ID constants
+│   ├── location_functions.ts          # World point conversion, walking, distance calculations
+│   ├── logger.ts                      # Centralized logging utility
+│   ├── npc_functions.ts               # NPC detection, interaction, and attack animation tracking
+│   ├── npc_Ids.ts                     # OSRS NPC IDs, animation mappings, and prayer maps
+│   ├── object_ids.ts                  # OSRS object ID constants
+│   ├── player_functions.ts            # Player state, dialogue checks, and prayer management
+│   ├── prayer_functions.ts            # Prayer activation and management utilities
+│   ├── projectile_functions.ts        # Projectile tracking and prayer activation
+│   ├── tile_functions.ts              # Tile objects and interactions
+│   ├── timeout_manager.ts             # Async timeout and delay management system
+│   ├── types.ts                       # Core type definitions (State, LocationCoordinates)
+│   ├── ui_functions.ts                # UI creation and management
+│   ├── utility_functions.ts           # General helper functions
 │   └── placeholder*.ts
 ├── js_sources/
 ├── profChins/
@@ -41,9 +42,9 @@ ProfProjects_Botmaker/
 ├── .gitattributes
 ├── .gitignore
 ├── Index-template.ts
-├── package.json
-├── pnpm-lock.yaml
-├── tsconfig.json
+├── package.json                       # hidden
+├── pnpm-lock.yaml                     # hidden
+├── tsconfig.json                      # hidden
 └── README.md
 ```
 
@@ -98,17 +99,19 @@ pnpm run typecheck
 
 ### Bot Functions
 
-- **player_functions.ts**: Player state and actions
-- **npc_functions.ts**: NPC detection, interaction (`npcRendered`, `getFirstNPC`, `getClosestNPC`)
+- **player_functions.ts**: Player state, dialogue checks, and automated prayer switching
+- **npc_functions.ts**: NPC detection, interaction, and attack animation tracking for preemptive prayers
+- **projectile_functions.ts**: Projectile tracking and distance-based prayer activation
+- **prayer_functions.ts**: Prayer activation, deactivation, and state management
 - **tile_functions.ts**: Tile objects and interactions
 - **location_functions.ts**: World point conversion, walking, distance calculations
-- **bank_functions.ts**: Banking operations
+- **bank_functions.ts**: Banking operations and item management
 - **ui_functions.ts**: UI creation and management
 
 ### Constants
 
 - **item_ids.ts**: OSRS item IDs
-- **npc_Ids.ts**: OSRS NPC IDs
+- **npc_Ids.ts**: OSRS NPC IDs, animation-to-prayer mappings, projectile-to-prayer mappings
 - **object_ids.ts**: OSRS object IDs
 
 ### Development Tools
