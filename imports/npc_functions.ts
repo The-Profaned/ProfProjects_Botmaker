@@ -1,22 +1,7 @@
+import { animationPrayerMap, animationTypeMap } from "./npc_Ids.js";
 import { prayers } from "./prayer_functions.js";
 import { logger } from "../imports/logger.js";
 import { State } from "./types.js";
-
-// Map NPC animation IDs to prayer keys (add your IDs here)
-const animationPrayerMap: Record<number, keyof typeof prayers> = {
-        /* example:
-        7617: "protRange",
-        7618: "protMage",
-        */
-};
-
-// Map NPC animation IDs to attack type labels
-const animationTypeMap: Record<number, "magic" | "ranged" | "melee" | "other"> = {
-        /* example:
-        7617: "ranged",
-        7618: "magic",
-        */
-};
 
 export const npcFunctions = {
   // Track NPC attack animations
@@ -101,13 +86,14 @@ export const npcFunctions = {
     }
   },
 
-  // Get sorted NPC attacks by distance
-  getSortedNpcAttacks: (): Array<{ npcIndex: number; animationId: number; distance: number }> => {
-    return Array.from(npcFunctions.trackedNpcAttacks.values()).sort((a, b) => a.distance - b.distance);
-  },
-
   // Get prayer key for given NPC animation ID
   getPrayerKeyForAnimation: (animationId: number): keyof typeof prayers | null => {
     return animationPrayerMap[animationId] ?? null;
   },
+
+   // Get type key for given NPC animation ID
+  getTypeKeyForAnimation: (animationId: number): "magic" | "ranged" | "melee" | "other" | undefined => {
+    return animationTypeMap[animationId];
+  },
+
 };

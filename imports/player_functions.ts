@@ -1,4 +1,5 @@
 // imports
+import { npcFunctions } from "./npc_functions.js";
 import { prayerFunctions, prayers } from "./prayer_functions.js";
 import { projectileFunctions } from "../imports/projectile_functions.js";
 import { logger } from "../imports/logger.js";
@@ -48,7 +49,7 @@ export const playerFunctions = {
 
     // Activate prayer for closest NPC attack animation (pre-emptive)
     activatePrayerForNpcAttack: (state: State, npcAttack: { npcIndex: number; animationId: number; distance: number }): boolean => {
-        const prayerKey = projectileFunctions.getPrayerKeyForAnimation(npcAttack.animationId);
+        const prayerKey = npcFunctions.getPrayerKeyForAnimation(npcAttack.animationId);
 
         if (!prayerKey) {
             logger(state, "debug", "activatePrayerForNpcAttack", `No prayer mapping for NPC anim ${npcAttack.animationId}`);
@@ -85,7 +86,7 @@ export const playerFunctions = {
 
     // Handle pre-emptive prayer activation for closest NPC attack animation
     handleNpcAttackAnimations: (state: State): boolean => {
-        const sortedAttacks = projectileFunctions.getSortedNpcAttacks();
+        const sortedAttacks = projectileFunctions.getSortedNpcAttacksDist();
 
         if (sortedAttacks.length === 0) {
             logger(state, "debug", "handleNpcAttackAnimations", "No tracked NPC attack animations within range.");

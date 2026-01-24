@@ -1,19 +1,8 @@
 // imports
+import { projectilePrayerMap, projectileTypeMap } from "./npc_Ids.js";
 import { prayerFunctions, prayers } from "./prayer_functions.js";
 import { logger } from "../imports/logger.js";
 import { State } from "./types.js";
-
-// Map projectile IDs to prayer keys (add your IDs here)
-const projectilePrayerMap: Record<number, keyof typeof prayers> = {
-  // example: 335: "protMage",
-  // example: 331: "protRange",
-};
-
-// Map projectile IDs to simple type labels
-const projectileTypeMap: Record<number, "magic" | "ranged" | "melee" | "other"> = {
-  // example: 335: "magic",
-  // example: 331: "ranged",
-};
 
 // Player-related projectile utility functions
 export const projectileFunctions = {
@@ -128,19 +117,12 @@ export const projectileFunctions = {
   },
 
     // Get the prayer key for an NPC attack animation ID
-  getPrayerKeyForAnimation: (animationId: number): "protMelee" | "protMage" | "protRange" | undefined => {
-    const animationToPrayerMap: Record<number, "protMelee" | "protMage" | "protRange"> = {
-        /* Example mappings:
-        1234: "protMelee",
-        5678: "protMage",
-        9012: "protRange",
-        */
-    };
-    return animationToPrayerMap[animationId];
+  getTypeKeyForProjectile: (projectileId: number): "magic" | "ranged" | "melee" | "other" | undefined => {
+    return projectileTypeMap[projectileId] ?? null;
   },
 
   // Get sorted NPC attacks by distance (stubbed method)
-  getSortedNpcAttacks: (): Array<{ npcIndex: number; animationId: number; distance: number }> => {
+  getSortedNpcAttacksDist: (): Array<{ npcIndex: number; animationId: number; distance: number }> => {
     // TODO: Implement actual logic to return sorted NPC attacks
     return [];
   },
