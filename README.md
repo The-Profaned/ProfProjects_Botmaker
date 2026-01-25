@@ -8,43 +8,40 @@ This repository contains the source code and utilities for creating OSRS BotMake
 
 ### Directory Structure
 
+
 ```
 ProfProjects_Botmaker/
-├── .vscode/
-│   └── settings.json
-├── imports/
-│   ├── bank_functions.ts              # Banking operations and item management
-│   ├── debug_functions.ts             # State debugging and inspection tools
-│   ├── general_function.ts            # Game tick handling, failure management, script termination
-│   ├── item_ids.ts                    # OSRS item ID constants
-│   ├── location_functions.ts          # World point conversion, walking, distance calculations
-│   ├── logger.ts                      # Centralized logging utility
-│   ├── npc_functions.ts               # NPC detection, interaction, and attack animation tracking
-│   ├── npc_Ids.ts                     # OSRS NPC IDs, animation mappings, and prayer maps
-│   ├── object_ids.ts                  # OSRS object ID constants
-│   ├── player_functions.ts            # Player state, dialogue checks, and prayer management
-│   ├── prayer_functions.ts            # Prayer activation and management utilities
-│   ├── projectile_functions.ts        # Projectile tracking and prayer activation
-│   ├── tile_functions.ts              # Tile objects and interactions
-│   ├── timeout_manager.ts             # Async timeout and delay management system
-│   ├── types.ts                       # Core type definitions (State, LocationCoordinates)
-│   ├── ui_functions.ts                # UI creation and management
-│   ├── utility_functions.ts           # General helper functions
-│   └── placeholder*.ts
-├── js_sources/
+├── .vscode/                        
+├── imports/                        # Core bot utility and logic modules
+│   ├── bank_functions.ts           # Banking operations and item management
+│   ├── debug_functions.ts          # State debugging and inspection tools
+│   ├── general_function.ts         # Game tick handling, failure management, script termination
+│   ├── inventory_functions.ts      # Inventory management and item interaction
+│   ├── item_ids.ts                 # OSRS item ID constants
+│   ├── location_functions.ts       # World point conversion, walking, distance calculations
+│   ├── logger.ts                   # Centralized logging utility
+│   ├── npc_functions.ts            # NPC detection, interaction, and attack animation tracking
+│   ├── npc_Ids.ts                  # OSRS NPC IDs, animation mappings, and prayer maps
+│   ├── object_ids.ts               # OSRS object ID constants and hazards
+│   ├── player_functions.ts         # Player state, dialogue checks, and prayer management
+│   ├── prayer_functions.ts         # Prayer activation and management utilities
+│   ├── projectile_functions.ts     # Projectile tracking and prayer activation
+│   ├── tile_functions.ts           # Tile objects and interactions
+│   ├── tile_sets.ts                # Tile set definitions and helpers
+│   ├── timeout_manager.ts          # Async timeout and delay management system
+│   ├── types.ts                    # Core type definitions (State, LocationCoordinates)
+│   ├── ui_functions.ts             # UI creation and management
+│   └── utility_functions.ts        # General helper functions
+├── Index-template.ts           # Example bot entry point template
 ├── profChins/
-│   └── index.ts
-├── types/
-│   └── global.d.ts
-├── node_modules/                      # hidden
-├── osrs-botmaker-typescript/          # hidden
-├── temp_osrs_botmaker_repo/           # hidden
+│   └── index.ts                # Chinchompa bot script entry
+├── profLeviathan/
+│   └── index.ts                # Leviathan bot script entry
 ├── .gitattributes
 ├── .gitignore
-├── Index-template.ts
-├── package.json                       # hidden
-├── pnpm-lock.yaml                     # hidden
-├── tsconfig.json                      # hidden
+├── package.json
+├── pnpm-lock.yaml
+├── tsconfig.json
 └── README.md
 ```
 
