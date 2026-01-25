@@ -4,8 +4,8 @@
         "git clone": true
     },
     "files.exclude": {
-        "osrs-botmaker-typescript": true,
-        "temp_osrs_botmaker_repo": true,
+        "osrs-botmaker-typescript": false,
+        "temp_osrs_botmaker_repo": false,
         "hidden_imports": true,
         "node_modules": true
     }
