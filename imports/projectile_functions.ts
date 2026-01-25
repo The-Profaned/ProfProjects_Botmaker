@@ -1,13 +1,14 @@
 // imports
 import { projectilePrayerMap, projectileTypeMap } from "./npc_Ids.js";
 import { prayerFunctions, prayers } from "./prayer_functions.js";
-import { logger } from "../imports/logger.js";
+import { logger } from "./logger.js";
 import { State } from "./types.js";
 
 // Player-related projectile utility functions
 export const projectileFunctions = {
-  // Track projectiles and their states
-  trackedProjectiles: new Map<number, { id: number, distance: number, hasHit: boolean }>(),
+  // Track projectiles with enhanced data
+  trackedProjectiles: new Map<number, { id: number, distance: number, hasHit: boolean,targetX?: number, targetY?: number, ticksUntilHit?: number, startCycle?: number, endCycle?: number
+  }>(),
 
   // Initialize event listeners for projectile tracking
   initializeProjectileTracking: (state: State): void => {
@@ -24,21 +25,34 @@ export const projectileFunctions = {
     );
   },
 
-  // Update projectile distance or add to tracking
+  // Enhanced projectile distance update with target tracking
   updateProjectileDistance: (state: State, event: any): void => {
     const projectile = event.getProjectile?.();
+    if (!projectile) return;
+    
     const id = projectile.getId?.() ?? projectile.id;
     const distance = projectileFunctions.calculateProjectileDistance(projectile);
-    const maxDistance = 3;
+    const maxDistance = 10;
 
-    if (!projectile) return;
     if (distance === null) return;
+
+    // Get target location and timing
+    const targetX = projectile.getX?.();
+    const targetY = projectile.getY?.();
+    const remainingCycles = projectile.getRemainingCycles?.();
+    const ticksUntilHit = remainingCycles ? Math.ceil(remainingCycles / 30) : undefined;
+    const startCycle = projectile.getStartCycle?.();
+    const endCycle = projectile.getEndCycle?.();
+
     if (distance <= maxDistance) {
       if (!projectileFunctions.trackedProjectiles.has(id)) {
-        projectileFunctions.trackedProjectiles.set(id, { id, distance, hasHit: false });
-        logger(state, "debug", "updateProjectileDistance", `Tracking new projectile ${id} at distance ${distance}`);
+        projectileFunctions.trackedProjectiles.set(id, { id, distance, hasHit: false, targetX, targetY, ticksUntilHit, startCycle, endCycle});
+        logger(state, "debug", "updateProjectileDistance", 
+          `Tracking projectile ${id} at distance ${distance}, hits in ${ticksUntilHit} ticks at (${targetX}, ${targetY})`);
       } else {
-        projectileFunctions.trackedProjectiles.get(id)!.distance = distance;
+        const tracked = projectileFunctions.trackedProjectiles.get(id)!;
+        tracked.distance = distance;
+        tracked.ticksUntilHit = ticksUntilHit;
       }
     } else if (projectileFunctions.trackedProjectiles.has(id)) {
       projectileFunctions.trackedProjectiles.delete(id);
@@ -69,8 +83,11 @@ export const projectileFunctions = {
   },
 
   // Get sorted projectiles by distance
-  getSortedProjectiles: (): Array<{ id: number; distance: number; hasHit: boolean }> => {
-    return Array.from(projectileFunctions.trackedProjectiles.values()).sort((a, b) => a.distance - b.distance);
+  getSortedProjectiles: (): Array<{ id: number; distance: number; hasHit: boolean; targetX?: number; targetY?: number; ticksUntilHit?: number;
+  }> => {
+    return Array.from(projectileFunctions.trackedProjectiles.values())
+      .filter(p => !p.hasHit)
+      .sort((a, b) => a.distance - b.distance);
   },
 
   // Get projectiles near the player within a specified distance defaulting to 3 tiles
@@ -123,5 +140,34 @@ export const projectileFunctions = {
   getSortedNpcAttacksDist: (): Array<{ npcIndex: number; animationId: number; distance: number }> => {
     // TODO: Implement actual logic to return sorted NPC attacks
     return [];
+  },
+
+  // Check if projectile will hit player's current location
+  willHitPlayer: (projectile: any): boolean => {
+    const player = client?.getLocalPlayer?.();
+    const playerLoc = player?.getWorldLocation?.();
+    if (!playerLoc) return false;
+
+    const targetX = projectile.getX?.();
+    const targetY = projectile.getY?.();
+    const plane = projectile.getFloor?.();
+
+    return (
+      targetX === playerLoc.getX() &&
+      targetY === playerLoc.getY() &&
+      plane === playerLoc.getPlane()
+    );
+  },
+
+  // Get projectiles that will hit player
+  getProjectilesTargetingPlayer: (): Array<{ id: number; ticksUntilHit: number }> => {
+    return Array.from(projectileFunctions.trackedProjectiles.values())
+      .filter(p => {
+        const player = client?.getLocalPlayer?.();
+        const playerLoc = player?.getWorldLocation?.();
+        return p.targetX === playerLoc?.getX() && p.targetY === playerLoc?.getY();
+      })
+      .map(p => ({ id: p.id, ticksUntilHit: p.ticksUntilHit ?? 0 }))
+      .sort((a, b) => a.ticksUntilHit - b.ticksUntilHit);
   },
 };

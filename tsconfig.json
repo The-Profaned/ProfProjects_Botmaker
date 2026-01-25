@@ -19,6 +19,7 @@
   "exclude": [
     "node_modules",
     "osrs-botmaker-typescript",
-    "temp_osrs_botmaker_repo"
+    "temp_osrs_botmaker_repo",
+    "pnpm-lock.yaml",
   ]
 }

@@ -1,8 +1,8 @@
 // imports
 import { npcFunctions } from "./npc_functions.js";
 import { prayerFunctions, prayers } from "./prayer_functions.js";
-import { projectileFunctions } from "../imports/projectile_functions.js";
-import { logger } from "../imports/logger.js";
+import { projectileFunctions } from "./projectile_functions.js";
+import { logger } from "./logger.js";
 import { State } from "./types.js";
 
 // Player-related utility functions
@@ -34,33 +34,35 @@ export const playerFunctions = {
     // Activate prayer for closest projectile
     activatePrayerForProjectile: (state: State, projectile: any): boolean => {
         const prayerKey = projectileFunctions.getPrayerKeyForProjectile(projectile.id);
-        const activated = prayerFunctions.togglePrayer(state, prayerKey);
-        
+
         if (!prayerKey) {
             logger(state, "debug", "activatePrayerForProjectile", `No prayer mapping for projectile ${projectile.id}`);
             return false;
         }
-        
+
+        const activated = prayerFunctions.togglePrayer(state, prayerKey);
+
         if (prayerFunctions.checkPrayer(state, prayerKey)) {
             logger(state, "debug", "activatePrayerForProjectile", `Already praying ${prayerKey} for projectile ${projectile.id}`);
             return true;
         }
-        
+
         logger(state, "debug", "activatePrayerForProjectile", 
             `Activated ${prayerKey} for projectile ${projectile.id} at distance ${projectile.distance}`);
-        
+
         return activated;
     },
 
     // Activate prayer for closest NPC attack animation (pre-emptive)
     activatePrayerForNpcAttack: (state: State, npcAttack: { npcIndex: number; animationId: number; distance: number }): boolean => {
         const prayerKey = npcFunctions.getPrayerKeyForAnimation(npcAttack.animationId);
-        const activated = prayerFunctions.togglePrayer(state, prayerKey);
 
         if (!prayerKey) {
             logger(state, "debug", "activatePrayerForNpcAttack", `No prayer mapping for NPC anim ${npcAttack.animationId}`);
             return false;
         }
+        
+        const activated = prayerFunctions.togglePrayer(state, prayerKey);
 
         if (prayerFunctions.checkPrayer(state, prayerKey)) {
             logger(state, "debug", "activatePrayerForNpcAttack", `Already praying ${prayerKey} for NPC ${npcAttack.npcIndex}`);
