@@ -27,7 +27,7 @@ ProfProjects_Botmaker/
 │   ├── ui-functions.ts             # UI utilities
 │   └── utility-functions.ts        # General helper functions
 ├── javaSource/                     # Compiled bot scripts (JavaScript output)
-│   ├── AutoTears.js
+│   ├── AutoTears.js                # WIP - not restructured, dosnt work
 │   ├── example-state-progression.js
 │   ├── example-ui-components.js
 │   └── profChins.js
