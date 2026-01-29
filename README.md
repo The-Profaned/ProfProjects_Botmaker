@@ -36,8 +36,6 @@ ProfProjects_Botmaker/
 │   ├── ui.ts
 │   ├── util-functions.ts
 │   └── README.md
-├── profLeviathan/                  # Leviathan bot script
-│   └── index.ts
 ├── api_list.txt                    # BotMaker API reference
 ├── Index-template.ts               # Bot script template
 └── README.md
