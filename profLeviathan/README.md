@@ -1,43 +1,14 @@
-┌──────────────┐
-│ start_state  │ (Initialize weapon speed)
-└──────┬───────┘
-       │
-       ▼
-┌──────────────────────┐
-│ prepare_combat       │ (Validate boundary entry)
-└──────┬───────────────┘
-       │ Success (in bounds)
-       ▼
-┌─────────────────────────────────────────────┐
-│      leviathan_combat (MAIN LOOP)           │
-│                                             │
-│  Each tick:                                 │
-│  1. Handle projectiles & prayer             │
-│  2. Check health for phase transitions      │
-│  3. Detect dangerous tiles                  │
-│  4. Execute sub_State logic                 │
-│                                             │
-│  Sub-States:                                │
-│  ├─ manage_hp/prayer ──→ engage_combat      │
-│  ├─ engage_combat ──────→ handle_danger     │
-│  ├─ handle_danger_tiles  ──→ engage_combat  │
-│  ├─ reset_leviathan ────→ avoid_lightning   │
-│  │                    ──→ dodge_debris      │
-│  ├─ avoid_lightning ────→ manage_hp/prayer  │
-│  ├─ dodge_debris ──────→ manage_hp/prayer   │
-│  ├─ moving_to_pathfinder→ manage_hp/prayer  │
-│  │  (at 25% health)         (at 20%)        │
-│  └─ track_abyss_pathfinder → pathf. drops   │
-│     (at 20% health)                         │
-│                                             │
-└──────┬──────────────────────────────────────┘
-       │ Failure (out of bounds)
-       ▼
-┌──────────────────────┐
-│ return_to_leviathan  │ (Re-navigate to arena)
-└──────┬───────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│ prepare_combat       │ (Try again)
-└──────────────────────┘
+{
+	"data": "ENC[AES256_GCM,data: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,iv:8wRERBcAAgaXT9z62ItVuqKlkqErkk2xKcV9i5Y1g/E=,tag:8Y6n1hHWEmhDktqdhzxQug==,type:str]",
+	"sops": {
+		"age": [
+			{
+				"recipient": "age18cvl5rxz07auwktzxgzws0vuu62hj3yh0n7lwexn3z3jdzqj3uvsej60pw",
+				"enc": "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB3QUZ4eXBKdFFlWTJsWWlR\nTVhVcnhuQmxnZHpPY1JVdmI4c0hEMTBxUUJ3CjEyUzFSTzcwd0ZmcFJIbzVjenhO\nSXorcWF6M2t2OXo5OGxSdy9uVUF4b28KLS0tIGRpbnVWUXhNZy9NUHNKR25XNXdK\nSDFyVk1PK1VJV1FodTVWT2NWTnNWdUUKDzlTPjt7l3kF+goJ06WHJrOWgcZjCkEB\nq12rOZliQLVof0XXtu4xUVeXxAYHyzoSNi3yl0fPjaXNcNX3pKKn0g==\n-----END AGE ENCRYPTED FILE-----\n"
+			}
+		],
+		"lastmodified": "2026-02-08T06:46:17Z",
+		"mac": "ENC[AES256_GCM,data:hEaGPVDNi5Pa7y6sd+cKgVIjl8du6GKswTapZqVWVB0tXRL5kt1bnmt+p3SGkT860jAPPBb3syuDopBiDZGPS0CiyLvk7zpUb/BI7Uo+QjvRSCfcXU6GLmFSKMWQ5vjhnoPEFox1aUxNnZQN5YCgdfL+oXoGXQ0vKhbc0Bkg0Sw=,iv:DsxljPE/gcEsXPt2m77nLruNVqUsxdTkkJa30PipfPo=,tag:VU1mNJ8aZfCQzE1yyc917g==,type:str]",
+		"version": "3.11.0"
+	}
+}
