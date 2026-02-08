@@ -27,7 +27,7 @@ ProfProjects_Botmaker/
 │   ├── ui-functions.ts             # UI utilities
 │   └── utility-functions.ts        # General helper functions
 ├── javaSource/                     # Compiled bot scripts (JavaScript output)
-│   ├── AutoTears.js
+│   ├── AutoTears.js                # WIP - not restructured, dosnt work
 │   ├── example-state-progression.js
 │   ├── example-ui-components.js
 │   └── profChins.js
@@ -48,7 +48,6 @@ This directory contains:
 - **imports/**: Reusable utility modules for bot development, covering banking, inventory, NPCs, prayers, UI, and more
 - **javaSource/**: Pre-compiled JavaScript bot scripts ready for BotMaker use
 - **profChins/**: Chinchompa trapping bot implementation
-- **profLeviathan/**: Leviathan combat bot implementation
 - **Index-template.ts**: Template for creating new bot scripts
 - **api_list.txt**: Reference documentation for available BotMaker APIs
 
