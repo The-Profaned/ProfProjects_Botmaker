@@ -6,6 +6,8 @@ BotMaker projects - TypeScript utilities and compiled scripts for OSRS bot devel
 
 ```
 ProfProjects_Botmaker/
+├── .gitignore                      # Local ignores (includes SOPS key file)
+├── .sops.yaml                      # SOPS encryption rules for sensitive files
 ├── imports/                        # Shared utility modules
 │   ├── bank-functions.ts           # Banking operations and item management
 │   ├── debug-functions.ts          # Debugging and inspection utilities
@@ -30,11 +32,15 @@ ProfProjects_Botmaker/
 │   ├── AutoTears.js                # WIP - not restructured, dosnt work
 │   ├── example-state-progression.js
 │   ├── example-ui-components.js
-│   └── profChins.js
+│   ├── profChins.js
+│   └── profLeviathan.js             # Encrypted with SOPS
 ├── profChins/                      # Chinchompa bot script
 │   ├── index.ts
 │   ├── ui.ts
 │   ├── util-functions.ts
+│   └── README.md
+├── profLeviathan/                   # Leviathan boss bot script (encrypted)
+│   ├── index.ts
 │   └── README.md
 ├── api_list.txt                    # BotMaker API reference
 ├── Index-template.ts               # Bot script template
@@ -48,6 +54,8 @@ This directory contains:
 - **imports/**: Reusable utility modules for bot development, covering banking, inventory, NPCs, prayers, UI, and more
 - **javaSource/**: Pre-compiled JavaScript bot scripts ready for BotMaker use
 - **profChins/**: Chinchompa trapping bot implementation
+- **profLeviathan/**: Leviathan boss bot implementation (encrypted with SOPS)
+- **.sops.yaml**: Encryption rules for sensitive files
 - **Index-template.ts**: Template for creating new bot scripts
 - **api_list.txt**: Reference documentation for available BotMaker APIs
 
