@@ -6,6 +6,9 @@ function _arrayLikeToArray(r, a) {
 function _arrayWithHoles(r) {
   if (Array.isArray(r)) return r;
 }
+function _arrayWithoutHoles(r) {
+  if (Array.isArray(r)) return _arrayLikeToArray(r);
+}
 function _createForOfIteratorHelper(r, e) {
   var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
   if (!t) {
@@ -54,6 +57,9 @@ function _createForOfIteratorHelper(r, e) {
     }
   };
 }
+function _iterableToArray(r) {
+  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+}
 function _iterableToArrayLimit(r, l) {
   var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
   if (null != t) {
@@ -81,8 +87,14 @@ function _iterableToArrayLimit(r, l) {
 function _nonIterableRest() {
   throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
 function _slicedToArray(r, e) {
   return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+}
+function _toConsumableArray(r) {
+  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
 }
 function _typeof(o) {
   "@babel/helpers - typeof";
@@ -103,8 +115,8 @@ function _unsupportedIterableToArray(r, a) {
 
 var logger = (state, type, source, message) => {
   var logMessage = "[".concat(source, "] ").concat(message);
-  if (type === 'all') bot.printGameMessage(logMessage);
-  if (type === 'all' || type === 'debug' && state.debugEnabled) bot.printLogMessage(logMessage);
+  if (type === 'all') log.printGameMessage(logMessage);
+  if (type === 'all' || type === 'debug' && state.debugEnabled) log.print(logMessage);
 };
 
 var debugFunctions = {
@@ -226,20 +238,75 @@ var generalFunctions = {
   }
 };
 
-var itemIds = {
-  stamina_potion_1: 12631,
-  stamina_potion_2: 12629,
-  stamina_potion_3: 12627,
-  stamina_potion_4: 12625,
-  boxTrap: 10008,
-  tBow: 20997
+var ItemID = net.runelite.api.ItemID;
+
+var Item = {
+  boxTrap: ItemID.BOX_TRAP
+};
+({
+  tBow: ItemID.TWISTED_BOW,
+  bowfa: ItemID.BOW_OF_FAERDHINEN,
+  bowfac: ItemID.BOW_OF_FAERDHINEN_C,
+  blowpipe: ItemID.TOXIC_BLOWPIPE
+});
+({
+  normalDelay: {
+    item: {
+      monkFish: ItemID.MONKFISH,
+      shark: ItemID.SHARK,
+      mantaRay: ItemID.MANTA_RAY,
+      anglerFish: ItemID.ANGLERFISH
+    }
+  },
+  comboDelay: {
+    item: {
+      karambwan: ItemID.COOKED_KARAMBWAN
+    }
+  }
+});
+var potion = {
+  normalDelay: {
+    item: {
+      stamina_potion_1: ItemID.STAMINA_POTION1,
+      stamina_potion_2: ItemID.STAMINA_POTION2,
+      stamina_potion_3: ItemID.STAMINA_POTION3,
+      stamina_potion_4: ItemID.STAMINA_POTION4,
+      prayer_potion_1: ItemID.PRAYER_POTION1,
+      prayer_potion_2: ItemID.PRAYER_POTION2,
+      prayer_potion_3: ItemID.PRAYER_POTION3,
+      prayer_potion_4: ItemID.PRAYER_POTION4,
+      saradomin_brew_1: ItemID.SARADOMIN_BREW1,
+      saradomin_brew_2: ItemID.SARADOMIN_BREW2,
+      saradomin_brew_3: ItemID.SARADOMIN_BREW3,
+      saradomin_brew_4: ItemID.SARADOMIN_BREW4,
+      super_restore_1: ItemID.SUPER_RESTORE1,
+      super_restore_2: ItemID.SUPER_RESTORE2,
+      super_restore_3: ItemID.SUPER_RESTORE3,
+      super_restore_4: ItemID.SUPER_RESTORE4
+    }
+  }
+};
+var potionGroups = {
+  stam1_4: [potion.normalDelay.item.stamina_potion_1, potion.normalDelay.item.stamina_potion_2, potion.normalDelay.item.stamina_potion_3, potion.normalDelay.item.stamina_potion_4],
+  ppots1_4: [potion.normalDelay.item.prayer_potion_1, potion.normalDelay.item.prayer_potion_2, potion.normalDelay.item.prayer_potion_3, potion.normalDelay.item.prayer_potion_4],
+  brews1_4: [potion.normalDelay.item.saradomin_brew_1, potion.normalDelay.item.saradomin_brew_2, potion.normalDelay.item.saradomin_brew_3, potion.normalDelay.item.saradomin_brew_4],
+  restores1_4: [potion.normalDelay.item.super_restore_1, potion.normalDelay.item.super_restore_2, potion.normalDelay.item.super_restore_3, potion.normalDelay.item.super_restore_4]
 };
 
-var objectIds = {
+var object = {
   boxTrapLayed: 9380,
   boxTrap_Failed: 9385,
-  boxTrap_Shaking: 9383
+  boxTrap_Shaking: 9383,
+  leviHandHolds: 47593
 };
+function getObjectIdGroups() {
+  return {
+    boxTrap: [9380, 9385, 9383],
+    boxTrap_Shaking: [9383],
+    boxTrap_Failed: [9385],
+    boxTrapLayed: [9380]
+  };
+}
 
 var state$2;
 var trapLocationsCache$2;
@@ -362,7 +429,7 @@ var overlayTile = {
             var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
             var stateColor = java.awt.Color.GRAY;
             var stateText = "Box ".concat(index + 1);
-            var shakingTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Shaking]).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
+            var shakingTrap = bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrap_Shaking).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
             if (shakingTrap) {
               stateColor = java.awt.Color.GREEN;
               stateText = 'Caught!';
@@ -371,7 +438,7 @@ var overlayTile = {
                 text: stateText
               });
             } else {
-              var failedTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Failed]).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
+              var failedTrap = bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrap_Failed).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
               if (failedTrap) {
                 stateColor = java.awt.Color.RED;
                 stateText = 'Reset';
@@ -380,7 +447,7 @@ var overlayTile = {
                   text: stateText
                 });
               } else {
-                var laidTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrapLayed]).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
+                var laidTrap = bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrapLayed).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
                 if (laidTrap) {
                   stateColor = java.awt.Color.YELLOW;
                   stateText = 'Active';
@@ -684,9 +751,9 @@ function initializeUtilFunctions(scriptState, traps, safeTiles, playerLoc, hunte
 }
 function maxTraps() {
   if (hunterLvl$1 < 20) return 1;
-  if (hunterLvl$1 >= 20 && hunterLvl$1 < 39) return 2;
-  if (hunterLvl$1 >= 40 && hunterLvl$1 < 59) return 3;
-  if (hunterLvl$1 >= 60 && hunterLvl$1 < 79) return 4;
+  if (hunterLvl$1 >= 20 && hunterLvl$1 < 40) return 2;
+  if (hunterLvl$1 >= 40 && hunterLvl$1 < 60) return 3;
+  if (hunterLvl$1 >= 60 && hunterLvl$1 < 80) return 4;
   if (hunterLvl$1 >= 80) return 5;
   return 0;
 }
@@ -717,7 +784,7 @@ function getSafeTiles() {
   return safeTiles;
 }
 function isOccupiedByTrapOrGround(loc) {
-  var allTrapIds = [objectIds.boxTrapLayed, objectIds.boxTrap_Failed, objectIds.boxTrap_Shaking, itemIds.boxTrap];
+  var allTrapIds = [object.boxTrapLayed, object.boxTrap_Failed, object.boxTrap_Shaking];
   var objectAtLoc = bot.objects.getTileObjectsWithIds(allTrapIds).find(o => {
     if (!o) return false;
     var worldLoc = o.getWorldLocation();
@@ -737,7 +804,7 @@ function maintainAllTrapTimestamps() {
     var _loop = function _loop() {
       var loc = _step.value;
       var key = "".concat(loc.getX(), ",").concat(loc.getY());
-      var shakingTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Shaking]).find(o => {
+      var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
         if (!o) return false;
         var worldLoc = o.getWorldLocation();
         if (!worldLoc) return false;
@@ -780,7 +847,7 @@ function maintainAllTrapTimestamps() {
     var _loop2 = function _loop2() {
       var loc = _step2.value;
       var key = "".concat(loc.getX(), ",").concat(loc.getY());
-      var failedTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Failed]).find(o => {
+      var failedTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
         if (!o) return false;
         var worldLoc = o.getWorldLocation();
         if (!worldLoc) return false;
@@ -827,14 +894,14 @@ function resetTraps() {
     var atTarget = playerWp.equals(targetLoc);
     if (_resetPhase === 'walking') {
       if (atTarget || Math.abs(playerWp.getX() - targetLoc.getX()) <= 2 && Math.abs(playerWp.getY() - targetLoc.getY()) <= 2) {
-        var trapToReset = bot.objects.getTileObjectsWithIds([objectIds.boxTrapLayed, objectIds.boxTrap_Shaking, objectIds.boxTrap_Failed]).find(o => {
+        var trapToReset = bot.objects.getTileObjectsWithIds([object.boxTrapLayed, object.boxTrap_Shaking, object.boxTrap_Failed]).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
           return worldLoc.getX() === targetLoc.getX() && worldLoc.getY() === targetLoc.getY();
         });
         if (trapToReset) {
-          var isShaking = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Shaking]).find(o => {
+          var isShaking = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
             if (!o) return false;
             var worldLoc = o.getWorldLocation();
             if (!worldLoc) return false;
@@ -861,7 +928,7 @@ function resetTraps() {
     }
     if (_resetPhase === 'animating') {
       if (_resetTargetLocation) {
-        var newTrapLaid = bot.objects.getTileObjectsWithIds([objectIds.boxTrapLayed]).find(o => {
+        var newTrapLaid = bot.objects.getTileObjectsWithIds([object.boxTrapLayed]).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
@@ -882,7 +949,7 @@ function resetTraps() {
                 var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
                 if (!playerLaidTraps.has(locKey)) return 0; // continue
                 if (locKey === _key) return 0; // continue
-                var shakingTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Shaking]).find(o => {
+                var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
                   if (!o) return false;
                   var worldLoc = o.getWorldLocation();
                   if (!worldLoc) return false;
@@ -914,7 +981,7 @@ function resetTraps() {
                 var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
                 if (!playerLaidTraps.has(locKey)) return 0; // continue
                 if (locKey === _key) return 0; // continue
-                var failedTrap = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Failed]).find(o => {
+                var failedTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
                   if (!o) return false;
                   var worldLoc = o.getWorldLocation();
                   if (!worldLoc) return false;
@@ -1015,7 +1082,7 @@ function layingInitialTraps(maxAllowed, trapsOnGround) {
       var dx = Math.abs(playerWp.getX() - _layingTrapLocation.getX());
       var dy = Math.abs(playerWp.getY() - _layingTrapLocation.getY());
       if (atTarget || dx <= 2 && dy <= 2) {
-        bot.inventory.interactWithIds([itemIds.boxTrap], ['Lay']);
+        bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
         logger(state$1, 'debug', 'layingInitialTraps', "Laying trap at location ".concat(_layingLocationIndex + 1));
         _layingPhase = 'animating';
         _layingTickCount = 0;
@@ -1029,7 +1096,7 @@ function layingInitialTraps(maxAllowed, trapsOnGround) {
     }
     if (_layingPhase === 'animating') {
       if (_layingTrapLocation) {
-        var newTrapLaid = bot.objects.getTileObjectsWithIds([objectIds.boxTrapLayed]).find(o => {
+        var newTrapLaid = bot.objects.getTileObjectsWithIds([object.boxTrapLayed]).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
@@ -1075,7 +1142,7 @@ function layingInitialTraps(maxAllowed, trapsOnGround) {
       return;
     }
     var occupied = isOccupiedByTrapOrGround(_loc);
-    if (!occupied && !_tickManipulationTriggered && bot.inventory.containsId(itemIds.boxTrap)) {
+    if (!occupied && !_tickManipulationTriggered && bot.inventory.containsId(Item.boxTrap)) {
       var _playerWp = client.getLocalPlayer().getWorldLocation();
       if (!_playerWp.equals(_loc)) {
         if (!_layingWalkCommandIssued) {
@@ -1153,7 +1220,7 @@ function criticalTrapChecker() {
         var loc = _step6.value;
         var key = "".concat(loc.getX(), ",").concat(loc.getY());
         if (!playerLaidTraps.has(key)) return 0; // continue
-        var shaking = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Shaking]).find(o => {
+        var shaking = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
@@ -1165,9 +1232,21 @@ function criticalTrapChecker() {
           var ageInTicks = Math.floor(ageInSeconds / 0.6);
           if (ageInTicks >= CRITICAL_TICK_THRESHOLD) {
             logger(state$1, 'all', 'criticalTrapChecker', "CRITICAL: Shaking trap at (".concat(loc.getX(), ", ").concat(loc.getY(), ") hit 80-tick timeout! Age: ").concat(ageInTicks, " ticks. Forcing reset!"));
-            utilState.resetInProgress = true;
-            utilState.resetTargetLocation = loc;
-            utilState.resetPhase = 'walking';
+            var criticalTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+              if (!o) return false;
+              var worldLoc = o.getWorldLocation();
+              if (!worldLoc) return false;
+              return worldLoc.getX() === loc.getX() && worldLoc.getY() === loc.getY();
+            });
+            if (criticalTrap) {
+              bot.objects.interactSuppliedObject(criticalTrap, 'Reset');
+              utilState.resetInProgress = true;
+              utilState.resetTargetLocation = loc;
+              utilState.resetPhase = 'animating';
+              _resetTickCount = 0;
+              _tickManipulationTriggered = true;
+              shakingTrapTimestamps.delete(key);
+            }
             return {
               v: true
             };
@@ -1192,7 +1271,7 @@ function criticalTrapChecker() {
         var loc = _step7.value;
         var key = "".concat(loc.getX(), ",").concat(loc.getY());
         if (!playerLaidTraps.has(key)) return 0; // continue
-        var failed = bot.objects.getTileObjectsWithIds([objectIds.boxTrap_Failed]).find(o => {
+        var failed = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
@@ -1204,9 +1283,21 @@ function criticalTrapChecker() {
           var ageInTicks = Math.floor(ageInSeconds / 0.6);
           if (ageInTicks >= CRITICAL_TICK_THRESHOLD) {
             logger(state$1, 'all', 'criticalTrapChecker', "CRITICAL: Failed trap at (".concat(loc.getX(), ", ").concat(loc.getY(), ") hit 80-tick timeout! Age: ").concat(ageInTicks, " ticks. Forcing reset!"));
-            utilState.resetInProgress = true;
-            utilState.resetTargetLocation = loc;
-            utilState.resetPhase = 'walking';
+            var criticalTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
+              if (!o) return false;
+              var worldLoc = o.getWorldLocation();
+              if (!worldLoc) return false;
+              return worldLoc.getX() === loc.getX() && worldLoc.getY() === loc.getY();
+            });
+            if (criticalTrap) {
+              bot.objects.interactSuppliedObject(criticalTrap, 'Reset');
+              utilState.resetInProgress = true;
+              utilState.resetTargetLocation = loc;
+              utilState.resetPhase = 'animating';
+              _resetTickCount = 0;
+              _tickManipulationTriggered = true;
+              failedTrapTimestamps.delete(key);
+            }
             return {
               v: true
             };
@@ -1236,7 +1327,7 @@ function handleGroundTraps() {
   }
   if (utilState.groundTrapHandlingLocation) {
     var targetLoc = utilState.groundTrapHandlingLocation;
-    var trapLaidAtLocation = bot.objects.getTileObjectsWithIds([objectIds.boxTrapLayed]).find(o => {
+    var trapLaidAtLocation = bot.objects.getTileObjectsWithIds([object.boxTrapLayed]).find(o => {
       if (!o) return false;
       var worldLoc = o.getWorldLocation();
       if (!worldLoc) return false;
@@ -1250,9 +1341,9 @@ function handleGroundTraps() {
       return true;
     }
     utilState.groundTrapTickCount++;
-    if (utilState.groundTrapTickCount === 2 && bot.inventory.containsId(itemIds.boxTrap)) {
+    if (utilState.groundTrapTickCount === 2 && bot.inventory.containsId(Item.boxTrap)) {
       logger(state$1, 'debug', 'handleGroundTraps', "Laying trap from inventory at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), ")."));
-      bot.inventory.interactWithIds([itemIds.boxTrap], ['Lay']);
+      bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
       profChinsUI.currentAction = 'Laying trap';
     }
     if (utilState.groundTrapTickCount > 10) {
@@ -1263,7 +1354,7 @@ function handleGroundTraps() {
     }
     return true;
   }
-  var groundTraps = bot.tileItems.getItemsWithIds([itemIds.boxTrap]);
+  var groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
   var _iterator8 = _createForOfIteratorHelper(groundTraps),
     _step8;
   try {
@@ -1299,6 +1390,42 @@ function handleGroundTraps() {
   }
   return false;
 }
+function hasTrapsNeedingAttention() {
+  if (cachedOldestTrap !== null) {
+    return true;
+  }
+  if (utilState.groundTrapHandlingLocation !== null) {
+    return true;
+  }
+  var groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
+  var _iterator9 = _createForOfIteratorHelper(groundTraps),
+    _step9;
+  try {
+    var _loop9 = function _loop9() {
+        var groundTrap = _step9.value;
+        if (!groundTrap || !groundTrap.tile) return 0; // continue
+        var trapLoc = groundTrap.tile.getWorldLocation();
+        if (!trapLoc) return 0; // continue
+        var isAtCachedLocation = trapLocationsCache$1.some(loc => loc.getX() === trapLoc.getX() && loc.getY() === trapLoc.getY());
+        if (isAtCachedLocation) {
+          return {
+            v: true
+          };
+        }
+      },
+      _ret6;
+    for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+      _ret6 = _loop9();
+      if (_ret6 === 0) continue;
+      if (_ret6) return _ret6.v;
+    }
+  } catch (err) {
+    _iterator9.e(err);
+  } finally {
+    _iterator9.f();
+  }
+  return false;
+}
 var utilFunctions = {
   maxTraps,
   getInitialTrapLocations,
@@ -1310,7 +1437,8 @@ var utilFunctions = {
   isPlayerOnTrapLocation,
   moveToSafeTileIfNeeded,
   criticalTrapChecker,
-  handleGroundTraps
+  handleGroundTraps,
+  hasTrapsNeedingAttention
 };
 
 var state = {
@@ -1325,7 +1453,7 @@ var state = {
   uiCompleted: false,
   timeout: 0,
   gameTick: 0,
-  sub_State: ''
+  subState: ''
 };
 var lastLoggedState = '';
 var stuckStateTracker = {
@@ -1479,7 +1607,7 @@ function stateManager() {
         {
           try {
             profChinsUI.currentAction = 'Starting...';
-            var trapCount = bot.inventory.getQuantityOfId(itemIds.boxTrap);
+            var trapCount = bot.inventory.getQuantityOfId(Item.boxTrap);
             if (!trapCount && trapCount !== 0) {
               bot.printGameMessage('ERROR: Could not get trap quantity from inventory');
               bot.terminate();
@@ -1528,7 +1656,7 @@ function stateManager() {
             state.mainState = 'critical_trap_handling';
           } else if (utilState.resetInProgress) {
             state.mainState = 'resetting_traps';
-          } else {
+          } else if (utilFunctions.hasTrapsNeedingAttention()) {
             state.mainState = 'resetting_traps';
           }
           break;

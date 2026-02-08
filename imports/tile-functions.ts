@@ -21,19 +21,28 @@ declare const WorldPoint: {
 // Tile object-related utility functions
 export const tileFunctions = {
 	// Return action on tile object
-	getAction: (tileObjectID: number, actionIndexToGet: number): string =>
-		bot.objects.getTileObjectComposition(tileObjectID).getActions()[
-			actionIndexToGet
-		], // Return action on tile object
+	getAction: (
+		tileObjectID: number,
+		actionIndexToGet: number,
+	): string | null => {
+		const composition = bot.objects.getTileObjectComposition(tileObjectID);
+		const actions = composition?.getActions?.();
+		if (
+			!actions ||
+			actionIndexToGet < 0 ||
+			actionIndexToGet >= actions.length
+		) {
+			return null;
+		}
+		return actions[actionIndexToGet];
+	},
 
 	// Get tile object with specific ID
 	getTileObjectWithID: (
 		tileObjectId: number,
 	): any /* Replace with correct type if available */ => {
 		const tileObjectIds = bot.objects.getTileObjectsWithIds([tileObjectId]);
-		return tileObjectIds.find(
-			(tileObject) => tileObject.getId() === tileObjectId,
-		);
+		return tileObjectIds[0] ?? null;
 	},
 
 	// Return if tile object has specific name
@@ -41,6 +50,7 @@ export const tileFunctions = {
 		bot.objects.getTileObjectComposition(tileObjectId).getName() ===
 		tileName,
 
+	// return dangerous tiles based on dangerousObjectIds
 	getDangerousTiles: (): WorldPoint[] => {
 		// Collect all dangerous object IDs into an array
 		const ids = Object.values(dangerousObjectIds);
@@ -49,7 +59,10 @@ export const tileFunctions = {
 		const dangerousObjects = bot.objects.getTileObjectsWithIds(ids);
 
 		// Map to their locations
-		return dangerousObjects.map((obj) => obj.getWorldLocation());
+		return dangerousObjects.map(
+			(obj: { getWorldLocation: () => WorldPoint }) =>
+				obj.getWorldLocation(),
+		);
 	},
 
 	// Check if a tile exists in a list of tiles
@@ -73,11 +86,13 @@ export const tileFunctions = {
 		// Get dangerous and safe tiles
 		const dangerousTiles = tileFunctions.getDangerousTiles(); // Array of WorldPointType
 		// Convert plain objects to WorldPointType instances
-		const safeTilesRaw = tileSets.safeTiles('testTiles') || [];
-		const safeTiles: WorldPoint[] = safeTilesRaw.map(
-			(t: { x: number; y: number; plane: number }) =>
-				new WorldPoint(t.x, t.y, t.plane),
-		);
+		const safeTilesRaw = tileSets.safeTiles('leviSafeTiles') || [];
+		const safeTiles: WorldPoint[] = Array.isArray(safeTilesRaw)
+			? safeTilesRaw.map(
+					(t: { x: number; y: number; plane: number }) =>
+						new WorldPoint(t.x, t.y, t.plane),
+				)
+			: [];
 
 		// Before the search loop
 		if (tileFunctions.isInTileList(playerLoc, dangerousTiles)) {
@@ -111,12 +126,6 @@ export const tileFunctions = {
 
 					// 1. Not under getDangerousTiles
 					if (tileFunctions.isInTileList(testTile, dangerousTiles)) {
-						logger(
-							state,
-							'debug',
-							'getSafeTile',
-							'Test Tile is on DangerousTiles.',
-						);
 						continue;
 					}
 					// 2. On safeTiles if safeTiles is defined
@@ -124,15 +133,15 @@ export const tileFunctions = {
 						safeTiles.length > 0 &&
 						!tileFunctions.isInTileList(testTile, safeTiles)
 					) {
-						logger(
-							state,
-							'debug',
-							'getSafeTile',
-							'Test Tile is on SafeTiles.',
-						);
 						continue;
 					}
 					// If all checks pass, return this tile
+					logger(
+						state,
+						'debug',
+						'getSafeTile',
+						`Found safe tile at (${testTile.getX()}, ${testTile.getY()})`,
+					);
 					return testTile;
 				}
 			}
@@ -191,16 +200,29 @@ export const tileFunctions = {
 			dangerousObjectIdArray,
 		);
 
-		const objectsFound = nearbyObjects.some((obj) => {
-			const objLoc = obj.getWorldLocation();
-			return boundaries.some(
-				(boundary) =>
-					objLoc.getX() >= boundary.minX &&
-					objLoc.getX() <= boundary.maxX &&
-					objLoc.getY() >= boundary.minY &&
-					objLoc.getY() <= boundary.maxY,
-			);
-		});
+		interface Boundary {
+			minX: number;
+			maxX: number;
+			minY: number;
+			maxY: number;
+		}
+
+		interface TileObject {
+			getWorldLocation(): WorldPoint;
+		}
+
+		const objectsFound: boolean = (nearbyObjects as TileObject[]).some(
+			(obj: TileObject) => {
+				const objLoc: WorldPoint = obj.getWorldLocation();
+				return (boundaries as Boundary[]).some(
+					(boundary: Boundary) =>
+						objLoc.getX() >= boundary.minX &&
+						objLoc.getX() <= boundary.maxX &&
+						objLoc.getY() >= boundary.minY &&
+						objLoc.getY() <= boundary.maxY,
+				);
+			},
+		);
 
 		logger(
 			state,
@@ -219,7 +241,7 @@ export const tileFunctions = {
 		destinationY: number,
 	): net.runelite.api.coords.WorldPoint[] => {
 		// Initiate webwalk to calculate path
-		bot.walking.walkToWorldPoint(destinationX, destinationY);
+		bot.walking.walkToTrueWorldPoint(destinationX, destinationY);
 
 		// Then get the calculated path
 		const path = bot.walking.getWebWalkCalculatedPath();
@@ -230,14 +252,19 @@ export const tileFunctions = {
 				'webWalkCalculator',
 				'Webwalk path is possible.',
 			);
-			path.forEach((waypoint, index) => {
-				logger(
-					state,
-					'debug',
-					'webWalkCalculator',
-					`Waypoint ${index}: (${waypoint.getX()}, ${waypoint.getY()})`,
-				);
-			});
+			path.forEach(
+				(
+					waypoint: net.runelite.api.coords.WorldPoint,
+					index: number,
+				) => {
+					logger(
+						state,
+						'debug',
+						'webWalkCalculator',
+						`Waypoint ${index}: (${waypoint.getX()}, ${waypoint.getY()})`,
+					);
+				},
+			);
 			const destination = path.at(-1);
 			if (destination) {
 				logger(

@@ -1,14 +1,14 @@
-import { itemIds } from './item-ids.js';
 import { playerFunctions } from './player-functions.js';
 import type { State } from './types.js';
 import { logger } from './logger.js';
+import { gear } from './item-ids.js';
 
 // Attack speed table: itemId => ticks between attacks
 export const weaponAttackSpeeds: Record<number, number> = {
-	// Example: weapon IDs with their attack speeds (in ticks)
-	// 1 tick = 0.6 seconds
-	// Common speeds: 1, 2, 3, 4, 5, 6 ticks
-	[itemIds.tBow]: 5,
+	[gear.tBow]: 5,
+	[gear.bowfa]: 4,
+	[gear.bowfac]: 4,
+	[gear.blowpipe]: 2,
 };
 
 export const attackTimers = {

@@ -1,5 +1,5 @@
 import { logger } from '../imports/logger.js';
-import { objectIds } from '../imports/object-ids.js';
+import { getObjectIdGroups } from '../imports/object-ids.js';
 
 // This will be passed in by the caller
 let state: any;
@@ -189,7 +189,9 @@ const overlayTile = {
 
 						// Check for shaking trap (caught)
 						const shakingTrap = bot.objects
-							.getTileObjectsWithIds([objectIds.boxTrap_Shaking])
+							.getTileObjectsWithIds(
+								getObjectIdGroups().boxTrap_Shaking,
+							)
 							.find(
 								(o: any) =>
 									o &&
@@ -210,9 +212,9 @@ const overlayTile = {
 						} else {
 							// Check for failed trap
 							const failedTrap = bot.objects
-								.getTileObjectsWithIds([
-									objectIds.boxTrap_Failed,
-								])
+								.getTileObjectsWithIds(
+									getObjectIdGroups().boxTrap_Failed,
+								)
 								.find(
 									(o: any) =>
 										o &&
@@ -234,9 +236,9 @@ const overlayTile = {
 							} else {
 								// Check for active laid trap
 								const laidTrap = bot.objects
-									.getTileObjectsWithIds([
-										objectIds.boxTrapLayed,
-									])
+									.getTileObjectsWithIds(
+										getObjectIdGroups().boxTrapLayed,
+									)
 									.find(
 										(o: any) =>
 											o &&

@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // imports
 import { projectilePrayerMap, projectileTypeMap } from './npc-ids.js';
 import { prayerFunctions, prayers } from './prayer-functions.js';
@@ -43,115 +38,112 @@ export const projectileFunctions = {
 	// Track projectile hit times for rate analysis (last 60 ticks)
 	projectileHitTimes: new Map<number, number[]>(),
 
-	// Initialize event listeners for projectile tracking
+	// Initialize projectile tracking (no longer uses events, called from onGameTick)
 	initializeProjectileTracking: (state: State): void => {
-		bot.events.register(
-			'ProjectileMoved',
-			(event: any) => {
-				projectileFunctions.updateProjectileDistance(state, event);
-			},
-			0,
-		);
-
-		bot.events.register(
-			'ProjectileDisplaced',
-			(event: any) => {
-				projectileFunctions.removeProjectile(state, event);
-			},
-			0,
+		// Initialization is now a no-op; tracking is polled directly in updateProjectileDistance
+		logger(
+			state,
+			'debug',
+			'initializeProjectileTracking',
+			'Projectile tracking initialized (polling-based).',
 		);
 	},
 
-	// Enhanced projectile distance update with target tracking
-	updateProjectileDistance: (state: State, event: any): void => {
-		const projectile = event.getProjectile?.() as Projectile;
-		if (!projectile) return;
+	// Poll projectiles directly once per tick instead of using events
+	// Only tracks projectiles defined in projectilePrayerMap or projectileTypeMap
+	updateProjectileDistance: (state: State): void => {
+		// Get only tracked projectile IDs from npc-ids.ts
+		const trackedProjectileIds = Object.keys(projectilePrayerMap)
+			.concat(Object.keys(projectileTypeMap))
+			.map(Number);
 
-		const id = projectile.getId?.() ?? projectile.id;
-		const distance =
-			projectileFunctions.calculateProjectileDistance(projectile);
+		if (trackedProjectileIds.length === 0) return;
+
+		// Use bot API to fetch only relevant projectiles
+		const projectiles =
+			(bot.projectiles?.getProjectilesWithIds?.(
+				trackedProjectileIds,
+			) as any[]) ?? [];
+		const player = client?.getLocalPlayer?.();
+		const playerLoc = player?.getWorldLocation?.();
+
+		if (!playerLoc) return;
+
 		const maxDistance = 10;
+		const currentProjectileIds = new Set<number>();
 
-		if (distance === null) return;
+		// Update/track projectiles within range
+		for (const projectileRaw of projectiles) {
+			const projectile: Projectile = projectileRaw as Projectile;
+			let id: number | undefined;
+			if (typeof projectile.getId === 'function') {
+				id = projectile.getId();
+			} else if (typeof projectile.id === 'number') {
+				id = projectile.id;
+			}
+			const projLoc = projectile.getWorldLocation?.();
 
-		// Get target location and timing
-		const targetX = projectile.getX?.();
-		const targetY = projectile.getY?.();
-		const remainingCycles = projectile.getRemainingCycles?.();
-		const ticksUntilHit = remainingCycles
-			? Math.ceil(remainingCycles / 30)
-			: undefined;
-		const startCycle = projectile.getStartCycle?.();
-		const endCycle = projectile.getEndCycle?.();
+			if (!projLoc?.distanceTo || typeof id !== 'number') continue;
 
-		if (typeof id === 'number' && distance <= maxDistance) {
-			if (projectileFunctions.trackedProjectiles.has(id)) {
-				const tracked = projectileFunctions.trackedProjectiles.get(id)!;
-				tracked.distance = distance;
-				tracked.ticksUntilHit = ticksUntilHit;
-			} else {
-				projectileFunctions.trackedProjectiles.set(id, {
-					id,
-					distance,
-					hasHit: false,
-					targetX,
-					targetY,
-					ticksUntilHit,
-					startCycle,
-					endCycle,
-				});
+			const distance = projLoc.distanceTo(playerLoc);
+
+			if (distance <= maxDistance) {
+				currentProjectileIds.add(id);
+
+				const targetX: number | undefined = projectile.getX?.();
+				const targetY = projectile.getY?.();
+				const remainingCycles = projectile.getRemainingCycles?.();
+				const ticksUntilHit = remainingCycles
+					? Math.ceil(remainingCycles / 30)
+					: undefined;
+				const startCycle = projectile.getStartCycle?.();
+				const endCycle = projectile.getEndCycle?.();
+
+				if (projectileFunctions.trackedProjectiles.has(id)) {
+					const tracked =
+						projectileFunctions.trackedProjectiles.get(id)!;
+					tracked.distance = distance;
+					tracked.ticksUntilHit = ticksUntilHit;
+				} else {
+					projectileFunctions.trackedProjectiles.set(id, {
+						id,
+						distance,
+						hasHit: false,
+						targetX,
+						targetY,
+						ticksUntilHit,
+						startCycle,
+						endCycle,
+					});
+					logger(
+						state,
+						'debug',
+						'updateProjectileDistance',
+						`Tracking projectile ${id} at distance ${distance}, hits in ${ticksUntilHit} ticks at (${targetX}, ${targetY})`,
+					);
+				}
+			}
+		}
+
+		// Remove projectiles that are no longer in range
+		for (const id of projectileFunctions.trackedProjectiles.keys()) {
+			if (!currentProjectileIds.has(id)) {
+				projectileFunctions.recordProjectileHit(state, id);
+				projectileFunctions.trackedProjectiles.delete(id);
 				logger(
 					state,
 					'debug',
 					'updateProjectileDistance',
-					`Tracking projectile ${id} at distance ${distance}, hits in ${ticksUntilHit} ticks at (${targetX}, ${targetY})`,
+					`Projectile ${id} out of range`,
 				);
 			}
-		} else if (
-			typeof id === 'number' &&
-			projectileFunctions.trackedProjectiles.has(id)
-		) {
-			projectileFunctions.trackedProjectiles.delete(id);
-			logger(
-				state,
-				'debug',
-				'updateProjectileDistance',
-				`Projectile ${id} out of range`,
-			);
-		}
-	},
-
-	// Calculate distance from projectile to player
-	calculateProjectileDistance: (projectile: any): number | null => {
-		const player = client?.getLocalPlayer?.();
-		const playerLoc = player?.getWorldLocation?.();
-		const projLoc = projectile?.getWorldLocation?.();
-
-		if (!playerLoc || !projLoc) return null;
-		return projLoc.distanceTo(playerLoc);
-	},
-
-	// Remove projectile from tracking
-	removeProjectile: (state: State, event: any): void => {
-		const projectile = event.getProjectile?.();
-		if (!projectile) return;
-
-		const id = projectile.getId?.() ?? projectile.id;
-		if (projectileFunctions.trackedProjectiles.has(id)) {
-			// Record hit before removing
-			projectileFunctions.recordProjectileHit(state, id);
-			projectileFunctions.trackedProjectiles.delete(id);
-			logger(
-				state,
-				'debug',
-				'removeProjectile',
-				`Projectile ${id} has hit/despawned`,
-			);
 		}
 	},
 
 	// Get sorted projectiles by distance
-	getSortedProjectiles: (): Array<{
+	getSortedProjectiles: (
+		state: State,
+	): Array<{
 		id: number;
 		distance: number;
 		hasHit: boolean;
@@ -159,52 +151,40 @@ export const projectileFunctions = {
 		targetY?: number;
 		ticksUntilHit?: number;
 	}> => {
-		return Array.from(projectileFunctions.trackedProjectiles.values())
+		const sorted = Array.from(
+			projectileFunctions.trackedProjectiles.values(),
+		)
 			.filter((p) => !p.hasHit)
 			.sort((a, b) => a.distance - b.distance);
-	},
 
-	// Get projectiles near the player within a specified distance defaulting to 3 tiles
-	projectilesNearPlayer: (state: State, maxDistance = 3) => {
-		logger(
-			state,
-			'debug',
-			'projectilesNearPlayer',
-			`Scanning projectiles within ${maxDistance} tiles.`,
-		);
-		const projectiles = client.getProjectiles
-			? client.getProjectiles().toArray()
-			: [];
-		const player = client?.getLocalPlayer?.();
-		const playerLoc = player?.getWorldLocation?.();
+		if (sorted.length > 0) {
+			logger(
+				state,
+				'debug',
+				'getSortedProjectiles',
+				`Found ${sorted.length} active projectiles. Closest: ID ${sorted[0].id} at distance ${sorted[0].distance} tiles, ETA ${sorted[0].ticksUntilHit} ticks.`,
+			);
+		}
 
-		if (!playerLoc?.distanceTo) return projectiles;
-		const nearby = projectiles.filter((p: any) => {
-			const loc = p?.getWorldLocation?.();
-			return loc?.distanceTo
-				? loc.distanceTo(playerLoc) <= maxDistance
-				: true;
-		});
-		logger(
-			state,
-			'debug',
-			'projectilesNearPlayer',
-			`Found ${nearby.length} nearby projectiles.`,
-		);
-		return nearby;
+		return sorted;
 	},
 
 	// Determine the type of a given projectile
 	projectileType: (
 		state: State,
-		projectile: any,
+		projectile: Projectile,
 	): 'magic' | 'ranged' | 'melee' | 'other' | 'unknown' => {
-		const id = projectile?.getId?.() ?? projectile?.id;
-		let type: 'magic' | 'ranged' | 'melee' | 'other' | 'unknown' =
-			'unknown';
-		if (id && typeof id === 'string' && id in projectileTypeMap) {
-			type = projectileTypeMap[id as keyof typeof projectileTypeMap];
+		let id: number | undefined;
+		if (typeof projectile.getId === 'function') {
+			id = projectile.getId();
+		} else if (typeof projectile.id === 'number') {
+			id = projectile.id;
 		}
+		const type =
+			typeof id === 'number' && projectileTypeMap[id]
+				? projectileTypeMap[id]
+				: 'unknown';
+
 		logger(
 			state,
 			'debug',
@@ -214,16 +194,19 @@ export const projectileFunctions = {
 		return type;
 	},
 
-	// Activate prayer based on projectile type
-	prayProjectile: (state: State, projectile: any): boolean => {
-		const id = projectile?.getId?.() ?? projectile?.id;
-		let prayerKey:
-			| (typeof projectilePrayerMap)[keyof typeof projectilePrayerMap]
-			| undefined;
-		if (id && typeof id === 'string' && id in projectilePrayerMap) {
-			prayerKey =
-				projectilePrayerMap[id as keyof typeof projectilePrayerMap];
+	// Activate prayer based on projectile ID
+	prayProjectile: (state: State, projectile: Projectile): boolean => {
+		let id: number | undefined;
+		if (typeof projectile.getId === 'function') {
+			id = projectile.getId();
+		} else if (typeof projectile.id === 'number') {
+			id = projectile.id;
 		}
+		const prayerKey =
+			typeof id === 'number' && projectilePrayerMap[id]
+				? projectilePrayerMap[id]
+				: undefined;
+
 		if (!prayerKey) {
 			logger(
 				state,
@@ -233,6 +216,7 @@ export const projectileFunctions = {
 			);
 			return false;
 		}
+
 		logger(
 			state,
 			'debug',
@@ -286,7 +270,7 @@ export const projectileFunctions = {
 	},
 
 	// Check if projectile will hit player's current location
-	willHitPlayer: (projectile: any): boolean => {
+	willHitPlayer: (projectile: Projectile): boolean => {
 		const playerLoc = projectileFunctions.getPlayerLocation();
 		if (!playerLoc) return false;
 

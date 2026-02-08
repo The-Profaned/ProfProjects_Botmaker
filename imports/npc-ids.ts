@@ -1,31 +1,23 @@
 import { prayers } from './prayer-functions.js';
+import { NpcID } from './types.js';
 
 // NPC IDs
-export const npcIds = {
-	dagSupreme: net.runelite.api.gameval.NpcID.DAGCAVE_RANGED_BOSS,
-	dagPrime: net.runelite.api.gameval.NpcID.DAGCAVE_MAGIC_BOSS,
-	dagRex: net.runelite.api.gameval.NpcID.DAGCAVE_MELEE_BOSS,
-	leviathan: net.runelite.api.gameval.NpcID.LEVIATHAN,
-	leviathanQuest: net.runelite.api.gameval.NpcID.LEVIATHAN_QUEST,
-	abbyssalPathfinder: net.runelite.api.gameval.NpcID.LEVIATHAN_BUFF_NPC,
-	zulrahSerp: net.runelite.api.gameval.NpcID.SNAKEBOSS_BOSS_RANGED,
-	zulrahMag: net.runelite.api.gameval.NpcID.SNAKEBOSS_BOSS_MELEE,
-	zulrahTanz: net.runelite.api.gameval.NpcID.SNAKEBOSS_BOSS_MAGIC,
-	derangedArch: net.runelite.api.gameval.NpcID.FOSSIL_CRAZY_ARCHAEOLOGIST,
+export const NPC = {
+	leviathan: NpcID.LEVIATHAN,
+	leviathanQuest: NpcID.LEVIATHAN_QUEST,
+	abbyssalPathfinder: NpcID.LEVIATHAN_BUFF_NPC,
+	graveDefault: NpcID.GRAVESTONE_DEFAULT,
+	graveAngel: NpcID.GRAVESTONE_ANGEL,
 };
 
 // Group NPC IDs
 export const npcGroupIds = {
-	dagKings: [npcIds.dagRex, npcIds.dagSupreme, npcIds.dagPrime],
-	leviathans: [npcIds.leviathan, npcIds.leviathanQuest],
-	zulrahAll: [npcIds.zulrahSerp, npcIds.zulrahMag, npcIds.zulrahTanz],
+	leviathans: [NPC.leviathan, NPC.leviathanQuest],
 };
 
 // NPC Animation IDs
 export const npcAnimationIds = {
-	dagRex: 0,
-	dagSupreme: 0,
-	dagPrime: 0,
+	// placeholder for actual numeric animation IDs
 };
 
 // Map NPC animation IDs to prayer keys (add your IDs here)
@@ -49,36 +41,24 @@ export const animationTypeMap: Record<
 
 // NPC Projectile IDs
 export const npcProjectileIds = {
-	leviathanMagic: 0,
-	leviathanRanged: 0,
-	leviathanMelee: 0,
-	crazyArch: 1259,
+	leviathanMagic: 2489,
+	leviathanRanged: 2487,
+	leviathanMelee: 2488,
 };
 
-// Map projectile IDs to prayer keys (add your IDs here)
-export const projectilePrayerMap: Record<
-	keyof typeof npcProjectileIds,
-	keyof typeof prayers
-> = {
-	/*
-   example: npcProjectileId: "protMage",
-  */
-	leviathanRanged: 'protRange',
-	leviathanMelee: 'protMelee',
-	leviathanMagic: 'protMage',
-	crazyArch: 'protRange',
+// Map numeric projectile IDs to prayer keys
+export const projectilePrayerMap: Record<number, keyof typeof prayers> = {
+	[npcProjectileIds.leviathanMagic]: 'protMage',
+	[npcProjectileIds.leviathanRanged]: 'protRange',
+	[npcProjectileIds.leviathanMelee]: 'protMelee',
 };
 
-// Map projectile IDs to simple type labels
+// Map numeric projectile IDs to attack type labels
 export const projectileTypeMap: Record<
-	keyof typeof npcProjectileIds,
+	number,
 	'magic' | 'ranged' | 'melee' | 'other'
 > = {
-	/*
-   example: npcProjectileName: "magic",
-  */
-	leviathanRanged: 'ranged',
-	leviathanMelee: 'melee',
-	leviathanMagic: 'magic',
-	crazyArch: 'ranged',
+	[npcProjectileIds.leviathanRanged]: 'ranged',
+	[npcProjectileIds.leviathanMelee]: 'melee',
+	[npcProjectileIds.leviathanMagic]: 'magic',
 };

@@ -1,6 +1,6 @@
 import { logger } from '../imports/logger.js';
-import { objectIds } from '../imports/object-ids.js';
-import { itemIds } from '../imports/item-ids.js';
+import { object } from '../imports/object-ids.js';
+import { Item } from '../imports/item-ids.js';
 import type { State } from '../imports/types.js';
 import { utilityFunctions } from '../imports/utility-functions.js';
 import { profChinsUI } from './ui.js';
@@ -30,9 +30,9 @@ let _groundTrapHandlingLocation: net.runelite.api.coords.WorldPoint | null =
 let _groundTrapPhase: 'walking' | 'looting' | 'relaying' | null = null;
 let _groundTrapTickCount = 0;
 let _groundTrapJustLaid = false; // Track if trap was just laid, waiting for player to idle
-let _moveOffTrapIssued = false; // Track if we've already issued a move off trap command
-let _repositioningInProgress = false; // Track if player is being repositioned off traps
-let _repositioningTickCount = 0; // Track ticks spent repositioning to prevent infinite loops
+//let _moveOffTrapIssued = false; // Track if we've already issued a move off trap command
+//let _repositioningInProgress = false; // Track if player is being repositioned off traps
+//let _repositioningTickCount = 0; // Track ticks spent repositioning to prevent infinite loops
 
 // Separate timestamp maps for shaking and failed traps (matches AutoChin)
 export const shakingTrapTimestamps = new Map<string, number>();
@@ -146,9 +146,9 @@ export function initializeUtilFunctions(
 
 export function maxTraps(): number {
 	if (hunterLvl < 20) return 1;
-	if (hunterLvl >= 20 && hunterLvl < 39) return 2;
-	if (hunterLvl >= 40 && hunterLvl < 59) return 3;
-	if (hunterLvl >= 60 && hunterLvl < 79) return 4;
+	if (hunterLvl >= 20 && hunterLvl < 40) return 2;
+	if (hunterLvl >= 40 && hunterLvl < 60) return 3;
+	if (hunterLvl >= 60 && hunterLvl < 80) return 4;
 	if (hunterLvl >= 80) return 5;
 	return 0;
 }
@@ -210,10 +210,9 @@ export function isOccupiedByTrapOrGround(
 	loc: net.runelite.api.coords.WorldPoint,
 ): boolean {
 	const allTrapIds = [
-		objectIds.boxTrapLayed,
-		objectIds.boxTrap_Failed,
-		objectIds.boxTrap_Shaking,
-		itemIds.boxTrap,
+		object.boxTrapLayed,
+		object.boxTrap_Failed,
+		object.boxTrap_Shaking,
 	];
 	const objectAtLoc = bot.objects
 		.getTileObjectsWithIds(allTrapIds)
@@ -254,7 +253,7 @@ export function maintainAllTrapTimestamps(): void {
 		const key = `${loc.getX()},${loc.getY()}`;
 
 		const shakingTrap = bot.objects
-			.getTileObjectsWithIds([objectIds.boxTrap_Shaking])
+			.getTileObjectsWithIds([object.boxTrap_Shaking])
 			.find((o) => {
 				if (!o) return false;
 				const worldLoc = o.getWorldLocation();
@@ -307,7 +306,7 @@ export function maintainAllTrapTimestamps(): void {
 		const key = `${loc.getX()},${loc.getY()}`;
 
 		const failedTrap = bot.objects
-			.getTileObjectsWithIds([objectIds.boxTrap_Failed])
+			.getTileObjectsWithIds([object.boxTrap_Failed])
 			.find((o) => {
 				if (!o) return false;
 				const worldLoc = o.getWorldLocation();
@@ -379,9 +378,9 @@ export function resetTraps(): boolean {
 				// At location - reset trap immediately
 				const trapToReset = bot.objects
 					.getTileObjectsWithIds([
-						objectIds.boxTrapLayed,
-						objectIds.boxTrap_Shaking,
-						objectIds.boxTrap_Failed,
+						object.boxTrapLayed,
+						object.boxTrap_Shaking,
+						object.boxTrap_Failed,
 					])
 					.find((o) => {
 						if (!o) return false;
@@ -396,7 +395,7 @@ export function resetTraps(): boolean {
 				if (trapToReset) {
 					// Check if it's a shaking trap (caught a chin)
 					const isShaking = bot.objects
-						.getTileObjectsWithIds([objectIds.boxTrap_Shaking])
+						.getTileObjectsWithIds([object.boxTrap_Shaking])
 						.find((o) => {
 							if (!o) return false;
 							const worldLoc = o.getWorldLocation();
@@ -438,7 +437,7 @@ export function resetTraps(): boolean {
 		if (_resetPhase === 'animating') {
 			if (_resetTargetLocation) {
 				const newTrapLaid = bot.objects
-					.getTileObjectsWithIds([objectIds.boxTrapLayed])
+					.getTileObjectsWithIds([object.boxTrapLayed])
 					.find((o) => {
 						if (!o) return false;
 						const worldLoc = o.getWorldLocation();
@@ -477,7 +476,7 @@ export function resetTraps(): boolean {
 						if (locKey === key) continue;
 
 						const shakingTrap = bot.objects
-							.getTileObjectsWithIds([objectIds.boxTrap_Shaking])
+							.getTileObjectsWithIds([object.boxTrap_Shaking])
 							.find((o) => {
 								if (!o) return false;
 								const worldLoc = o.getWorldLocation();
@@ -510,7 +509,7 @@ export function resetTraps(): boolean {
 						if (locKey === key) continue;
 
 						const failedTrap = bot.objects
-							.getTileObjectsWithIds([objectIds.boxTrap_Failed])
+							.getTileObjectsWithIds([object.boxTrap_Failed])
 							.find((o) => {
 								if (!o) return false;
 								const worldLoc = o.getWorldLocation();
@@ -664,7 +663,7 @@ export function layingInitialTraps(
 
 			if (atTarget || (dx <= 2 && dy <= 2)) {
 				// At location - lay trap immediately
-				bot.inventory.interactWithIds([itemIds.boxTrap], ['Lay']);
+				bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
 				logger(
 					state,
 					'debug',
@@ -687,7 +686,7 @@ export function layingInitialTraps(
 		if (_layingPhase === 'animating') {
 			if (_layingTrapLocation) {
 				const newTrapLaid = bot.objects
-					.getTileObjectsWithIds([objectIds.boxTrapLayed])
+					.getTileObjectsWithIds([object.boxTrapLayed])
 					.find((o) => {
 						if (!o) return false;
 						const worldLoc = o.getWorldLocation();
@@ -771,7 +770,7 @@ export function layingInitialTraps(
 		if (
 			!occupied &&
 			!_tickManipulationTriggered &&
-			bot.inventory.containsId(itemIds.boxTrap)
+			bot.inventory.containsId(Item.boxTrap)
 		) {
 			const playerWp = client.getLocalPlayer().getWorldLocation();
 			if (!playerWp.equals(loc)) {
@@ -938,7 +937,7 @@ export function criticalTrapChecker(): boolean {
 		if (!playerLaidTraps.has(key)) continue;
 
 		const shaking = bot.objects
-			.getTileObjectsWithIds([objectIds.boxTrap_Shaking])
+			.getTileObjectsWithIds([object.boxTrap_Shaking])
 			.find((o) => {
 				if (!o) return false;
 				const worldLoc = o.getWorldLocation();
@@ -961,9 +960,33 @@ export function criticalTrapChecker(): boolean {
 					'criticalTrapChecker',
 					`CRITICAL: Shaking trap at (${loc.getX()}, ${loc.getY()}) hit 80-tick timeout! Age: ${ageInTicks} ticks. Forcing reset!`,
 				);
-				utilState.resetInProgress = true;
-				utilState.resetTargetLocation = loc;
-				utilState.resetPhase = 'walking';
+
+				// Find the actual trap object to interact with
+				const criticalTrap = bot.objects
+					.getTileObjectsWithIds([object.boxTrap_Shaking])
+					.find((o) => {
+						if (!o) return false;
+						const worldLoc = o.getWorldLocation();
+						if (!worldLoc) return false;
+						return (
+							worldLoc.getX() === loc.getX() &&
+							worldLoc.getY() === loc.getY()
+						);
+					});
+
+				if (criticalTrap) {
+					// Immediately interact with the critical trap - bypass normal queue
+					bot.objects.interactSuppliedObject(criticalTrap, 'Reset');
+					utilState.resetInProgress = true;
+					utilState.resetTargetLocation = loc;
+					utilState.resetPhase = 'animating'; // Skip walking, go straight to animation
+					_resetTickCount = 0;
+					_tickManipulationTriggered = true;
+
+					// Remove from timestamp tracking
+					shakingTrapTimestamps.delete(key);
+				}
+
 				return true; // Signal that critical trap is being handled
 			}
 		}
@@ -977,7 +1000,7 @@ export function criticalTrapChecker(): boolean {
 		if (!playerLaidTraps.has(key)) continue;
 
 		const failed = bot.objects
-			.getTileObjectsWithIds([objectIds.boxTrap_Failed])
+			.getTileObjectsWithIds([object.boxTrap_Failed])
 			.find((o) => {
 				if (!o) return false;
 				const worldLoc = o.getWorldLocation();
@@ -1000,9 +1023,33 @@ export function criticalTrapChecker(): boolean {
 					'criticalTrapChecker',
 					`CRITICAL: Failed trap at (${loc.getX()}, ${loc.getY()}) hit 80-tick timeout! Age: ${ageInTicks} ticks. Forcing reset!`,
 				);
-				utilState.resetInProgress = true;
-				utilState.resetTargetLocation = loc;
-				utilState.resetPhase = 'walking';
+
+				// Find the actual trap object to interact with
+				const criticalTrap = bot.objects
+					.getTileObjectsWithIds([object.boxTrap_Failed])
+					.find((o) => {
+						if (!o) return false;
+						const worldLoc = o.getWorldLocation();
+						if (!worldLoc) return false;
+						return (
+							worldLoc.getX() === loc.getX() &&
+							worldLoc.getY() === loc.getY()
+						);
+					});
+
+				if (criticalTrap) {
+					// Immediately interact with the critical trap - bypass normal queue
+					bot.objects.interactSuppliedObject(criticalTrap, 'Reset');
+					utilState.resetInProgress = true;
+					utilState.resetTargetLocation = loc;
+					utilState.resetPhase = 'animating'; // Skip walking, go straight to animation
+					_resetTickCount = 0;
+					_tickManipulationTriggered = true;
+
+					// Remove from timestamp tracking
+					failedTrapTimestamps.delete(key);
+				}
+
 				return true; // Signal that critical trap is being handled
 			}
 		}
@@ -1029,7 +1076,7 @@ export function handleGroundTraps(): boolean {
 
 		// Check if trap has been successfully laid at this location
 		const trapLaidAtLocation = bot.objects
-			.getTileObjectsWithIds([objectIds.boxTrapLayed])
+			.getTileObjectsWithIds([object.boxTrapLayed])
 			.find((o) => {
 				if (!o) return false;
 				const worldLoc = o.getWorldLocation();
@@ -1060,7 +1107,7 @@ export function handleGroundTraps(): boolean {
 		// On tick 2, lay the trap from inventory (give it time to loot first)
 		if (
 			utilState.groundTrapTickCount === 2 &&
-			bot.inventory.containsId(itemIds.boxTrap)
+			bot.inventory.containsId(Item.boxTrap)
 		) {
 			logger(
 				state,
@@ -1068,7 +1115,7 @@ export function handleGroundTraps(): boolean {
 				'handleGroundTraps',
 				`Laying trap from inventory at (${targetLoc.getX()}, ${targetLoc.getY()}).`,
 			);
-			bot.inventory.interactWithIds([itemIds.boxTrap], ['Lay']);
+			bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
 			profChinsUI.currentAction = 'Laying trap';
 		}
 
@@ -1090,7 +1137,7 @@ export function handleGroundTraps(): boolean {
 	// No trap in progress, find next one to handle
 	// Look for ground traps at cached locations
 	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-	const groundTraps = bot.tileItems.getItemsWithIds([itemIds.boxTrap]);
+	const groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
 
 	for (const groundTrap of groundTraps) {
 		// Safely access the tile property
@@ -1133,6 +1180,37 @@ export function handleGroundTraps(): boolean {
 	return false; // No ground traps found or handled
 }
 
+// Check if there are any traps that need resetting (shaking, failed, or ground items)
+export function hasTrapsNeedingAttention(): boolean {
+	// Check if we have a cached oldest trap (shaking or failed)
+	if (cachedOldestTrap !== null) {
+		return true;
+	}
+
+	// Check if ground trap handling is in progress
+	if (utilState.groundTrapHandlingLocation !== null) {
+		return true;
+	}
+
+	// Check if there are any ground traps at our cached locations
+	const groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
+	for (const groundTrap of groundTraps) {
+		if (!groundTrap || !groundTrap.tile) continue;
+		const trapLoc = groundTrap.tile.getWorldLocation();
+		if (!trapLoc) continue;
+
+		const isAtCachedLocation = trapLocationsCache.some(
+			(loc) =>
+				loc.getX() === trapLoc.getX() && loc.getY() === trapLoc.getY(),
+		);
+		if (isAtCachedLocation) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 // Export utility functions through the utilFunctions object
 export const utilFunctions = {
 	maxTraps,
@@ -1146,4 +1224,5 @@ export const utilFunctions = {
 	moveToSafeTileIfNeeded,
 	criticalTrapChecker,
 	handleGroundTraps,
+	hasTrapsNeedingAttention,
 };

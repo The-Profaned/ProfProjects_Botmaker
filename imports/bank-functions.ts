@@ -36,13 +36,6 @@ export const bankFunctions = {
 		return false;
 	},
 
-	// Open the bank if it is not already open
-	openBank: (state: State): boolean => bankFunctions.toggleBank(state, true),
-
-	// Close the bank if it is open
-	closeBank: (state: State): boolean =>
-		bankFunctions.toggleBank(state, false),
-
 	// Ensure the bank is in the required state, otherwise set fallback state
 	requireBankState: (
 		state: State,
@@ -56,17 +49,9 @@ export const bankFunctions = {
 		return true;
 	},
 
-	// Ensure the bank is open, otherwise set fallback state
-	requireOpenBank: (state: State, fallbackState: string): boolean =>
-		bankFunctions.requireBankState(state, true, fallbackState),
-
-	// Ensure the bank is closed, otherwise set fallback state
-	requireClosedBank: (state: State, fallbackState: string): boolean =>
-		bankFunctions.requireBankState(state, false, fallbackState),
-
 	// Check if item quantity in bank is below specified amount
-	lowQuantityInBank: (itemId: number, quanitty: number): boolean =>
-		bot.bank.getQuantityOfId(itemId) < quanitty,
+	lowQuantityInBank: (itemId: number, quantity: number): boolean =>
+		bot.bank.getQuantityOfId(itemId) < quantity,
 
 	// Check if any of the specified items have low quantity in bank
 	anyQuantityLowInBank: (
@@ -96,7 +81,7 @@ export const bankFunctions = {
 					state,
 					'debug',
 					'bankFunctions.withdrawMissingItems',
-					`Withdrawing item ID ${item.id} with wuantity ${item.quantity}`,
+					`Withdrawing item ID ${item.id} with quantity ${item.quantity}`,
 				);
 				item.quantity == 'all'
 					? bot.bank.withdrawAllWithId(item.id)
@@ -122,24 +107,188 @@ export const bankFunctions = {
 		failResetState?: string,
 	): boolean => {
 		for (const itemId of itemIds) {
-			if (bot.bank.getQuantityOfId(itemId))
+			const bankQuantity = bot.bank.getQuantityOfId(itemId);
+			if (bankQuantity === 0) continue;
+
+			logger(
+				state,
+				'debug',
+				'bankFunctions.withdrawFirstExistingItem',
+				`Withdrawing item ID ${itemId} with quantity ${quantity}`,
+			);
+			bot.bank.withdrawQuantityWithId(itemId, quantity);
+			return inventoryFunctions.itemInventoryTimeout.present(
+				state,
+				itemId,
+				failResetState,
+			);
+		}
+		// No items found
+		logger(
+			state,
+			'debug',
+			'bankFunctions.withdrawFirstExistingItem',
+			`No items found in bank with IDs: ${itemIds.join(', ')}`,
+		);
+		return false;
+	},
+
+	// Quickly Banks items based on initial inventory state, with timeout handling
+	quickBanking: (
+		state: State,
+		initialInventory: Record<number, { itemId: number; quantity: number }>,
+		progress: QuickBankingProgress,
+		failResetState?: string,
+	): boolean => {
+		if (!progress.initialized) {
+			const deposited: boolean = bankFunctions.depositItemsTimeout.all(
+				state,
+				failResetState,
+			);
+			if (!deposited) return false;
+
+			const requiredItems: { id: number; quantity: number }[] = [];
+			progress.slots = [];
+
+			for (let slot: number = 0; slot < 28; slot++) {
+				const item = initialInventory[slot];
+				if (!item) continue;
+
+				requiredItems.push({
+					id: item.itemId,
+					quantity: item.quantity,
+				});
+				progress.slots.push(slot);
+			}
+
+			if (bankFunctions.anyQuantityLowInBank(requiredItems)) {
 				logger(
 					state,
-					'debug',
-					'bankFunctions.withdrawFirstExistingItem',
-					`Withdrawing item ID ${itemId} with quantity ${quantity}`,
+					'all',
+					'bankFunctions.quickBanking',
+					'No more required items, resupply before you start again',
 				);
-			bot.bank.withdrawQuantityWithId(itemId, quantity);
-			if (
-				!inventoryFunctions.itemInventoryTimeout.present(
-					state,
-					itemId,
-					failResetState,
-				)
-			)
+				bot.terminate();
 				return false;
+			}
+
+			progress.index = 0;
+			progress.initialized = true;
 		}
-		return true;
+
+		// Wait for banking dialog to close before continuing
+		if (bot.bank.isBanking()) {
+			logger(
+				state,
+				'debug',
+				'bankFunctions.quickBanking',
+				'Waiting for banking dialog to close',
+			);
+			return false;
+		}
+
+		let itemsProcessed: number = 0;
+		const allowedThisTick: number = 3;
+
+		// Bank withdraw loop
+		while (
+			progress.index < progress.slots.length &&
+			itemsProcessed < allowedThisTick
+		) {
+			const slot: number = progress.slots[progress.index];
+			const item = initialInventory[slot];
+
+			progress.index++;
+
+			if (!item) continue;
+
+			const quantity: number = item.quantity;
+			const isStandardQuantity: boolean =
+				quantity === 1 || quantity === 5 || quantity === 10;
+
+			// If quantity isn't 1/5/10, initiate withdraw and let isBanking() handle the dialog
+			if (!isStandardQuantity) {
+				bot.bank.withdrawQuantityWithId(item.itemId, quantity);
+				return false;
+			}
+
+			bot.bank.withdrawQuantityWithId(item.itemId, quantity);
+
+			const itemPresent: boolean =
+				inventoryFunctions.itemInventoryTimeout.present(
+					state,
+					item.itemId,
+					failResetState,
+				);
+
+			if (!itemPresent) {
+				logger(
+					state,
+					'all',
+					'bankFunctions.quickBanking',
+					'No more required items, resupply before you start again',
+				);
+				bot.terminate();
+				return false;
+			}
+
+			itemsProcessed++;
+		}
+
+		if (progress.index >= progress.slots.length) {
+			progress.initialized = false;
+			progress.index = 0;
+			progress.slots = [];
+			return true;
+		}
+
+		return false;
+	},
+
+	// Webwalk to nearest bank, open it, and retry every 5 ticks until open
+	processBankOpen: (state: State, onOpen: () => void): void => {
+		if (state.bankWalkInitiated === undefined) {
+			state.bankWalkInitiated = false;
+		}
+		if (state.isAtBankLocation === undefined) {
+			state.isAtBankLocation = false;
+		}
+		if (state.bankOpenAttemptTick === undefined) {
+			state.bankOpenAttemptTick = -1;
+		}
+
+		if (bot.bank.isOpen()) {
+			state.bankWalkInitiated = false;
+			state.isAtBankLocation = false;
+			state.bankOpenAttemptTick = -1;
+			onOpen();
+			return;
+		}
+		if (bot.walking.isWebWalking()) {
+			state.isAtBankLocation = false;
+			state.bankOpenAttemptTick = -1;
+			return;
+		}
+		if (!state.bankWalkInitiated) {
+			bot.walking.webWalkToNearestBank();
+			state.bankWalkInitiated = true;
+			state.isAtBankLocation = false;
+			state.bankOpenAttemptTick = -1;
+			return;
+		}
+		if (!state.isAtBankLocation) {
+			state.isAtBankLocation = true;
+			state.bankOpenAttemptTick = state.gameTick;
+			bot.bank.open();
+			return;
+		}
+		if (
+			state.bankOpenAttemptTick === -1 ||
+			state.gameTick - state.bankOpenAttemptTick >= 5
+		) {
+			state.bankOpenAttemptTick = state.gameTick;
+			bot.bank.open();
+		}
 	},
 };
 
@@ -176,4 +325,10 @@ const depositItemsTimeoutBase = (
 		return false;
 	}
 	return true;
+};
+
+export type QuickBankingProgress = {
+	initialized: boolean;
+	slots: number[];
+	index: number;
 };

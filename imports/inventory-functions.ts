@@ -141,6 +141,49 @@ export const inventoryFunctions = {
 		}
 		return false;
 	},
+
+	cacheInventory: (
+		state: State,
+	): Record<number, { itemId: number; quantity: number }> => {
+		const cachedInventory: Record<
+			number,
+			{ itemId: number; quantity: number }
+		> = {};
+
+		// Get inventory container from client (93 is the INVENTORY container ID)
+		const inventoryContainer = client.getItemContainer(93);
+
+		if (inventoryContainer) {
+			const items = inventoryContainer.getItems();
+			for (const [slot, item] of items.entries()) {
+				if (item && item.getId() > 0) {
+					cachedInventory[slot] = {
+						itemId: item.getId(),
+						quantity: item.getQuantity(),
+					};
+				}
+			}
+		}
+
+		// Log the complete inventory snapshot
+		logger(
+			state,
+			'debug',
+			'cacheInventory',
+			`Cached inventory state: ${JSON.stringify(cachedInventory, null, 2)}`,
+		);
+
+		// Also log in a more readable format
+		let inventoryLog: string = 'Inventory Cache:\n';
+		for (let slot: number = 0; slot < 28; slot++) {
+			inventoryLog += cachedInventory[slot]
+				? `Slot ${slot}: Item ID ${cachedInventory[slot].itemId} x${cachedInventory[slot].quantity}\n`
+				: `Slot ${slot}: Empty\n`;
+		}
+		logger(state, 'debug', 'cacheInventory', inventoryLog);
+
+		return cachedInventory;
+	},
 };
 
 // core function for item inventory timeout
