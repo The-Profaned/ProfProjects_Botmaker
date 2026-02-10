@@ -1,776 +1,756 @@
 // imports
-import { npcFunctions } from './npc-functions.js';
-import { prayerFunctions, prayers } from './prayer-functions.js';
-import { projectileFunctions } from './projectile-functions.js';
+import { getClosestNPC, getPrayerKeyForAnimation } from './npc-functions.js';
+import { checkPrayer, prayers, togglePrayer } from './prayer-functions.js';
+import {
+	getPrayerKeyForProjectile,
+	getSortedNpcAttacksByDistance,
+	getSortedProjectiles,
+} from './projectile-functions.js';
 import { logger } from './logger.js';
 import { State } from './types.js';
 import { Projectile } from './projectile-functions.js';
-import { tileFunctions } from './tile-functions.js';
+import { isPlayerInArea } from './tile-functions.js';
 
 // Player-related utility functions
-export const playerFunctions = {
-	// Disable all protection prayers
-	disableProtectionPrayers: (state: State): void => {
-		const protectionPrayers: (keyof typeof prayers)[] = [
-			'protMelee',
-			'protMage',
-			'protRange',
-		];
-		for (const prayer of protectionPrayers) {
-			if (prayerFunctions.checkPrayer(state, prayer)) {
-				bot.prayer.togglePrayer(prayers[prayer], false);
-				logger(
-					state,
-					'debug',
-					'disableProtectionPrayers',
-					`Toggled off ${prayer}`,
-				);
-			}
-		}
-	},
 
-	// Generic prayer activation helper
-	activatePrayerForThreat: (
-		state: State,
-		prayerKey: keyof typeof prayers | null,
-		threatSource: string,
-	): boolean => {
-		if (!prayerKey) {
+// Disable all protection prayers
+export const disableProtectionPrayers = (state: State): void => {
+	const protectionPrayers: (keyof typeof prayers)[] = [
+		'protMelee',
+		'protMage',
+		'protRange',
+	];
+	for (const prayer of protectionPrayers) {
+		if (checkPrayer(state, prayer)) {
+			bot.prayer.togglePrayer(prayers[prayer], false);
 			logger(
 				state,
 				'debug',
-				'activatePrayerForThreat',
-				`No prayer mapping for threat source: ${threatSource}`,
+				'disableProtectionPrayers',
+				`Toggled off ${prayer}`,
 			);
-			return false;
 		}
+	}
+};
 
-		if (prayerFunctions.checkPrayer(state, prayerKey)) {
-			logger(
-				state,
-				'debug',
-				'activatePrayerForThreat',
-				`Already praying ${prayerKey} for ${threatSource}`,
-			);
-			return true;
-		}
-
-		const activated = prayerFunctions.togglePrayer(state, prayerKey);
+// Generic prayer activation helper
+export const activatePrayerForThreat = (
+	state: State,
+	prayerKey: keyof typeof prayers | null,
+	threatSource: string,
+): boolean => {
+	if (!prayerKey) {
 		logger(
 			state,
 			'debug',
 			'activatePrayerForThreat',
-			`Activated ${prayerKey} for ${threatSource}`,
+			`No prayer mapping for threat source: ${threatSource}`,
 		);
+		return false;
+	}
 
-		return activated;
-	},
-
-	// Activate prayer for closest projectile
-	activatePrayerForProjectile: (
-		state: State,
-		projectile: Projectile,
-	): boolean => {
-		const projectileId = projectile.getId?.() ?? projectile.id ?? -1;
-		const prayerKey =
-			projectileFunctions.getPrayerKeyForProjectile(projectileId);
-		const distance = projectile
-			.getWorldLocation?.()
-			?.distanceTo(client.getLocalPlayer().getWorldLocation());
-		return playerFunctions.activatePrayerForThreat(
+	if (checkPrayer(state, prayerKey)) {
+		logger(
 			state,
-			prayerKey,
-			`projectile ${projectileId} at distance ${distance}`,
+			'debug',
+			'activatePrayerForThreat',
+			`Already praying ${prayerKey} for ${threatSource}`,
 		);
-	},
+		return true;
+	}
 
-	// Activate prayer for closest NPC attack animation (pre-emptive)
-	activatePrayerForNpcAttack: (
-		state: State,
-		npcAttack: { npcIndex: number; animationId: number; distance: number },
-	): boolean => {
-		const prayerKey = npcFunctions.getPrayerKeyForAnimation(
-			npcAttack.animationId,
-		);
-		return playerFunctions.activatePrayerForThreat(
-			state,
-			prayerKey,
-			`NPC ${npcAttack.npcIndex} anim ${npcAttack.animationId} at distance ${npcAttack.distance}`,
-		);
-	},
+	const activated = togglePrayer(state, prayerKey);
+	logger(
+		state,
+		'debug',
+		'activatePrayerForThreat',
+		`Activated ${prayerKey} for ${threatSource}`,
+	);
 
-	// Handle prayer activation for closest projectile + all projectiles in range
-	handleIncomingProjectiles: (
-		state: State & { currentPrayProjectileId?: number },
-	): boolean => {
-		const sortedProjectiles =
-			projectileFunctions.getSortedProjectiles(state);
+	return activated;
+};
 
-		// if no projectiles, disable prayers
-		if (sortedProjectiles.length === 0) {
-			logger(
-				state,
-				'debug',
-				'handleIncomingProjectiles',
-				'No tracked projectiles within range.',
-			);
-			playerFunctions.disableProtectionPrayers(state);
-			state.currentPrayProjectileId = undefined;
-			return false;
-		}
+// Activate prayer for closest projectile
+export const activatePrayerForProjectile = (
+	state: State,
+	projectile: Projectile,
+): boolean => {
+	const projectileId = projectile.getId?.() ?? projectile.id ?? -1;
+	const prayerKey = getPrayerKeyForProjectile(projectileId);
+	const distance = projectile
+		.getWorldLocation?.()
+		?.distanceTo(client.getLocalPlayer().getWorldLocation());
+	return activatePrayerForThreat(
+		state,
+		prayerKey,
+		`projectile ${projectileId} at distance ${distance}`,
+	);
+};
 
-		// Check if we're already praying for a projectile
-		let targetProjectile = sortedProjectiles[0];
+// Activate prayer for closest NPC attack animation (pre-emptive)
+export const activatePrayerForNpcAttack = (
+	state: State,
+	npcAttack: { npcIndex: number; animationId: number; distance: number },
+): boolean => {
+	const prayerKey = getPrayerKeyForAnimation(npcAttack.animationId);
+	return activatePrayerForThreat(
+		state,
+		prayerKey,
+		`NPC ${npcAttack.npcIndex} anim ${npcAttack.animationId} at distance ${npcAttack.distance}`,
+	);
+};
 
-		if (state.currentPrayProjectileId === undefined) {
-			// No projectile being prayed for yet, set the closest one
-			state.currentPrayProjectileId = targetProjectile.id;
-		} else {
-			// Find the projectile we're currently praying for
-			const currentProjectile = sortedProjectiles.find(
-				(p) => p.id === state.currentPrayProjectileId,
-			);
+// Handle prayer activation for closest projectile + all projectiles in range
+export const handleIncomingProjectiles = (
+	state: State & { currentPrayProjectileId?: number },
+): boolean => {
+	const sortedProjectiles = getSortedProjectiles(state);
 
-			// If current projectile still exists and hasn't hit, keep praying for it
-			if (currentProjectile && !currentProjectile.hasHit) {
-				targetProjectile = currentProjectile;
-			} else {
-				// Current projectile has hit, switch to next one
-				state.currentPrayProjectileId = targetProjectile.id;
-				logger(
-					state,
-					'debug',
-					'handleIncomingProjectiles',
-					`Previous projectile hit. Switching to projectile ${targetProjectile.id}.`,
-				);
-			}
-		}
-
+	// if no projectiles, disable prayers
+	if (sortedProjectiles.length === 0) {
 		logger(
 			state,
 			'debug',
 			'handleIncomingProjectiles',
-			`Projectile queue (${sortedProjectiles.length}): ${sortedProjectiles.map((p) => `${p.id}(${p.distance}t)`).join(', ')} | Praying for: ${targetProjectile.id}`,
+			'No tracked projectiles within range.',
+		);
+		disableProtectionPrayers(state);
+		state.currentPrayProjectileId = undefined;
+		return false;
+	}
+
+	// Check if we're already praying for a projectile
+	let targetProjectile = sortedProjectiles[0];
+
+	if (state.currentPrayProjectileId === undefined) {
+		// No projectile being prayed for yet, set the closest one
+		state.currentPrayProjectileId = targetProjectile.id;
+	} else {
+		// Find the projectile we're currently praying for
+		const currentProjectile = sortedProjectiles.find(
+			(p) => p.id === state.currentPrayProjectileId,
 		);
 
-		return playerFunctions.activatePrayerForProjectile(
-			state,
-			targetProjectile,
-		);
-	},
-
-	// Handle pre-emptive prayer activation for closest NPC attack animation
-	// TODO: This function will not work until getSortedNpcAttacksDist is implemented
-	handleNpcAttackAnimations: (state: State): boolean => {
-		const sortedAttacks = projectileFunctions.getSortedNpcAttacksDist();
-
-		if (sortedAttacks.length === 0) {
+		// If current projectile still exists and hasn't hit, keep praying for it
+		if (currentProjectile && !currentProjectile.hasHit) {
+			targetProjectile = currentProjectile;
+		} else {
+			// Current projectile has hit, switch to next one
+			state.currentPrayProjectileId = targetProjectile.id;
 			logger(
 				state,
 				'debug',
-				'handleNpcAttackAnimations',
-				'No tracked NPC attack animations within range (or stub not implemented).',
+				'handleIncomingProjectiles',
+				`Previous projectile hit. Switching to projectile ${targetProjectile.id}.`,
 			);
-			return false;
 		}
+	}
 
+	logger(
+		state,
+		'debug',
+		'handleIncomingProjectiles',
+		`Projectile queue (${sortedProjectiles.length}): ${sortedProjectiles.map((p) => `${p.id}(${p.distance}t)`).join(', ')} | Praying for: ${targetProjectile.id}`,
+	);
+
+	return activatePrayerForProjectile(state, targetProjectile);
+};
+
+// Handle pre-emptive prayer activation for closest NPC attack animation
+// TODO: This function will not work until getSortedNpcAttacksByDistance is implemented
+export const handleNpcAttackAnimations = (state: State): boolean => {
+	const sortedAttacks = getSortedNpcAttacksByDistance();
+
+	if (sortedAttacks.length === 0) {
 		logger(
 			state,
 			'debug',
 			'handleNpcAttackAnimations',
-			`NPC attack queue (${sortedAttacks.length}): ${sortedAttacks.map((a) => `${a.npcIndex}:${a.animationId}(${a.distance}t)`).join(', ')}`,
+			'No tracked NPC attack animations within range (or stub not implemented).',
 		);
+		return false;
+	}
 
-		return playerFunctions.activatePrayerForNpcAttack(
-			state,
-			sortedAttacks[0],
-		);
-	},
+	logger(
+		state,
+		'debug',
+		'handleNpcAttackAnimations',
+		`NPC attack queue (${sortedAttacks.length}): ${sortedAttacks.map((a) => `${a.npcIndex}:${a.animationId}(${a.distance}t)`).join(', ')}`,
+	);
 
-	// Attack target NPC by ID
-	attackTargetNpc: (state: State, npcId: number): boolean => {
-		const npc = npcFunctions.getClosestNPC([npcId]);
-		const player = client?.getLocalPlayer?.();
-		const interacting = player.getInteracting?.();
+	return activatePrayerForNpcAttack(state, sortedAttacks[0]);
+};
 
-		if (!npc) {
-			logger(
-				state,
-				'debug',
-				'attackTargetNpc',
-				`No NPC found with ID ${npcId}`,
-			);
-			return false;
-		}
+// Attack target NPC by ID
+export const attackTargetNpc = (state: State, npcId: number): boolean => {
+	const npc = getClosestNPC([npcId]);
+	const player = client?.getLocalPlayer?.();
+	const interacting = player.getInteracting?.();
 
-		if (!player) {
-			logger(state, 'debug', 'attackTargetNpc', 'Player not found');
-			return false;
-		}
-
-		if (interacting && interacting === npc) {
-			logger(
-				state,
-				'debug',
-				'attackTargetNpc',
-				`Already attacking NPC ${npcId}`,
-			);
-			return true;
-		}
-
-		bot.npcs.interact(npc.getName?.(), 'Attack');
+	if (!npc) {
 		logger(
 			state,
 			'debug',
 			'attackTargetNpc',
-			`Attacking NPC ${npcId} at ${npc.getWorldLocation?.().getX()}, ${npc.getWorldLocation?.().getY()}, ${npc.getWorldLocation?.().getPlane()}`,
+			`No NPC found with ID ${npcId}`,
+		);
+		return false;
+	}
+
+	if (!player) {
+		logger(state, 'debug', 'attackTargetNpc', 'Player not found');
+		return false;
+	}
+
+	if (interacting && interacting === npc) {
+		logger(
+			state,
+			'debug',
+			'attackTargetNpc',
+			`Already attacking NPC ${npcId}`,
 		);
 		return true;
-	},
+	}
 
-	// Move player to specified safe tile coordinates
-	moveToSafeTile: (
-		state: State,
-		moveToSafeTile: { x: number; y: number },
-	): boolean => {
-		const player = client?.getLocalPlayer?.();
-		const playerLoc = player.getWorldLocation?.();
+	bot.npcs.interact(npc.getName?.(), 'Attack');
+	logger(
+		state,
+		'debug',
+		'attackTargetNpc',
+		`Attacking NPC ${npcId} at ${npc.getWorldLocation?.().getX()}, ${npc.getWorldLocation?.().getY()}, ${npc.getWorldLocation?.().getPlane()}`,
+	);
+	return true;
+};
 
-		if (!player) {
-			logger(state, 'debug', 'moveToSafeTile', 'Player not found');
-			return false;
-		}
+// Move player to specified safe tile coordinates
+export const moveToSafeTile = (
+	state: State,
+	moveToSafeTile: { x: number; y: number },
+): boolean => {
+	const player = client?.getLocalPlayer?.();
+	const playerLoc = player.getWorldLocation?.();
 
-		if (!playerLoc) {
-			logger(
-				state,
-				'debug',
-				'moveToSafeTile',
-				'Player location not found',
-			);
-			return false;
-		}
+	if (!player) {
+		logger(state, 'debug', 'moveToSafeTile', 'Player not found');
+		return false;
+	}
 
-		if (
-			playerLoc.getX() === moveToSafeTile.x &&
-			playerLoc.getY() === moveToSafeTile.y
-		) {
-			logger(
-				state,
-				'debug',
-				'moveToSafeTile',
-				`Already at safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`,
-			);
-			return true;
-		}
+	if (!playerLoc) {
+		logger(state, 'debug', 'moveToSafeTile', 'Player location not found');
+		return false;
+	}
 
-		bot.walking.walkToWorldPoint(moveToSafeTile.x, moveToSafeTile.y);
+	if (
+		playerLoc.getX() === moveToSafeTile.x &&
+		playerLoc.getY() === moveToSafeTile.y
+	) {
 		logger(
 			state,
 			'debug',
 			'moveToSafeTile',
-			`Moving to safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`,
+			`Already at safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`,
 		);
 		return true;
-	},
+	}
 
-	// Get player's currently worn equipment
-	getWornEquipment: (state: State): Record<string, number> => {
-		const equipment: Record<string, number> = {};
-		const equipmentItems = bot.equipment.getEquipment();
+	bot.walking.walkToWorldPoint(moveToSafeTile.x, moveToSafeTile.y);
+	logger(
+		state,
+		'debug',
+		'moveToSafeTile',
+		`Moving to safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`,
+	);
+	return true;
+};
 
-		// Equipment array indices match RuneLite equipment slots
-		const equipmentSlots: Record<number, string> = {
-			0: 'head',
-			1: 'cape',
-			2: 'neck',
-			3: 'weapon',
-			4: 'body',
-			5: 'shield',
-			7: 'legs',
-			9: 'hands',
-			10: 'feet',
-			12: 'ring',
-			13: 'ammo',
-		};
+// Get player's currently worn equipment
+export const getWornEquipment = (state: State): Record<string, number> => {
+	const equipment: Record<string, number> = {};
+	const equipmentItems = bot.equipment.getEquipment();
 
-		for (const [slotIndex, slotName] of Object.entries(equipmentSlots)) {
-			const index = Number(slotIndex);
-			const item = equipmentItems[index];
-			if (item && item.id > 0) {
-				equipment[slotName] = item.id;
-			}
+	// Equipment array indices match RuneLite equipment slots
+	const equipmentSlots: Record<number, string> = {
+		0: 'head',
+		1: 'cape',
+		2: 'neck',
+		3: 'weapon',
+		4: 'body',
+		5: 'shield',
+		7: 'legs',
+		9: 'hands',
+		10: 'feet',
+		12: 'ring',
+		13: 'ammo',
+	};
+
+	for (const [slotIndex, slotName] of Object.entries(equipmentSlots)) {
+		const index = Number(slotIndex);
+		const item = equipmentItems[index];
+		if (item && item.id > 0) {
+			equipment[slotName] = item.id;
 		}
+	}
 
+	logger(
+		state,
+		'debug',
+		'getWornEquipment',
+		`Current equipment: ${JSON.stringify(equipment)}`,
+	);
+	return equipment;
+};
+
+// Verify if player has all required equipment worn
+export const hasRequiredEquipment = (
+	state: State,
+	requiredEquipment: Record<string, number>,
+): boolean => {
+	const { isFullyGeared, missingSlot, missingItemId } = getGearSnapshot(
+		state,
+		requiredEquipment,
+	);
+	logger(
+		state,
+		'debug',
+		'hasRequiredEquipment',
+		isFullyGeared
+			? 'All required equipment verified'
+			: `Missing required item ${missingItemId} in slot ${missingSlot}`,
+	);
+	return isFullyGeared;
+};
+
+// Snapshot required vs worn equipment using a cached initial equipment object
+export const getGearSnapshot = (
+	state: State,
+	initialEquipmentReferance: Record<string, number>,
+): {
+	requiredEquipment: Record<string, number>;
+	wornEquipment: Record<string, number>;
+	isFullyGeared: boolean;
+	missingSlot: string | null;
+	missingItemId: number | null;
+} => {
+	if (Object.keys(initialEquipmentReferance).length === 0) {
+		const wornEquipment = getWornEquipment(state);
+		Object.assign(initialEquipmentReferance, wornEquipment);
+	}
+
+	const requiredEquipment = initialEquipmentReferance;
+	const wornEquipment = getWornEquipment(state);
+	let isFullyGeared = true;
+	let missingSlot: string | null = null;
+	let missingItemId: number | null = null;
+
+	for (const [slot, itemId] of Object.entries(requiredEquipment)) {
+		if (wornEquipment[slot] !== itemId) {
+			isFullyGeared = false;
+			missingSlot = slot;
+			missingItemId = itemId;
+			break;
+		}
+	}
+
+	return {
+		requiredEquipment,
+		wornEquipment,
+		isFullyGeared,
+		missingSlot,
+		missingItemId,
+	};
+};
+
+// THIS IS ONLY FOR STATE CONTROL - THIS DOES NOT ATTACK THE NPC
+// Transitions to 'manage_hp/prayer' sub-state when in area or when no area bounds specified
+export const engageNPC = (
+	state: State & { inCombatArea: boolean },
+	areaBounds?: {
+		minX: number;
+		maxX: number;
+		minY: number;
+		maxY: number;
+		plane?: number;
+	},
+): boolean => {
+	// If no area bounds specified, immediately transition to manage_hp/prayer
+	if (!areaBounds) {
+		state.inCombatArea = true;
+		state.subState = 'manage_hp/prayer';
 		logger(
 			state,
 			'debug',
-			'getWornEquipment',
-			`Current equipment: ${JSON.stringify(equipment)}`,
+			'engageNPC',
+			'No area bounds. Transitioning to manage_hp/prayer.',
 		);
-		return equipment;
-	},
+		return true;
+	}
 
-	// Verify if player has all required equipment worn
-	hasRequiredEquipment: (
-		state: State,
-		requiredEquipment: Record<string, number>,
-	): boolean => {
-		const { isFullyGeared, missingSlot, missingItemId } =
-			playerFunctions.getGearSnapshot(state, requiredEquipment);
+	// Check if player is within specified area bounds
+	const isInArea: boolean = (
+		isPlayerInArea as (
+			state: State,
+			minX: number,
+			maxX: number,
+			minY: number,
+			maxY: number,
+			plane?: number,
+		) => boolean
+	)(
+		state,
+		areaBounds.minX,
+		areaBounds.maxX,
+		areaBounds.minY,
+		areaBounds.maxY,
+		areaBounds.plane,
+	);
+
+	// Player entered combat area
+	if (isInArea && !state.inCombatArea) {
+		state.inCombatArea = true;
+		state.subState = 'manage_hp/prayer';
 		logger(
 			state,
 			'debug',
-			'hasRequiredEquipment',
-			isFullyGeared
-				? 'All required equipment verified'
-				: `Missing required item ${missingItemId} in slot ${missingSlot}`,
+			'engageNPC',
+			'Player in combat area. Transitioning to manage_hp/prayer.',
 		);
-		return isFullyGeared;
-	},
+		return true;
+	}
 
-	// Snapshot required vs worn equipment using a cached initial equipment object
-	getGearSnapshot: (
-		state: State,
-		initialEquipmentReferance: Record<string, number>,
-	): {
-		requiredEquipment: Record<string, number>;
-		wornEquipment: Record<string, number>;
-		isFullyGeared: boolean;
-		missingSlot: string | null;
-		missingItemId: number | null;
-	} => {
-		if (Object.keys(initialEquipmentReferance).length === 0) {
-			const wornEquipment = playerFunctions.getWornEquipment(state);
-			Object.assign(initialEquipmentReferance, wornEquipment);
-		}
-
-		const requiredEquipment = initialEquipmentReferance;
-		const wornEquipment = playerFunctions.getWornEquipment(state);
-		let isFullyGeared = true;
-		let missingSlot: string | null = null;
-		let missingItemId: number | null = null;
-
-		for (const [slot, itemId] of Object.entries(requiredEquipment)) {
-			if (wornEquipment[slot] !== itemId) {
-				isFullyGeared = false;
-				missingSlot = slot;
-				missingItemId = itemId;
-				break;
-			}
-		}
-
-		return {
-			requiredEquipment,
-			wornEquipment,
-			isFullyGeared,
-			missingSlot,
-			missingItemId,
-		};
-	},
-
-	// THIS IS ONLY FOR STATE CONTROL - THIS DOES NOT ATTACK THE NPC
-	// Transitions to 'manage_hp/prayer' sub-state when in area or when no area bounds specified
-	engageNPC: (
-		state: State & { inCombatArea: boolean },
-		areaBounds?: {
-			minX: number;
-			maxX: number;
-			minY: number;
-			maxY: number;
-			plane?: number;
-		},
-	): boolean => {
-		// If no area bounds specified, immediately transition to manage_hp/prayer
-		if (!areaBounds) {
-			state.inCombatArea = true;
-			state.subState = 'manage_hp/prayer';
-			logger(
-				state,
-				'debug',
-				'engageNPC',
-				'No area bounds. Transitioning to manage_hp/prayer.',
-			);
-			return true;
-		}
-
-		// Check if player is within specified area bounds
-		const isInArea: boolean = (
-			tileFunctions.isPlayerInArea as (
-				state: State,
-				minX: number,
-				maxX: number,
-				minY: number,
-				maxY: number,
-				plane?: number,
-			) => boolean
-		)(
-			state,
-			areaBounds.minX,
-			areaBounds.maxX,
-			areaBounds.minY,
-			areaBounds.maxY,
-			areaBounds.plane,
-		);
-
-		// Player entered combat area
-		if (isInArea && !state.inCombatArea) {
-			state.inCombatArea = true;
-			state.subState = 'manage_hp/prayer';
-			logger(
-				state,
-				'debug',
-				'engageNPC',
-				'Player in combat area. Transitioning to manage_hp/prayer.',
-			);
-			return true;
-		}
-
-		// Player left combat area
-		if (!isInArea && state.inCombatArea) {
-			state.inCombatArea = false;
-			logger(state, 'debug', 'engageNPC', 'Player left combat area.');
-			return false;
-		}
-
-		// Still outside area
-		if (!isInArea && !state.inCombatArea) {
-			logger(state, 'debug', 'engageNPC', 'Moving to combat area...');
-			return false;
-		}
-
+	// Player left combat area
+	if (!isInArea && state.inCombatArea) {
+		state.inCombatArea = false;
+		logger(state, 'debug', 'engageNPC', 'Player left combat area.');
 		return false;
-	},
+	}
 
-	// Cast a spell from an array on a target NPC (uses first available spell name)
-	castSpellOnNpc: (
-		state: State,
-		spellNames: string[],
-		npcIds: number[],
-	): boolean => {
-		// Find closest NPC from the provided IDs
-		const targetNpc = npcFunctions.getClosestNPC(npcIds);
+	// Still outside area
+	if (!isInArea && !state.inCombatArea) {
+		logger(state, 'debug', 'engageNPC', 'Moving to combat area...');
+		return false;
+	}
 
-		if (!targetNpc) {
-			logger(
-				state,
-				'debug',
-				'castSpellOnNpc',
-				`No NPC found with IDs: ${npcIds.join(', ')}`,
-			);
-			return false;
-		}
+	return false;
+};
 
-		if (spellNames.length === 0) {
-			logger(
-				state,
-				'debug',
-				'castSpellOnNpc',
-				'No spell names provided.',
-			);
-			return false;
-		}
+// Cast a spell from an array on a target NPC (uses first available spell name)
+export const castSpellOnNpc = (
+	state: State,
+	spellNames: string[],
+	npcIds: number[],
+): boolean => {
+	// Find closest NPC from the provided IDs
+	const targetNpc = getClosestNPC(npcIds);
 
-		// Use the first available spell from the array
-		const spellName: string = spellNames[0];
-
-		(
-			bot.magic.castOnNpc as (
-				spellName: string,
-				npc: net.runelite.api.NPC,
-			) => void
-		)(spellName, targetNpc);
+	if (!targetNpc) {
 		logger(
 			state,
 			'debug',
 			'castSpellOnNpc',
-			`Cast spell ${spellName} on NPC ${targetNpc.getName?.()}`,
+			`No NPC found with IDs: ${npcIds.join(', ')}`,
 		);
-
-		return true;
-	},
-
-	// Eat food from inventory by item IDs
-	// Respects food delay lockout - will not eat if still locked out from previous food
-	eatFood: (
-		state: State,
-		foodItemIds: number[],
-		foodDelay: number,
-	): boolean => {
-		// Check if we're still in food lockout
-		if (state.lastFoodEatTick && state.lastFoodDelay) {
-			const ticksSinceLastEat = state.gameTick - state.lastFoodEatTick;
-			if (ticksSinceLastEat < state.lastFoodDelay) {
-				logger(
-					state,
-					'debug',
-					'eatFood',
-					`Food locked out - ${state.lastFoodDelay - ticksSinceLastEat} ticks remaining`,
-				);
-				return false;
-			}
-		}
-
-		for (const itemIds of foodItemIds) {
-			if (bot.inventory.containsId(itemIds)) {
-				bot.inventory.interactWithIds([itemIds], ['Eat']);
-				state.lastFoodEatTick = state.gameTick;
-				state.lastFoodDelay = foodDelay;
-				logger(
-					state,
-					'debug',
-					'eatFood',
-					`Eating food item ID ${itemIds} with ${foodDelay} tick delay`,
-				);
-				return true;
-			}
-		}
 		return false;
-	},
+	}
 
-	// Combo eat: eat a normal delay food and a combo delay food in the same tick
-	// Returns true if both foods were eaten successfully
-	// Respects food delay lockout
-	comboEat: (
-		state: State,
-		normalFoodIds: number[],
-		comboFoodIds: number[],
-		normalFoodDelay: number,
-	): boolean => {
-		// Check if we're still in food lockout
-		if (state.lastFoodEatTick && state.lastFoodDelay) {
-			const ticksSinceLastEat = state.gameTick - state.lastFoodEatTick;
-			if (ticksSinceLastEat < state.lastFoodDelay) {
-				logger(
-					state,
-					'debug',
-					'comboEat',
-					`Food locked out - ${state.lastFoodDelay - ticksSinceLastEat} ticks remaining`,
-				);
-				return false;
-			}
+	if (spellNames.length === 0) {
+		logger(state, 'debug', 'castSpellOnNpc', 'No spell names provided.');
+		return false;
+	}
+
+	// Use the first available spell from the array
+	const spellName: string = spellNames[0];
+
+	(
+		bot.magic.castOnNpc as (
+			spellName: string,
+			npc: net.runelite.api.NPC,
+		) => void
+	)(spellName, targetNpc);
+	logger(
+		state,
+		'debug',
+		'castSpellOnNpc',
+		`Cast spell ${spellName} on NPC ${targetNpc.getName?.()}`,
+	);
+
+	return true;
+};
+
+// Eat food from inventory by item IDs
+// Respects food delay lockout - will not eat if still locked out from previous food
+export const eatFood = (
+	state: State,
+	foodItemIds: number[],
+	foodDelay: number,
+): boolean => {
+	// Check if we're still in food lockout
+	if (state.lastFoodEatTick && state.lastFoodDelay) {
+		const ticksSinceLastEat = state.gameTick - state.lastFoodEatTick;
+		if (ticksSinceLastEat < state.lastFoodDelay) {
+			logger(
+				state,
+				'debug',
+				'eatFood',
+				`Food locked out - ${state.lastFoodDelay - ticksSinceLastEat} ticks remaining`,
+			);
+			return false;
 		}
+	}
 
-		// First, check if we have both types of food
-		const hasNormalFood = normalFoodIds.some((id) =>
-			bot.inventory.containsId(id),
-		);
-		const hasComboFood = comboFoodIds.some((id) =>
-			bot.inventory.containsId(id),
-		);
+	for (const itemIds of foodItemIds) {
+		if (bot.inventory.containsId(itemIds)) {
+			bot.inventory.interactWithIds([itemIds], ['Eat']);
+			state.lastFoodEatTick = state.gameTick;
+			state.lastFoodDelay = foodDelay;
+			logger(
+				state,
+				'debug',
+				'eatFood',
+				`Eating food item ID ${itemIds} with ${foodDelay} tick delay`,
+			);
+			return true;
+		}
+	}
+	return false;
+};
 
-		if (!hasNormalFood || !hasComboFood) {
+// Combo eat: eat a normal delay food and a combo delay food in the same tick
+// Returns true if both foods were eaten successfully
+// Respects food delay lockout
+export const comboEat = (
+	state: State,
+	normalFoodIds: number[],
+	comboFoodIds: number[],
+	normalFoodDelay: number,
+): boolean => {
+	// Check if we're still in food lockout
+	if (state.lastFoodEatTick && state.lastFoodDelay) {
+		const ticksSinceLastEat = state.gameTick - state.lastFoodEatTick;
+		if (ticksSinceLastEat < state.lastFoodDelay) {
 			logger(
 				state,
 				'debug',
 				'comboEat',
-				`Missing food - normal: ${hasNormalFood}, combo: ${hasComboFood}`,
+				`Food locked out - ${state.lastFoodDelay - ticksSinceLastEat} ticks remaining`,
 			);
 			return false;
 		}
+	}
 
-		// Eat normal delay food first
-		let normalEaten = false;
-		for (const itemId of normalFoodIds) {
+	// First, check if we have both types of food
+	const hasNormalFood = normalFoodIds.some((id) =>
+		bot.inventory.containsId(id),
+	);
+	const hasComboFood = comboFoodIds.some((id) =>
+		bot.inventory.containsId(id),
+	);
+
+	if (!hasNormalFood || !hasComboFood) {
+		logger(
+			state,
+			'debug',
+			'comboEat',
+			`Missing food - normal: ${hasNormalFood}, combo: ${hasComboFood}`,
+		);
+		return false;
+	}
+
+	// Eat normal delay food first
+	let normalEaten = false;
+	for (const itemId of normalFoodIds) {
+		if (bot.inventory.containsId(itemId)) {
+			bot.inventory.interactWithIds([itemId], ['Eat']);
+			logger(
+				state,
+				'debug',
+				'comboEat',
+				`Eating normal food item ID ${itemId}`,
+			);
+			normalEaten = true;
+			break;
+		}
+	}
+
+	// Immediately eat combo delay food (karambwan) in the same tick
+	if (normalEaten) {
+		for (const itemId of comboFoodIds) {
 			if (bot.inventory.containsId(itemId)) {
 				bot.inventory.interactWithIds([itemId], ['Eat']);
+				// Update state tracking - use normalFoodDelay since that's the longer lockout
+				state.lastFoodEatTick = state.gameTick;
+				state.lastFoodDelay = normalFoodDelay;
 				logger(
 					state,
 					'debug',
 					'comboEat',
-					`Eating normal food item ID ${itemId}`,
-				);
-				normalEaten = true;
-				break;
-			}
-		}
-
-		// Immediately eat combo delay food (karambwan) in the same tick
-		if (normalEaten) {
-			for (const itemId of comboFoodIds) {
-				if (bot.inventory.containsId(itemId)) {
-					bot.inventory.interactWithIds([itemId], ['Eat']);
-					// Update state tracking - use normalFoodDelay since that's the longer lockout
-					state.lastFoodEatTick = state.gameTick;
-					state.lastFoodDelay = normalFoodDelay;
-					logger(
-						state,
-						'debug',
-						'comboEat',
-						`Combo eating item ID ${itemId} with ${normalFoodDelay} tick delay`,
-					);
-					return true;
-				}
-			}
-		}
-
-		return false;
-	},
-
-	// Eat food and drink potion at the same time
-	// Returns true if both food and potion were consumed successfully
-	// Respects both food and potion delay lockouts
-	eatFoodAndDrinkPotion: (
-		state: State,
-		foodItemIds: number[],
-		foodDelay: number,
-		potionItemIds: number[],
-		potionDelay: number,
-	): boolean => {
-		// Check if we're still in food lockout
-		if (state.lastFoodEatTick && state.lastFoodDelay) {
-			const ticksSinceLastEat = state.gameTick - state.lastFoodEatTick;
-			if (ticksSinceLastEat < state.lastFoodDelay) {
-				logger(
-					state,
-					'debug',
-					'eatFoodAndDrinkPotion',
-					`Food locked out - ${state.lastFoodDelay - ticksSinceLastEat} ticks remaining`,
-				);
-				return false;
-			}
-		}
-
-		// Check if we're still in potion lockout
-		if (state.lastPotionDrinkTick) {
-			const ticksSinceLastDrink =
-				state.gameTick - state.lastPotionDrinkTick;
-			if (ticksSinceLastDrink < potionDelay) {
-				logger(
-					state,
-					'debug',
-					'eatFoodAndDrinkPotion',
-					`Potion locked out - ${potionDelay - ticksSinceLastDrink} ticks remaining`,
-				);
-				return false;
-			}
-		}
-
-		// Check if we have both food and potion
-		const hasFood = foodItemIds.some((id) => bot.inventory.containsId(id));
-		const hasPotion = potionItemIds.some((id) =>
-			bot.inventory.containsId(id),
-		);
-
-		if (!hasFood || !hasPotion) {
-			logger(
-				state,
-				'debug',
-				'eatFoodAndDrinkPotion',
-				`Missing items - food: ${hasFood}, potion: ${hasPotion}`,
-			);
-			return false;
-		}
-
-		// Eat food first
-		let foodEaten = false;
-		for (const itemId of foodItemIds) {
-			if (bot.inventory.containsId(itemId)) {
-				bot.inventory.interactWithIds([itemId], ['Eat']);
-				logger(
-					state,
-					'debug',
-					'eatFoodAndDrinkPotion',
-					`Eating food item ID ${itemId}`,
-				);
-				foodEaten = true;
-				break;
-			}
-		}
-
-		// Immediately drink potion in the same tick
-		if (foodEaten) {
-			for (const itemId of potionItemIds) {
-				if (bot.inventory.containsId(itemId)) {
-					bot.inventory.interactWithIds([itemId], ['Drink']);
-					// Update state tracking for both food and potion
-					state.lastFoodEatTick = state.gameTick;
-					state.lastFoodDelay = foodDelay;
-					state.lastPotionDrinkTick = state.gameTick;
-					logger(
-						state,
-						'debug',
-						'eatFoodAndDrinkPotion',
-						`Drinking potion item ID ${itemId} - food delay: ${foodDelay}, potion delay: ${potionDelay}`,
-					);
-					return true;
-				}
-			}
-		}
-
-		return false;
-	},
-
-	// Drink potion from inventory by item IDs
-	// Respects potion delay lockout - will not drink if still locked out from previous potion
-	drinkPotion: (
-		state: State,
-		potionItemIds: number[],
-		potionDelay: number,
-	): boolean => {
-		// Check if we're still in potion lockout
-		if (state.lastPotionDrinkTick) {
-			const ticksSinceLastDrink =
-				state.gameTick - state.lastPotionDrinkTick;
-			if (ticksSinceLastDrink < potionDelay) {
-				logger(
-					state,
-					'debug',
-					'drinkPotion',
-					`Potion locked out - ${potionDelay - ticksSinceLastDrink} ticks remaining`,
-				);
-				return false;
-			}
-		}
-
-		for (const itemIds of potionItemIds) {
-			if (bot.inventory.containsId(itemIds)) {
-				bot.inventory.interactWithIds([itemIds], ['Drink']);
-				state.lastPotionDrinkTick = state.gameTick;
-				logger(
-					state,
-					'debug',
-					'drinkPotion',
-					`Drinking potion item ID ${itemIds} with ${potionDelay} tick delay`,
+					`Combo eating item ID ${itemId} with ${normalFoodDelay} tick delay`,
 				);
 				return true;
 			}
 		}
-		return false;
-	},
+	}
 
-	// Check if player is on a tile, runs between two tiles, or web walks to a tile with timeout handling
-	runBetweenTiles: (
-		state: State,
-		tileA: { x: number; y: number },
-		tileB: { x: number; y: number },
-	): boolean => {
-		const player = client?.getLocalPlayer?.();
-		const playerLoc = player.getWorldLocation?.();
+	return false;
+};
 
-		if (!player || !playerLoc) {
+// Eat food and drink potion at the same time
+// Returns true if both food and potion were consumed successfully
+// Respects both food and potion delay lockouts
+export const eatFoodAndDrinkPotion = (
+	state: State,
+	foodItemIds: number[],
+	foodDelay: number,
+	potionItemIds: number[],
+	potionDelay: number,
+): boolean => {
+	// Check if we're still in food lockout
+	if (state.lastFoodEatTick && state.lastFoodDelay) {
+		const ticksSinceLastEat = state.gameTick - state.lastFoodEatTick;
+		if (ticksSinceLastEat < state.lastFoodDelay) {
 			logger(
 				state,
 				'debug',
-				'runBetweenTiles',
-				'Player or location not found',
+				'eatFoodAndDrinkPotion',
+				`Food locked out - ${state.lastFoodDelay - ticksSinceLastEat} ticks remaining`,
 			);
 			return false;
 		}
+	}
 
-		// Check if player is at tile A
-		const isAtA =
-			playerLoc.getX() === tileA.x && playerLoc.getY() === tileA.y;
+	// Check if we're still in potion lockout
+	if (state.lastPotionDrinkTick) {
+		const ticksSinceLastDrink = state.gameTick - state.lastPotionDrinkTick;
+		if (ticksSinceLastDrink < potionDelay) {
+			logger(
+				state,
+				'debug',
+				'eatFoodAndDrinkPotion',
+				`Potion locked out - ${potionDelay - ticksSinceLastDrink} ticks remaining`,
+			);
+			return false;
+		}
+	}
 
-		// Run to opposite tile
-		const targetTile = isAtA ? tileB : tileA;
-		const targetDesc = isAtA
-			? `Tile B (${tileB.x}, ${tileB.y})`
-			: `Tile A (${tileA.x}, ${tileA.y})`;
+	// Check if we have both food and potion
+	const hasFood = foodItemIds.some((id) => bot.inventory.containsId(id));
+	const hasPotion = potionItemIds.some((id) => bot.inventory.containsId(id));
 
-		bot.walking.walkToWorldPoint(targetTile.x, targetTile.y);
-		logger(state, 'debug', 'runBetweenTiles', `Walking to ${targetDesc}`);
+	if (!hasFood || !hasPotion) {
+		logger(
+			state,
+			'debug',
+			'eatFoodAndDrinkPotion',
+			`Missing items - food: ${hasFood}, potion: ${hasPotion}`,
+		);
+		return false;
+	}
 
-		return true;
-	},
+	// Eat food first
+	let foodEaten = false;
+	for (const itemId of foodItemIds) {
+		if (bot.inventory.containsId(itemId)) {
+			bot.inventory.interactWithIds([itemId], ['Eat']);
+			logger(
+				state,
+				'debug',
+				'eatFoodAndDrinkPotion',
+				`Eating food item ID ${itemId}`,
+			);
+			foodEaten = true;
+			break;
+		}
+	}
+
+	// Immediately drink potion in the same tick
+	if (foodEaten) {
+		for (const itemId of potionItemIds) {
+			if (bot.inventory.containsId(itemId)) {
+				bot.inventory.interactWithIds([itemId], ['Drink']);
+				// Update state tracking for both food and potion
+				state.lastFoodEatTick = state.gameTick;
+				state.lastFoodDelay = foodDelay;
+				state.lastPotionDrinkTick = state.gameTick;
+				logger(
+					state,
+					'debug',
+					'eatFoodAndDrinkPotion',
+					`Drinking potion item ID ${itemId} - food delay: ${foodDelay}, potion delay: ${potionDelay}`,
+				);
+				return true;
+			}
+		}
+	}
+
+	return false;
+};
+
+// Drink potion from inventory by item IDs
+// Respects potion delay lockout - will not drink if still locked out from previous potion
+export const drinkPotion = (
+	state: State,
+	potionItemIds: number[],
+	potionDelay: number,
+): boolean => {
+	// Check if we're still in potion lockout
+	if (state.lastPotionDrinkTick) {
+		const ticksSinceLastDrink = state.gameTick - state.lastPotionDrinkTick;
+		if (ticksSinceLastDrink < potionDelay) {
+			logger(
+				state,
+				'debug',
+				'drinkPotion',
+				`Potion locked out - ${potionDelay - ticksSinceLastDrink} ticks remaining`,
+			);
+			return false;
+		}
+	}
+
+	for (const itemIds of potionItemIds) {
+		if (bot.inventory.containsId(itemIds)) {
+			bot.inventory.interactWithIds([itemIds], ['Drink']);
+			state.lastPotionDrinkTick = state.gameTick;
+			logger(
+				state,
+				'debug',
+				'drinkPotion',
+				`Drinking potion item ID ${itemIds} with ${potionDelay} tick delay`,
+			);
+			return true;
+		}
+	}
+	return false;
+};
+
+// Check if player is on a tile, runs between two tiles, or web walks to a tile with timeout handling
+export const runBetweenTiles = (
+	state: State,
+	tileA: { x: number; y: number },
+	tileB: { x: number; y: number },
+): boolean => {
+	const player = client?.getLocalPlayer?.();
+	const playerLoc = player.getWorldLocation?.();
+
+	if (!player || !playerLoc) {
+		logger(
+			state,
+			'debug',
+			'runBetweenTiles',
+			'Player or location not found',
+		);
+		return false;
+	}
+
+	// Check if player is at tile A
+	const isAtA = playerLoc.getX() === tileA.x && playerLoc.getY() === tileA.y;
+
+	// Run to opposite tile
+	const targetTile = isAtA ? tileB : tileA;
+	const targetDesc = isAtA
+		? `Tile B (${tileB.x}, ${tileB.y})`
+		: `Tile A (${tileA.x}, ${tileA.y})`;
+
+	bot.walking.walkToWorldPoint(targetTile.x, targetTile.y);
+	logger(state, 'debug', 'runBetweenTiles', `Walking to ${targetDesc}`);
+
+	return true;
 };

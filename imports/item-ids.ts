@@ -99,6 +99,20 @@ export const potionGroups = {
 	],
 };
 
+export const PRAYER_POTION_DOSES: Record<number, number> = {
+	[potion.normalDelay.item.prayer_potion_1]: 1,
+	[potion.normalDelay.item.prayer_potion_2]: 2,
+	[potion.normalDelay.item.prayer_potion_3]: 3,
+	[potion.normalDelay.item.prayer_potion_4]: 4,
+};
+
+export const SUPER_RESTORE_DOSES: Record<number, number> = {
+	[potion.normalDelay.item.super_restore_1]: 1,
+	[potion.normalDelay.item.super_restore_2]: 2,
+	[potion.normalDelay.item.super_restore_3]: 3,
+	[potion.normalDelay.item.super_restore_4]: 4,
+};
+
 // All potions in an array for easy reference
 export const allPotions = [
 	...potionGroups.stam1_4,

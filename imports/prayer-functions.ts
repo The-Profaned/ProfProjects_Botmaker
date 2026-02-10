@@ -17,93 +17,83 @@ export const prayers = {
 };
 
 // Prayer-related utility functions
-export const prayerFunctions = {
-	// Check if specified prayer is currently active
-	checkPrayer: (state: State, prayerKey: keyof typeof prayers): boolean => {
-		const prayer = prayers[prayerKey];
-		if (!prayer) {
-			logger(
-				state,
-				'debug',
-				'checkPrayer',
-				`Unknown prayer key: ${prayerKey}`,
-			);
-			return false;
-		}
-		const active = client.isPrayerActive(prayer);
+
+// Check if specified prayer is currently active
+export const checkPrayer = (
+	state: State,
+	prayerKey: keyof typeof prayers,
+): boolean => {
+	const prayer = prayers[prayerKey];
+	if (!prayer) {
 		logger(
 			state,
 			'debug',
 			'checkPrayer',
-			`${prayerKey} is ${active ? 'active' : 'inactive'}`,
+			`Unknown prayer key: ${prayerKey}`,
 		);
-		return active;
-	},
+		return false;
+	}
+	const active = client.isPrayerActive(prayer);
+	logger(
+		state,
+		'debug',
+		'checkPrayer',
+		`${prayerKey} is ${active ? 'active' : 'inactive'}`,
+	);
+	return active;
+};
 
-	// Activate specified prayer
-	togglePrayer: (state: State, prayerKey: keyof typeof prayers): boolean => {
-		const prayer = prayers[prayerKey];
+// Activate specified prayer
+export const togglePrayer = (
+	state: State,
+	prayerKey: keyof typeof prayers,
+): boolean => {
+	const prayer = prayers[prayerKey];
+	logger(state, 'debug', 'togglePrayer', `Activating prayer: ${prayerKey}`);
+	if (!prayer) {
 		logger(
 			state,
 			'debug',
 			'togglePrayer',
-			`Activating prayer: ${prayerKey}`,
+			`Unknown prayer key: ${prayerKey}`,
 		);
-		if (!prayer) {
+		return false;
+	}
+	if (client.isPrayerActive(prayer)) {
+		logger(state, 'debug', 'togglePrayer', `${prayerKey} already active`);
+		return true;
+	}
+	bot.prayer.togglePrayer(prayer, true);
+	const nowActive = client.isPrayerActive(prayer);
+	logger(
+		state,
+		'debug',
+		'togglePrayer',
+		`${prayerKey} activated ${nowActive ? 'successfully' : '(failed)'}`,
+	);
+	return nowActive;
+};
+
+// Get the currently active protection prayer
+export const getActivePrayer = (state: State): keyof typeof prayers | null => {
+	const protectionPrayers: Array<keyof typeof prayers> = [
+		'protMage',
+		'protRange',
+		'protMelee',
+	];
+
+	for (const prayer of protectionPrayers) {
+		if (checkPrayer(state, prayer)) {
 			logger(
 				state,
 				'debug',
-				'togglePrayer',
-				`Unknown prayer key: ${prayerKey}`,
+				'getActivePrayer',
+				`Active prayer: ${prayer}`,
 			);
-			return false;
+			return prayer;
 		}
-		if (client.isPrayerActive(prayer)) {
-			logger(
-				state,
-				'debug',
-				'togglePrayer',
-				`${prayerKey} already active`,
-			);
-			return true;
-		}
-		bot.prayer.togglePrayer(prayer, true);
-		const nowActive = client.isPrayerActive(prayer);
-		logger(
-			state,
-			'debug',
-			'togglePrayer',
-			`${prayerKey} activated ${nowActive ? 'successfully' : '(failed)'}`,
-		);
-		return nowActive;
-	},
+	}
 
-	// Get the currently active protection prayer
-	getActivePrayer: (state: State): keyof typeof prayers | null => {
-		const protectionPrayers: Array<keyof typeof prayers> = [
-			'protMage',
-			'protRange',
-			'protMelee',
-		];
-
-		for (const prayer of protectionPrayers) {
-			if (prayerFunctions.checkPrayer(state, prayer)) {
-				logger(
-					state,
-					'debug',
-					'getActivePrayer',
-					`Active prayer: ${prayer}`,
-				);
-				return prayer;
-			}
-		}
-
-		logger(
-			state,
-			'debug',
-			'getActivePrayer',
-			'No active protection prayer',
-		);
-		return null;
-	},
+	logger(state, 'debug', 'getActivePrayer', 'No active protection prayer');
+	return null;
 };

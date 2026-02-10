@@ -1,4 +1,4 @@
-import { playerFunctions } from './player-functions.js';
+import { getWornEquipment } from './player-functions.js';
 import type { State } from './types.js';
 import { logger } from './logger.js';
 import { gear } from './item-ids.js';
@@ -31,7 +31,7 @@ export const attackTimers = {
 
 	// Get equipped weapon attack speed from player's current gear
 	getEquippedWeaponSpeed: (state: State): number => {
-		const equippedGear = playerFunctions.getWornEquipment(state);
+		const equippedGear = getWornEquipment(state);
 		const weaponId = equippedGear.weapon;
 
 		if (!weaponId) {
