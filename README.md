@@ -18,6 +18,19 @@ ProfProjects_Botmaker/
 │   ├── location-functions.ts       # World point and movement utilities
 │   ├── logger.ts                   # Centralized logging utility
 │   ├── loot-tables/                # Loot table helpers + organized boss loot
+|       ├── ammo.ts                 # ammot tables
+|       ├── armour-weapons.ts       # armor + weapon tables
+|       ├── combat-supplies.ts      # combat supply tables (food/potions)
+|       ├── gems.ts                 # gems table
+|       ├── general-loot.ts         # general loot tables
+|       ├── herbs-seeds.ts          # herbs + seed tables
+|       ├── loot-index.ts           # loot index for catagory usage/calling functions
+|       ├── loot-priority.ts        # loot priority override filters
+|       ├── loot-utils.ts           # all helper functions for using the loot tables
+|       ├── ores-bars.ts            # ores + bar tables
+|       ├── runes.ts                # runes table
+|       ├── tertiary.ts             # tertiary drop table
+|       ├── uniques.ts              # custom unique table to be built for script specific drops
 │   ├── npc-functions.ts            # NPC detection and interaction
 │   ├── npc-ids.ts                  # OSRS NPC IDs and animation mappings
 │   ├── object-ids.ts               # OSRS object ID constants
@@ -36,13 +49,13 @@ ProfProjects_Botmaker/
 │   ├── example-state-progression.js
 │   ├── example-ui-components.js
 │   ├── profChins.js
-│   └── profLeviathan.js             # Encrypted with SOPS
-├── profChins/                       # Chinchompa bot script
+│   └── profLeviathan.js            # Encrypted with SOPS
+├── profChins/                      # Chinchompa bot script
 │   ├── index.ts
 │   ├── ui.ts
 │   ├── util-functions.ts
 │   └── README.md
-├── profLeviathan/                   # Leviathan boss bot script (encrypted)
+├── profLeviathan/                  # Leviathan boss bot script (encrypted)
 │   ├── index.ts
 │   └── README.md
 ├── api_list.txt                    # BotMaker API reference
