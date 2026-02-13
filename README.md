@@ -7,6 +7,7 @@ BotMaker projects - TypeScript utilities and compiled scripts for OSRS bot devel
 ```
 ProfProjects_Botmaker/
 ├── .gitignore                      # Local ignores (includes SOPS key file)
+├── .sops/                          # Local SOPS key material (not committed)
 ├── .sops.yaml                      # SOPS encryption rules for sensitive files
 ├── imports/                        # Shared utility modules
 │   ├── bank-functions.ts           # Banking operations and item management
@@ -16,12 +17,14 @@ ProfProjects_Botmaker/
 │   ├── item-ids.ts                 # OSRS item ID constants
 │   ├── location-functions.ts       # World point and movement utilities
 │   ├── logger.ts                   # Centralized logging utility
+│   ├── loot-tables/                # Loot table helpers + organized boss loot
 │   ├── npc-functions.ts            # NPC detection and interaction
 │   ├── npc-ids.ts                  # OSRS NPC IDs and animation mappings
 │   ├── object-ids.ts               # OSRS object ID constants
 │   ├── player-functions.ts         # Player state and prayer utilities
 │   ├── prayer-functions.ts         # Prayer management
 │   ├── projectile-functions.ts     # Projectile tracking
+│   ├── sharefile.ts                # Shared file utilities
 │   ├── tile-functions.ts           # Tile and object interaction
 │   ├── tile-sets.ts                # Tile set definitions
 │   ├── timeout-manager.ts          # Async timeout management
@@ -29,12 +32,12 @@ ProfProjects_Botmaker/
 │   ├── ui-functions.ts             # UI utilities
 │   └── utility-functions.ts        # General helper functions
 ├── javaSource/                     # Compiled bot scripts (JavaScript output)
-│   ├── AutoTears.js                # WIP - not restructured, dosnt work
+│   ├── AutoTears.js                # WIP - not restructured, does not work
 │   ├── example-state-progression.js
 │   ├── example-ui-components.js
 │   ├── profChins.js
 │   └── profLeviathan.js             # Encrypted with SOPS
-├── profChins/                      # Chinchompa bot script
+├── profChins/                       # Chinchompa bot script
 │   ├── index.ts
 │   ├── ui.ts
 │   ├── util-functions.ts
@@ -43,6 +46,7 @@ ProfProjects_Botmaker/
 │   ├── index.ts
 │   └── README.md
 ├── api_list.txt                    # BotMaker API reference
+├── decrypt commands.txt            # Local SOPS decryption notes
 ├── Index-template.ts               # Bot script template
 └── README.md
 ```
@@ -55,7 +59,9 @@ This directory contains:
 - **javaSource/**: Pre-compiled JavaScript bot scripts ready for BotMaker use
 - **profChins/**: Chinchompa trapping bot implementation
 - **profLeviathan/**: Leviathan boss bot implementation (encrypted with SOPS)
+- **.sops/**: Local SOPS key material (ignored by git)
 - **.sops.yaml**: Encryption rules for sensitive files
+- **decrypt commands.txt**: Local decryption notes for SOPS-managed files
 - **Index-template.ts**: Template for creating new bot scripts
 - **api_list.txt**: Reference documentation for available BotMaker APIs
 

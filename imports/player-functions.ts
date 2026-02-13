@@ -300,6 +300,43 @@ export const getWornEquipment = (state: State): Record<string, number> => {
 	return equipment;
 };
 
+export const unequipWornEquipment = (
+	state: State,
+	slots?: string[],
+): {
+	attemptedIds: number[];
+	remainingIds: number[];
+	success: boolean;
+} => {
+	const equipment = getWornEquipment(state);
+	const targetSlots: string[] = slots ?? Object.keys(equipment);
+	const attemptedIds: number[] = [];
+
+	for (const slot of targetSlots) {
+		const itemId: number | undefined = equipment[slot];
+		if (!itemId) {
+			continue;
+		}
+		attemptedIds.push(itemId);
+		bot.equipment.unequip(itemId);
+	}
+
+	const remainingIds: number[] = attemptedIds.filter((id) =>
+		bot.equipment.containsId(id),
+	);
+	const success: boolean =
+		attemptedIds.length > 0 && remainingIds.length === 0;
+
+	logger(
+		state,
+		'debug',
+		'unequipWornEquipment',
+		`Attempted unequip: ${JSON.stringify(attemptedIds)} | Remaining: ${JSON.stringify(remainingIds)}`,
+	);
+
+	return { attemptedIds, remainingIds, success };
+};
+
 // Verify if player has all required equipment worn
 export const hasRequiredEquipment = (
 	state: State,
@@ -754,3 +791,27 @@ export const runBetweenTiles = (
 
 	return true;
 };
+
+// Equipment slot indices for swapping gear
+export const equipmentSlotIndices: Record<string, number> = {
+	head: 0,
+	cape: 1,
+	neck: 2,
+	weapon: 3,
+	body: 4,
+	shield: 5,
+	legs: 7,
+	hands: 9,
+	feet: 10,
+	ring: 12,
+	ammo: 13,
+};
+
+// Helper function to web walk to a point if not already web walking
+export function webWalkToPointIfIdle(
+	worldPoint: net.runelite.api.coords.WorldPoint,
+): void {
+	if (!bot.walking.isWebWalking()) {
+		bot.walking.webWalkStart(worldPoint);
+	}
+}

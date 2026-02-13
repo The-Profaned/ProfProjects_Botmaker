@@ -9,6 +9,7 @@ export const weaponAttackSpeeds: Record<number, number> = {
 	[gear.bowfa]: 4,
 	[gear.bowfac]: 4,
 	[gear.blowpipe]: 2,
+	[gear.rcbow]: 5,
 };
 
 export const attackTimers = {

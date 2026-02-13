@@ -57,6 +57,14 @@ function _createForOfIteratorHelper(r, e) {
     }
   };
 }
+function _defineProperty(e, r, t) {
+  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: true,
+    configurable: true,
+    writable: true
+  }) : e[r] = t, e;
+}
 function _iterableToArray(r) {
   if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 }
@@ -71,7 +79,10 @@ function _iterableToArrayLimit(r, l) {
       f = true,
       o = false;
     try {
-      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
     } catch (r) {
       o = true, n = r;
     } finally {
@@ -96,6 +107,20 @@ function _slicedToArray(r, e) {
 function _toConsumableArray(r) {
   return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
 }
+function _toPrimitive(t, r) {
+  if ("object" != typeof t || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r);
+    if ("object" != typeof i) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r ? String : Number)(t);
+}
+function _toPropertyKey(t) {
+  var i = _toPrimitive(t, "string");
+  return "symbol" == typeof i ? i : i + "";
+}
 function _typeof(o) {
   "@babel/helpers - typeof";
 
@@ -113,32 +138,48 @@ function _unsupportedIterableToArray(r, a) {
   }
 }
 
-var logger = (state, type, source, message) => {
+var LOG_COLOR_GRAY = {
+  r: 128,
+  g: 128,
+  b: 128
+};
+var LOG_COLOR_DEFAULT = LOG_COLOR_GRAY;
+var logger = (state, type, source, message, color) => {
   var logMessage = "[".concat(source, "] ").concat(message);
+  var printToLog = () => {
+    var chosenColor = LOG_COLOR_DEFAULT;
+    log.printRGB(logMessage, chosenColor.r, chosenColor.g, chosenColor.b);
+  };
   if (type === 'all') log.printGameMessage(logMessage);
-  if (type === 'all' || type === 'debug' && state.debugEnabled) log.print(logMessage);
+  if (!state) {
+    if (type === 'all') {
+      printToLog();
+    }
+    return;
+  }
+  if (type === 'all' || type === 'debug' && state.debugEnabled) {
+    printToLog();
+  }
 };
 
-var debugFunctions = {
-  stateDebugger: function stateDebugger(state) {
-    var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    var recurse = (object, pfx) => {
-      for (var _i = 0, _Object$entries = Object.entries(object); _i < _Object$entries.length; _i++) {
-        var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-          key = _Object$entries$_i[0],
-          value = _Object$entries$_i[1];
-        var type = _typeof(value);
-        if (type === 'string' || type === 'number' || type === 'boolean') {
-          logger(state, 'debug', 'stateDebugger', "".concat(pfx).concat(key, ": ").concat(String(value)));
-        } else if (Array.isArray(value)) {
-          logger(state, 'debug', 'stateDebugger', "".concat(pfx).concat(key, " Length: ").concat(value.length));
-        } else if (type === 'object' && value !== null) {
-          recurse(value, "".concat(pfx).concat(key, "."));
-        }
+var stateDebugger = function stateDebugger(state) {
+  var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var recurse = (object, pfx) => {
+    for (var _i = 0, _Object$entries = Object.entries(object); _i < _Object$entries.length; _i++) {
+      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+        key = _Object$entries$_i[0],
+        value = _Object$entries$_i[1];
+      var type = _typeof(value);
+      if (type === 'string' || type === 'number' || type === 'boolean') {
+        logger(state, 'debug', 'stateDebugger', "".concat(pfx).concat(key, ": ").concat(String(value)));
+      } else if (Array.isArray(value)) {
+        logger(state, 'debug', 'stateDebugger', "".concat(pfx).concat(key, " Length: ").concat(value.length));
+      } else if (type === 'object' && value !== null) {
+        recurse(value, "".concat(pfx).concat(key, "."));
       }
-    };
-    recurse(state, prefix);
-  }
+    }
+  };
+  recurse(state, prefix);
 };
 
 var timeoutManager = {
@@ -192,62 +233,72 @@ var timeoutManager = {
   }
 };
 
-var generalFunctions = {
-  gameTick: state => {
-    try {
-      if (state.debugEnabled && state.debugFullState) {
-        logger(state, 'debug', 'onGameTick', "Script game tick ".concat(state.gameTick, " ----------------"));
-        debugFunctions.stateDebugger(state);
-      }
-      state.gameTick++;
-      if (state.timeout > 0) {
-        state.timeout--;
-        return false;
-      }
-      timeoutManager.tick();
-      if (timeoutManager.isWaiting()) return false;
-    } catch (error) {
-      var fatalMessage = error.toString();
-      logger(state, 'all', 'Script', fatalMessage);
-      generalFunctions.handleFailure(state, 'gameTick', fatalMessage);
+var gameTick = state => {
+  try {
+    if (state.debugEnabled && state.debugFullState) {
+      logger(state, 'debug', 'onGameTick', "Script game tick ".concat(state.gameTick, " ----------------"));
+      stateDebugger(state);
+    }
+    state.gameTick++;
+    if (state.timeout > 0) {
+      state.timeout--;
       return false;
     }
-    return true;
-  },
-  onFailures: (state, failureLocation, failureMessage, failureResetState) => {
-    var failureKey = "".concat(failureLocation, " - ").concat(failureMessage);
-    logger(state, 'debug', 'onFailures', failureMessage);
-    state.failureCounts[failureKey] = state.lastFailureKey === failureKey ? (state.failureCounts[failureKey] || 1) + 1 : 1;
-    state.lastFailureKey = failureKey;
-    state.failureOrigin = failureKey;
-    if (state.failureCounts[failureKey] >= 3) {
-      logger(state, 'all', 'Script', "Fatal error: \"".concat(failureKey, "\" occured 3x in a row."));
-      bot.terminate();
-      return;
-    }
-    if (failureResetState) state.mainState = failureResetState;
-  },
-  handleFailure: (state, failureLocation, failureMessage, failureResetState) => {
-    generalFunctions.onFailures(state, failureLocation, failureMessage, failureResetState);
-  },
-  endScript: state => {
-    bot.breakHandler.setBreakHandlerStatus(false);
-    bot.printGameMessage("Termination of ".concat(state.scriptName, "."));
-    bot.walking.webWalkCancel();
-    bot.events.unregisterAll();
+    timeoutManager.tick();
+    if (timeoutManager.isWaiting()) return false;
+  } catch (error) {
+    var fatalMessage = error.toString();
+    logger(state, 'all', 'Script', fatalMessage);
+    handleFailure(state, 'gameTick', fatalMessage);
+    return false;
   }
+  return true;
+};
+var onFailures = (state, failureLocation, failureMessage, failureResetState) => {
+  var failureKey = "".concat(failureLocation, " - ").concat(failureMessage);
+  logger(state, 'debug', 'onFailures', failureMessage);
+  state.failureCounts[failureKey] = state.lastFailureKey === failureKey ? (state.failureCounts[failureKey] || 1) + 1 : 1;
+  state.lastFailureKey = failureKey;
+  state.failureOrigin = failureKey;
+  if (state.failureCounts[failureKey] >= 3) {
+    logger(state, 'all', 'Script', "Fatal error: \"".concat(failureKey, "\" occured 3x in a row."));
+    bot.terminate();
+    return;
+  }
+};
+var handleFailure = (state, failureLocation, failureMessage, failureResetState) => {
+  onFailures(state, failureLocation, failureMessage);
+};
+var endScript = state => {
+  bot.breakHandler.setBreakHandlerStatus(false);
+  if (state !== null && state !== void 0 && state.scriptName) {
+    log.printGameMessage("Termination of ".concat(state.scriptName, "."));
+  } else {
+    log.printGameMessage('Termination of script.');
+  }
+  bot.walking.webWalkCancel();
+  bot.events.unregisterAll();
 };
 
 var ItemID = net.runelite.api.ItemID;
 
 var Item = {
-  boxTrap: ItemID.BOX_TRAP
+  boxTrap: ItemID.BOX_TRAP,
+  gamesNecklace1: ItemID.GAMES_NECKLACE1,
+  gamesNecklace2: ItemID.GAMES_NECKLACE2,
+  gamesNecklace3: ItemID.GAMES_NECKLACE3,
+  gamesNecklace4: ItemID.GAMES_NECKLACE4,
+  gamesNecklace5: ItemID.GAMES_NECKLACE5,
+  gamesNecklace6: ItemID.GAMES_NECKLACE6,
+  gamesNecklace7: ItemID.GAMES_NECKLACE7,
+  gamesNecklace8: ItemID.GAMES_NECKLACE8
 };
 ({
   tBow: ItemID.TWISTED_BOW,
   bowfa: ItemID.BOW_OF_FAERDHINEN,
   bowfac: ItemID.BOW_OF_FAERDHINEN_C,
-  blowpipe: ItemID.TOXIC_BLOWPIPE
+  blowpipe: ItemID.TOXIC_BLOWPIPE,
+  rcbow: ItemID.RUNE_CROSSBOW
 });
 ({
   normalDelay: {
@@ -282,7 +333,11 @@ var potion = {
       super_restore_1: ItemID.SUPER_RESTORE1,
       super_restore_2: ItemID.SUPER_RESTORE2,
       super_restore_3: ItemID.SUPER_RESTORE3,
-      super_restore_4: ItemID.SUPER_RESTORE4
+      super_restore_4: ItemID.SUPER_RESTORE4,
+      drange_potion_1: ItemID.DIVINE_RANGING_POTION1,
+      drange_potion_2: ItemID.DIVINE_RANGING_POTION2,
+      drange_potion_3: ItemID.DIVINE_RANGING_POTION3,
+      drange_potion_4: ItemID.DIVINE_RANGING_POTION4
     }
   }
 };
@@ -290,8 +345,12 @@ var potionGroups = {
   stam1_4: [potion.normalDelay.item.stamina_potion_1, potion.normalDelay.item.stamina_potion_2, potion.normalDelay.item.stamina_potion_3, potion.normalDelay.item.stamina_potion_4],
   ppots1_4: [potion.normalDelay.item.prayer_potion_1, potion.normalDelay.item.prayer_potion_2, potion.normalDelay.item.prayer_potion_3, potion.normalDelay.item.prayer_potion_4],
   brews1_4: [potion.normalDelay.item.saradomin_brew_1, potion.normalDelay.item.saradomin_brew_2, potion.normalDelay.item.saradomin_brew_3, potion.normalDelay.item.saradomin_brew_4],
-  restores1_4: [potion.normalDelay.item.super_restore_1, potion.normalDelay.item.super_restore_2, potion.normalDelay.item.super_restore_3, potion.normalDelay.item.super_restore_4]
+  restores1_4: [potion.normalDelay.item.super_restore_1, potion.normalDelay.item.super_restore_2, potion.normalDelay.item.super_restore_3, potion.normalDelay.item.super_restore_4],
+  drange1_4: [potion.normalDelay.item.drange_potion_1, potion.normalDelay.item.drange_potion_2, potion.normalDelay.item.drange_potion_3, potion.normalDelay.item.drange_potion_4]
 };
+_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.prayer_potion_1, 1), potion.normalDelay.item.prayer_potion_2, 2), potion.normalDelay.item.prayer_potion_3, 3), potion.normalDelay.item.prayer_potion_4, 4);
+_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.super_restore_1, 1), potion.normalDelay.item.super_restore_2, 2), potion.normalDelay.item.super_restore_3, 3), potion.normalDelay.item.super_restore_4, 4);
+_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.drange_potion_1, 1), potion.normalDelay.item.drange_potion_2, 2), potion.normalDelay.item.drange_potion_3, 3), potion.normalDelay.item.drange_potion_4, 4);
 
 var object = {
   boxTrapLayed: 9380,
@@ -310,8 +369,11 @@ function getObjectIdGroups() {
 
 var state$2;
 var trapLocationsCache$2;
-var isOccupiedByTrapOrGround$1;
-var maxTraps$1;
+var getTrapsLaid;
+var getMaxTraps;
+var getIsWebWalking;
+var TILE_OVERLAY_INTERVAL = 2;
+var PANEL_OVERLAY_INTERVAL = 2;
 var currentAction = 'Idle';
 var totalChinsCaught = 0;
 var lastHunterXp = 0;
@@ -344,35 +406,57 @@ var overlay = {
 };
 var overlayPanel = {
   panel: null,
+  panelCache: null,
   override: {
     shrink: false,
     maxWidth: 0,
     panelComponent: null,
     render(graphics) {
-      var trapsLaid = 0;
-      var _iterator = _createForOfIteratorHelper(trapLocationsCache$2),
-        _step;
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var loc = _step.value;
-          if (isOccupiedByTrapOrGround$1(loc)) {
-            trapsLaid++;
-          }
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
+      if (!state$2) {
+        return this.super$render(graphics);
       }
-      var panelText1 = this.shrink ? 'Caught:' : 'Chins caught:';
-      this.addText(graphics, this.panelComponent, panelText1, "".concat(totalChinsCaught), java.awt.Color.CYAN, java.awt.Color.YELLOW);
-      var maxAllowed = maxTraps$1();
-      var panelText2 = this.shrink ? 'Traps:' : 'Traps laid:';
-      this.addText(graphics, this.panelComponent, panelText2, "".concat(trapsLaid, "/").concat(maxAllowed), java.awt.Color.CYAN, java.awt.Color.GREEN);
-      var stateText = this.shrink ? 'Action:' : 'Current Action:';
-      var stateValue = currentAction;
-      var stateColor = java.awt.Color.GREEN;
-      this.addText(graphics, this.panelComponent, stateText, stateValue, java.awt.Color.CYAN, stateColor);
+      var shouldRefresh = state$2.gameTick % PANEL_OVERLAY_INTERVAL === 0;
+      if (shouldRefresh || !overlayPanel.panelCache || overlayPanel.panelCache.shrink !== this.shrink) {
+        var panelText1 = this.shrink ? 'Caught:' : 'Chins caught:';
+        var trapsLaid = getTrapsLaid();
+        var maxAllowed = getMaxTraps();
+        var panelText2 = this.shrink ? 'Traps:' : 'Traps laid:';
+        var stateText = this.shrink ? 'Action:' : 'Current Action:';
+        overlayPanel.panelCache = {
+          shrink: this.shrink,
+          lines: [{
+            left: panelText1,
+            right: "".concat(totalChinsCaught),
+            leftColor: java.awt.Color.CYAN,
+            rightColor: java.awt.Color.YELLOW
+          }, {
+            left: panelText2,
+            right: "".concat(trapsLaid, "/").concat(maxAllowed),
+            leftColor: java.awt.Color.CYAN,
+            rightColor: java.awt.Color.GREEN
+          }, {
+            left: stateText,
+            right: currentAction,
+            leftColor: java.awt.Color.CYAN,
+            rightColor: java.awt.Color.GREEN
+          }]
+        };
+      }
+      var cached = overlayPanel.panelCache;
+      if (cached) {
+        var _iterator = _createForOfIteratorHelper(cached.lines),
+          _step;
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var line = _step.value;
+            this.addText(graphics, this.panelComponent, line.left, line.right, line.leftColor, line.rightColor);
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+      }
       return this.super$render(graphics);
     },
     addText(graphics, comp, left, right, leftColor, rightColor) {
@@ -424,56 +508,89 @@ var overlayTile = {
   override: {
     render(graphics) {
       try {
+        if (!state$2) {
+          return null;
+        }
+        if (getIsWebWalking && getIsWebWalking()) {
+          return null;
+        }
+        if (getTrapsLaid() === 0) {
+          return null;
+        }
+        var shouldRefresh = state$2.gameTick % TILE_OVERLAY_INTERVAL === 0;
+        var shakingTrapMap = shouldRefresh ? new Map(bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrap_Shaking).filter(o => o && o.getWorldLocation()).map(o => {
+          var worldLoc = o.getWorldLocation();
+          var key = "".concat(worldLoc.getX(), ",").concat(worldLoc.getY());
+          return [key, o];
+        })) : null;
+        var failedTrapMap = shouldRefresh ? new Map(bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrap_Failed).filter(o => o && o.getWorldLocation()).map(o => {
+          var worldLoc = o.getWorldLocation();
+          var key = "".concat(worldLoc.getX(), ",").concat(worldLoc.getY());
+          return [key, o];
+        })) : null;
+        var laidTrapMap = shouldRefresh ? new Map(bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrapLayed).filter(o => o && o.getWorldLocation()).map(o => {
+          var worldLoc = o.getWorldLocation();
+          var key = "".concat(worldLoc.getX(), ",").concat(worldLoc.getY());
+          return [key, o];
+        })) : null;
         trapLocationsCache$2.forEach((loc, index) => {
           try {
             var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
             var stateColor = java.awt.Color.GRAY;
             var stateText = "Box ".concat(index + 1);
-            var shakingTrap = bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrap_Shaking).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
-            if (shakingTrap) {
-              stateColor = java.awt.Color.GREEN;
-              stateText = 'Caught!';
-              overlayTile.tileStates.set(locKey, {
-                color: stateColor,
-                text: stateText
-              });
-            } else {
-              var failedTrap = bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrap_Failed).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
-              if (failedTrap) {
-                stateColor = java.awt.Color.RED;
-                stateText = 'Reset';
+            if (shouldRefresh) {
+              var shakingTrap = shakingTrapMap && shakingTrapMap.get(locKey);
+              if (shakingTrap) {
+                stateColor = java.awt.Color.GREEN;
+                stateText = 'Caught!';
                 overlayTile.tileStates.set(locKey, {
                   color: stateColor,
                   text: stateText
                 });
               } else {
-                var laidTrap = bot.objects.getTileObjectsWithIds(getObjectIdGroups().boxTrapLayed).find(o => o && o.getWorldLocation() && o.getWorldLocation().getX() === loc.getX() && o.getWorldLocation().getY() === loc.getY());
-                if (laidTrap) {
-                  stateColor = java.awt.Color.YELLOW;
-                  stateText = 'Active';
+                var failedTrap = failedTrapMap && failedTrapMap.get(locKey);
+                if (failedTrap) {
+                  stateColor = java.awt.Color.RED;
+                  stateText = 'Reset';
                   overlayTile.tileStates.set(locKey, {
                     color: stateColor,
                     text: stateText
                   });
                 } else {
-                  var cachedState = overlayTile.tileStates.get(locKey);
-                  if (cachedState) {
-                    if (cachedState.text === 'Caught!' || cachedState.text === 'Reset') {
-                      stateColor = java.awt.Color.GRAY;
-                      stateText = 'Laying...';
-                      overlayTile.tileStates.set(locKey, {
-                        color: stateColor,
-                        text: stateText
-                      });
-                    } else {
-                      stateColor = cachedState.color;
-                      stateText = cachedState.text;
-                    }
+                  var laidTrap = laidTrapMap && laidTrapMap.get(locKey);
+                  if (laidTrap) {
+                    stateColor = java.awt.Color.YELLOW;
+                    stateText = 'Active';
+                    overlayTile.tileStates.set(locKey, {
+                      color: stateColor,
+                      text: stateText
+                    });
                   } else {
-                    stateColor = java.awt.Color.GRAY;
-                    stateText = "Box ".concat(index + 1);
+                    var cachedState = overlayTile.tileStates.get(locKey);
+                    if (cachedState) {
+                      if (cachedState.text === 'Caught!' || cachedState.text === 'Reset') {
+                        stateColor = java.awt.Color.GRAY;
+                        stateText = 'Laying...';
+                        overlayTile.tileStates.set(locKey, {
+                          color: stateColor,
+                          text: stateText
+                        });
+                      } else {
+                        stateColor = cachedState.color;
+                        stateText = cachedState.text;
+                      }
+                    } else {
+                      stateColor = java.awt.Color.GRAY;
+                      stateText = "Box ".concat(index + 1);
+                    }
                   }
                 }
+              }
+            } else {
+              var _cachedState = overlayTile.tileStates.get(locKey);
+              if (_cachedState) {
+                stateColor = _cachedState.color;
+                stateText = _cachedState.text;
               }
             }
             this.drawTileOverlay(graphics, loc, stateColor, stateText);
@@ -577,11 +694,12 @@ function enableBotMakerOverlay() {
     logger(state$2, 'all', 'UI', 'Error enabling BotMaker overlay: ' + String(error));
   }
 }
-function initializeUI(scriptState, traps, isOccupied, maxTrapsFunction) {
+function initializeUI(scriptState, traps, getTrapsLaidFunction, getMaxTrapsFunction, getIsWebWalkingFunction) {
   state$2 = scriptState;
   trapLocationsCache$2 = traps;
-  isOccupiedByTrapOrGround$1 = isOccupied;
-  maxTraps$1 = maxTrapsFunction;
+  getTrapsLaid = getTrapsLaidFunction;
+  getMaxTraps = getMaxTrapsFunction;
+  getIsWebWalking = getIsWebWalkingFunction;
 }
 var profChinsUI = {
   get currentAction() {
@@ -616,27 +734,24 @@ var profChinsUI = {
   }
 };
 
-var utilityFunctions = {
-  randInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
-  shuffle: length => {
-    var random = Array.from({
-      length
-    }, (_, index) => index + 1);
-    for (var index = random.length - 1; index > 0; index--) {
-      var randomIndex = Math.floor(Math.random() * (index + 1));
-      var _ref = [random[randomIndex], random[index]];
-      random[index] = _ref[0];
-      random[randomIndex] = _ref[1];
-    }
-    return random;
+var shuffle = length => {
+  var random = Array.from({
+    length
+  }, (_, index) => index + 1);
+  for (var index = random.length - 1; index > 0; index--) {
+    var randomIndex = Math.floor(Math.random() * (index + 1));
+    var _ref = [random[randomIndex], random[index]];
+    random[index] = _ref[0];
+    random[randomIndex] = _ref[1];
   }
+  return random;
 };
 
 var state$1;
 var trapLocationsCache$1;
 var safeTilesCache;
-var player_location$1;
-var hunterLvl$1;
+var player_location;
+var hunterLvl;
 var _resetInProgress = false;
 var _resetTargetLocation = null;
 var _resetPhase = null;
@@ -653,9 +768,12 @@ var _groundTrapHandlingLocation = null;
 var _groundTrapPhase = null;
 var _groundTrapTickCount = 0;
 var _groundTrapJustLaid = false;
+var _groundTrapPreLootCount = null;
 var shakingTrapTimestamps = new Map();
 var failedTrapTimestamps = new Map();
 var playerLaidTraps = new Set();
+var fallenTrapTickCounts = new Map();
+var FALLEN_TRAP_THRESHOLD = 5;
 var utilState = {
   get resetInProgress() {
     return _resetInProgress;
@@ -746,26 +864,26 @@ function initializeUtilFunctions(scriptState, traps, safeTiles, playerLoc, hunte
   state$1 = scriptState;
   trapLocationsCache$1 = traps;
   safeTilesCache = safeTiles;
-  player_location$1 = playerLoc;
-  hunterLvl$1 = hunterLevel;
+  player_location = playerLoc;
+  hunterLvl = hunterLevel;
 }
 function maxTraps() {
-  if (hunterLvl$1 < 20) return 1;
-  if (hunterLvl$1 >= 20 && hunterLvl$1 < 40) return 2;
-  if (hunterLvl$1 >= 40 && hunterLvl$1 < 60) return 3;
-  if (hunterLvl$1 >= 60 && hunterLvl$1 < 80) return 4;
-  if (hunterLvl$1 >= 80) return 5;
+  if (hunterLvl < 20) return 1;
+  if (hunterLvl >= 20 && hunterLvl < 40) return 2;
+  if (hunterLvl >= 40 && hunterLvl < 60) return 3;
+  if (hunterLvl >= 60 && hunterLvl < 80) return 4;
+  if (hunterLvl >= 80) return 5;
   return 0;
 }
 function getInitialTrapLocations() {
   var allTiles = [];
   for (var dx = -1; dx <= 1; dx++) {
     for (var dy = -1; dy <= 1; dy++) {
-      var tile = player_location$1.dx(dx).dy(dy);
+      var tile = player_location.dx(dx).dy(dy);
       allTiles.push(tile);
     }
   }
-  var shuffledKey = utilityFunctions.shuffle(allTiles.length);
+  var shuffledKey = shuffle(allTiles.length);
   var shuffledTiles = shuffledKey.map(index => allTiles[index - 1]);
   var selectedLocations = shuffledTiles.slice(0, maxTraps());
   var locationString = selectedLocations.map(loc => "(".concat(loc.getX(), ", ").concat(loc.getY(), ")")).join(', ');
@@ -776,7 +894,7 @@ function getSafeTiles() {
   var allTiles = [];
   for (var dx = -1; dx <= 1; dx++) {
     for (var dy = -1; dy <= 1; dy++) {
-      var tile = player_location$1.dx(dx).dy(dy);
+      var tile = player_location.dx(dx).dy(dy);
       allTiles.push(tile);
     }
   }
@@ -794,22 +912,42 @@ function isOccupiedByTrapOrGround(loc) {
   return objectAtLoc !== undefined;
 }
 var cachedOldestTrap = null;
+var buildTrapMap = ids => {
+  var map = new Map();
+  var objects = bot.objects.getTileObjectsWithIds(ids);
+  var _iterator = _createForOfIteratorHelper(objects),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var _object = _step.value;
+      if (!_object) continue;
+      var worldLoc = _object.getWorldLocation();
+      if (!worldLoc) continue;
+      var key = "".concat(worldLoc.getX(), ",").concat(worldLoc.getY());
+      if (!map.has(key)) {
+        map.set(key, _object);
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return map;
+};
 function maintainAllTrapTimestamps() {
   var now = Date.now();
   var oldestTrap = null;
   var oldestTime = Number.POSITIVE_INFINITY;
-  var _iterator = _createForOfIteratorHelper(trapLocationsCache$1),
-    _step;
+  var shakingTrapMap = buildTrapMap([object.boxTrap_Shaking]);
+  var failedTrapMap = buildTrapMap([object.boxTrap_Failed]);
+  var _iterator2 = _createForOfIteratorHelper(trapLocationsCache$1),
+    _step2;
   try {
-    var _loop = function _loop() {
-      var loc = _step.value;
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var loc = _step2.value;
       var key = "".concat(loc.getX(), ",").concat(loc.getY());
-      var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
-        if (!o) return false;
-        var worldLoc = o.getWorldLocation();
-        if (!worldLoc) return false;
-        return worldLoc.getX() === loc.getX() && worldLoc.getY() === loc.getY();
-      });
+      var shakingTrap = shakingTrapMap.get(key) || null;
       if (shakingTrap && !shakingTrapTimestamps.has(key)) {
         shakingTrapTimestamps.set(key, now);
         if (!playerLaidTraps.has(key)) {
@@ -832,63 +970,62 @@ function maintainAllTrapTimestamps() {
           };
         }
       }
-    };
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      _loop();
-    }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
-  }
-  var _iterator2 = _createForOfIteratorHelper(trapLocationsCache$1),
-    _step2;
-  try {
-    var _loop2 = function _loop2() {
-      var loc = _step2.value;
-      var key = "".concat(loc.getX(), ",").concat(loc.getY());
-      var failedTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
-        if (!o) return false;
-        var worldLoc = o.getWorldLocation();
-        if (!worldLoc) return false;
-        return worldLoc.getX() === loc.getX() && worldLoc.getY() === loc.getY();
-      });
-      if (failedTrap && !failedTrapTimestamps.has(key)) {
-        failedTrapTimestamps.set(key, now);
-        if (!playerLaidTraps.has(key)) {
-          playerLaidTraps.add(key);
-        }
-        logger(state$1, 'debug', 'maintainAllTrapTimestamps', "Assigned timestamp to failed trap at ".concat(key, " (may be slightly delayed)"));
-      }
-      if (!failedTrap && failedTrapTimestamps.has(key)) {
-        failedTrapTimestamps.delete(key);
-      }
-      if (failedTrap) {
-        var timestamp = failedTrapTimestamps.get(key) || now;
-        if (timestamp < oldestTime) {
-          oldestTime = timestamp;
-          oldestTrap = {
-            trap: failedTrap,
-            loc: loc,
-            timestamp,
-            type: 'failed'
-          };
-        }
-      }
-    };
-    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-      _loop2();
     }
   } catch (err) {
     _iterator2.e(err);
   } finally {
     _iterator2.f();
   }
+  var _iterator3 = _createForOfIteratorHelper(trapLocationsCache$1),
+    _step3;
+  try {
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var _loc = _step3.value;
+      var _key = "".concat(_loc.getX(), ",").concat(_loc.getY());
+      var failedTrap = failedTrapMap.get(_key) || null;
+      if (failedTrap && !failedTrapTimestamps.has(_key)) {
+        failedTrapTimestamps.set(_key, now);
+        if (!playerLaidTraps.has(_key)) {
+          playerLaidTraps.add(_key);
+        }
+        logger(state$1, 'debug', 'maintainAllTrapTimestamps', "Assigned timestamp to failed trap at ".concat(_key, " (may be slightly delayed)"));
+      }
+      if (!failedTrap && failedTrapTimestamps.has(_key)) {
+        failedTrapTimestamps.delete(_key);
+      }
+      if (failedTrap) {
+        var _timestamp = failedTrapTimestamps.get(_key) || now;
+        if (_timestamp < oldestTime) {
+          oldestTime = _timestamp;
+          oldestTrap = {
+            trap: failedTrap,
+            loc: _loc,
+            timestamp: _timestamp,
+            type: 'failed'
+          };
+        }
+      }
+    }
+  } catch (err) {
+    _iterator3.e(err);
+  } finally {
+    _iterator3.f();
+  }
   cachedOldestTrap = oldestTrap;
 }
 function resetTraps() {
   var maintainedOldestTrap = cachedOldestTrap;
   if (_resetInProgress && _resetTargetLocation) {
+    var isCurrentlyLaying = _layingTrapLocation !== null && _layingPhase === 'animating';
+    if (!isCurrentlyLaying && handleGroundTraps()) {
+      _resetInProgress = false;
+      _resetTargetLocation = null;
+      _resetPhase = null;
+      _resetTickCount = 0;
+      _nextTrapSearchAttempts = 0;
+      _tickManipulationTriggered = false;
+      return true;
+    }
     var playerWp = client.getLocalPlayer().getWorldLocation();
     var targetLoc = _resetTargetLocation;
     var atTarget = playerWp.equals(targetLoc);
@@ -936,19 +1073,28 @@ function resetTraps() {
         });
         if (newTrapLaid) {
           logger(state$1, 'debug', 'resetTraps', "Trap reset - object detected. Finding next trap immediately");
-          var _key = "".concat(_resetTargetLocation.getX(), ",").concat(_resetTargetLocation.getY());
-          shakingTrapTimestamps.delete(_key);
-          failedTrapTimestamps.delete(_key);
+          var _key2 = "".concat(_resetTargetLocation.getX(), ",").concat(_resetTargetLocation.getY());
+          shakingTrapTimestamps.delete(_key2);
+          failedTrapTimestamps.delete(_key2);
+          if (handleGroundTraps()) {
+            _resetInProgress = false;
+            _resetTargetLocation = null;
+            _resetPhase = null;
+            _resetTickCount = 0;
+            _nextTrapSearchAttempts = 0;
+            _tickManipulationTriggered = false;
+            return true;
+          }
           var nextOldestTrap = null;
           var nextOldestTime = Number.POSITIVE_INFINITY;
-          var _iterator3 = _createForOfIteratorHelper(trapLocationsCache$1),
-            _step3;
+          var _iterator4 = _createForOfIteratorHelper(trapLocationsCache$1),
+            _step4;
           try {
-            var _loop3 = function _loop3() {
-                var loc = _step3.value;
+            var _loop = function _loop() {
+                var loc = _step4.value;
                 var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
                 if (!playerLaidTraps.has(locKey)) return 0; // continue
-                if (locKey === _key) return 0; // continue
+                if (locKey === _key2) return 0; // continue
                 var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
                   if (!o) return false;
                   var worldLoc = o.getWorldLocation();
@@ -964,23 +1110,23 @@ function resetTraps() {
                 }
               },
               _ret;
-            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-              _ret = _loop3();
+            for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+              _ret = _loop();
               if (_ret === 0) continue;
             }
           } catch (err) {
-            _iterator3.e(err);
+            _iterator4.e(err);
           } finally {
-            _iterator3.f();
+            _iterator4.f();
           }
-          var _iterator4 = _createForOfIteratorHelper(trapLocationsCache$1),
-            _step4;
+          var _iterator5 = _createForOfIteratorHelper(trapLocationsCache$1),
+            _step5;
           try {
-            var _loop4 = function _loop4() {
-                var loc = _step4.value;
+            var _loop2 = function _loop2() {
+                var loc = _step5.value;
                 var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
                 if (!playerLaidTraps.has(locKey)) return 0; // continue
-                if (locKey === _key) return 0; // continue
+                if (locKey === _key2) return 0; // continue
                 var failedTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
                   if (!o) return false;
                   var worldLoc = o.getWorldLocation();
@@ -996,14 +1142,14 @@ function resetTraps() {
                 }
               },
               _ret2;
-            for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-              _ret2 = _loop4();
+            for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+              _ret2 = _loop2();
               if (_ret2 === 0) continue;
             }
           } catch (err) {
-            _iterator4.e(err);
+            _iterator5.e(err);
           } finally {
-            _iterator4.f();
+            _iterator5.f();
           }
           if (nextOldestTrap) {
             bot.objects.interactSuppliedObject(nextOldestTrap, 'Reset');
@@ -1043,6 +1189,10 @@ function resetTraps() {
   }
   var oldestTrap = maintainedOldestTrap;
   if (utilState.groundTrapHandlingLocation !== null && handleGroundTraps()) {
+    _resetInProgress = true;
+    return true;
+  }
+  if (handleGroundTraps()) {
     _resetInProgress = true;
     return true;
   }
@@ -1137,26 +1287,26 @@ function layingInitialTraps(maxAllowed, trapsOnGround) {
     }
   }
   for (var _index = _layingLocationIndex; _index < trapLocationsCache$1.length; _index++) {
-    var _loc = trapLocationsCache$1[_index];
+    var _loc2 = trapLocationsCache$1[_index];
     if (trapsOnGround >= maxAllowed) {
       return;
     }
-    var occupied = isOccupiedByTrapOrGround(_loc);
+    var occupied = isOccupiedByTrapOrGround(_loc2);
     if (!occupied && !_tickManipulationTriggered && bot.inventory.containsId(Item.boxTrap)) {
       var _playerWp = client.getLocalPlayer().getWorldLocation();
-      if (!_playerWp.equals(_loc)) {
+      if (!_playerWp.equals(_loc2)) {
         if (!_layingWalkCommandIssued) {
-          bot.walking.walkToWorldPoint(_loc.getX(), _loc.getY());
+          bot.walking.walkToWorldPoint(_loc2.getX(), _loc2.getY());
           _layingWalkCommandIssued = true;
           logger(state$1, 'debug', 'layingInitialTraps', "Walking to trap location");
         }
-        _layingTrapLocation = _loc;
+        _layingTrapLocation = _loc2;
         _layingPhase = 'walking';
         _layingLocationIndex = _index;
         _tickManipulationTriggered = true;
         return;
       }
-      _layingTrapLocation = _loc;
+      _layingTrapLocation = _loc2;
       _layingPhase = 'walking';
       _layingLocationIndex = _index;
       _tickManipulationTriggered = true;
@@ -1176,11 +1326,11 @@ function moveToSafeTileIfNeeded() {
   }
   var closestSafeTile = null;
   var closestDistance = Number.POSITIVE_INFINITY;
-  var _iterator5 = _createForOfIteratorHelper(safeTilesCache),
-    _step5;
+  var _iterator6 = _createForOfIteratorHelper(safeTilesCache),
+    _step6;
   try {
-    var _loop5 = function _loop5() {
-      var safeTile = _step5.value;
+    var _loop3 = function _loop3() {
+      var safeTile = _step6.value;
       var dx = playerWp.getX() - safeTile.getX();
       var dy = playerWp.getY() - safeTile.getY();
       var distance = Math.hypot(dx, dy);
@@ -1194,13 +1344,13 @@ function moveToSafeTileIfNeeded() {
         closestSafeTile = safeTile;
       }
     };
-    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
-      _loop5();
+    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+      _loop3();
     }
   } catch (err) {
-    _iterator5.e(err);
+    _iterator6.e(err);
   } finally {
-    _iterator5.f();
+    _iterator6.f();
   }
   if (closestSafeTile) {
     logger(state$1, 'debug', 'moveToSafeTileIfNeeded', "Moving to safe tile (".concat(closestSafeTile.getX(), ", ").concat(closestSafeTile.getY(), ") to stay within 2 tiles of all traps"));
@@ -1213,11 +1363,11 @@ function moveToSafeTileIfNeeded() {
 function criticalTrapChecker() {
   var CRITICAL_TICK_THRESHOLD = 80;
   var now = Date.now();
-  var _iterator6 = _createForOfIteratorHelper(trapLocationsCache$1),
-    _step6;
+  var _iterator7 = _createForOfIteratorHelper(trapLocationsCache$1),
+    _step7;
   try {
-    var _loop6 = function _loop6() {
-        var loc = _step6.value;
+    var _loop4 = function _loop4() {
+        var loc = _step7.value;
         var key = "".concat(loc.getX(), ",").concat(loc.getY());
         if (!playerLaidTraps.has(key)) return 0; // continue
         var shaking = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
@@ -1254,21 +1404,21 @@ function criticalTrapChecker() {
         }
       },
       _ret3;
-    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
-      _ret3 = _loop6();
+    for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+      _ret3 = _loop4();
       if (_ret3 === 0) continue;
       if (_ret3) return _ret3.v;
     }
   } catch (err) {
-    _iterator6.e(err);
+    _iterator7.e(err);
   } finally {
-    _iterator6.f();
+    _iterator7.f();
   }
-  var _iterator7 = _createForOfIteratorHelper(trapLocationsCache$1),
-    _step7;
+  var _iterator8 = _createForOfIteratorHelper(trapLocationsCache$1),
+    _step8;
   try {
-    var _loop7 = function _loop7() {
-        var loc = _step7.value;
+    var _loop5 = function _loop5() {
+        var loc = _step8.value;
         var key = "".concat(loc.getX(), ",").concat(loc.getY());
         if (!playerLaidTraps.has(key)) return 0; // continue
         var failed = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
@@ -1305,15 +1455,15 @@ function criticalTrapChecker() {
         }
       },
       _ret4;
-    for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
-      _ret4 = _loop7();
+    for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
+      _ret4 = _loop5();
       if (_ret4 === 0) continue;
       if (_ret4) return _ret4.v;
     }
   } catch (err) {
-    _iterator7.e(err);
+    _iterator8.e(err);
   } finally {
-    _iterator7.f();
+    _iterator8.f();
   }
   return false;
 }
@@ -1327,6 +1477,28 @@ function handleGroundTraps() {
   }
   if (utilState.groundTrapHandlingLocation) {
     var targetLoc = utilState.groundTrapHandlingLocation;
+    if (_groundTrapPhase !== 'relaying') {
+      var currentTrapCount = bot.inventory.getQuantityOfId(Item.boxTrap);
+      var previousTrapCount = _groundTrapPreLootCount !== null && _groundTrapPreLootCount !== void 0 ? _groundTrapPreLootCount : currentTrapCount;
+      if (currentTrapCount > previousTrapCount) {
+        logger(state$1, 'debug', 'handleGroundTraps', "Loot confirmed. Relaying trap at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), ")."));
+        bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
+        profChinsUI.currentAction = 'Laying trap';
+        _groundTrapPhase = 'relaying';
+        utilState.groundTrapTickCount = 0;
+        return true;
+      }
+      utilState.groundTrapTickCount++;
+      if (utilState.groundTrapTickCount > 10) {
+        logger(state$1, 'debug', 'handleGroundTraps', "Timeout waiting for loot at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), "). Resetting state."));
+        utilState.groundTrapHandlingLocation = null;
+        utilState.groundTrapTickCount = 0;
+        _groundTrapPhase = null;
+        _groundTrapPreLootCount = null;
+        return false;
+      }
+      return true;
+    }
     var trapLaidAtLocation = bot.objects.getTileObjectsWithIds([object.boxTrapLayed]).find(o => {
       if (!o) return false;
       var worldLoc = o.getWorldLocation();
@@ -1334,59 +1506,206 @@ function handleGroundTraps() {
       return worldLoc.getX() === targetLoc.getX() && worldLoc.getY() === targetLoc.getY();
     });
     if (trapLaidAtLocation) {
-      logger(state$1, 'debug', 'handleGroundTraps', "Trap successfully laid at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), "). Waiting for player to idle before repositioning."));
+      logger(state$1, 'debug', 'handleGroundTraps', "Trap successfully laid at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), "). Chaining to next trap reset."));
       utilState.groundTrapHandlingLocation = null;
       utilState.groundTrapTickCount = 0;
+      _groundTrapPhase = null;
+      _groundTrapPreLootCount = null;
+      var nextOldestTrap = null;
+      var nextOldestTime = Number.POSITIVE_INFINITY;
+      var _iterator9 = _createForOfIteratorHelper(trapLocationsCache$1),
+        _step9;
+      try {
+        var _loop6 = function _loop6() {
+            var loc = _step9.value;
+            var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
+            if (!playerLaidTraps.has(locKey)) return 0; // continue
+            if (locKey === "".concat(targetLoc.getX(), ",").concat(targetLoc.getY())) return 0; // continue
+            var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+              if (!o) return false;
+              var worldLoc = o.getWorldLocation();
+              if (!worldLoc) return false;
+              return worldLoc.getX() === loc.getX() && worldLoc.getY() === loc.getY();
+            });
+            if (shakingTrap) {
+              var timestamp = shakingTrapTimestamps.get(locKey) || Date.now();
+              if (timestamp < nextOldestTime) {
+                nextOldestTime = timestamp;
+                nextOldestTrap = shakingTrap;
+              }
+            }
+          },
+          _ret5;
+        for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+          _ret5 = _loop6();
+          if (_ret5 === 0) continue;
+        }
+      } catch (err) {
+        _iterator9.e(err);
+      } finally {
+        _iterator9.f();
+      }
+      var _iterator0 = _createForOfIteratorHelper(trapLocationsCache$1),
+        _step0;
+      try {
+        var _loop7 = function _loop7() {
+            var loc = _step0.value;
+            var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
+            if (!playerLaidTraps.has(locKey)) return 0; // continue
+            if (locKey === "".concat(targetLoc.getX(), ",").concat(targetLoc.getY())) return 0; // continue
+            var failedTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Failed]).find(o => {
+              if (!o) return false;
+              var worldLoc = o.getWorldLocation();
+              if (!worldLoc) return false;
+              return worldLoc.getX() === loc.getX() && worldLoc.getY() === loc.getY();
+            });
+            if (failedTrap) {
+              var timestamp = failedTrapTimestamps.get(locKey) || Date.now();
+              if (timestamp < nextOldestTime) {
+                nextOldestTime = timestamp;
+                nextOldestTrap = failedTrap;
+              }
+            }
+          },
+          _ret6;
+        for (_iterator0.s(); !(_step0 = _iterator0.n()).done;) {
+          _ret6 = _loop7();
+          if (_ret6 === 0) continue;
+        }
+      } catch (err) {
+        _iterator0.e(err);
+      } finally {
+        _iterator0.f();
+      }
+      if (nextOldestTrap) {
+        bot.objects.interactSuppliedObject(nextOldestTrap, 'Reset');
+        _resetInProgress = true;
+        _resetTargetLocation = nextOldestTrap.getWorldLocation();
+        _resetPhase = 'animating';
+        _resetTickCount = 0;
+        _nextTrapSearchAttempts = 0;
+        return true;
+      }
       _groundTrapJustLaid = true;
       return true;
     }
     utilState.groundTrapTickCount++;
-    if (utilState.groundTrapTickCount === 2 && bot.inventory.containsId(Item.boxTrap)) {
-      logger(state$1, 'debug', 'handleGroundTraps', "Laying trap from inventory at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), ")."));
-      bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
-      profChinsUI.currentAction = 'Laying trap';
-    }
     if (utilState.groundTrapTickCount > 10) {
       logger(state$1, 'debug', 'handleGroundTraps', "Timeout waiting for trap at (".concat(targetLoc.getX(), ", ").concat(targetLoc.getY(), "). Resetting state."));
       utilState.groundTrapHandlingLocation = null;
       utilState.groundTrapTickCount = 0;
+      _groundTrapPhase = null;
+      _groundTrapPreLootCount = null;
       return false;
     }
     return true;
   }
   var groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
-  var _iterator8 = _createForOfIteratorHelper(groundTraps),
-    _step8;
+  var _iterator1 = _createForOfIteratorHelper(groundTraps),
+    _step1;
   try {
     var _loop8 = function _loop8() {
-        var groundTrap = _step8.value;
+        var groundTrap = _step1.value;
         if (!groundTrap || !groundTrap.tile) return 0; // continue
         var trapLoc = groundTrap.tile.getWorldLocation();
         if (!trapLoc) return 0; // continue
         var isAtCachedLocation = trapLocationsCache$1.some(loc => loc.getX() === trapLoc.getX() && loc.getY() === trapLoc.getY());
         if (isAtCachedLocation) {
-          utilState.groundTrapHandlingLocation = trapLoc;
-          utilState.groundTrapTickCount = 0;
-          logger(state$1, 'debug', 'handleGroundTraps', "Looting trap from ground at (".concat(trapLoc.getX(), ", ").concat(trapLoc.getY(), ")."));
-          bot.tileItems.lootItem(groundTrap);
-          profChinsUI.currentAction = 'Looting fallen trap';
-          var relayKey = "".concat(trapLoc.getX(), ",").concat(trapLoc.getY());
-          playerLaidTraps.add(relayKey);
+          var locKey = "".concat(trapLoc.getX(), ",").concat(trapLoc.getY());
+          if (!fallenTrapTickCounts.has(locKey)) {
+            fallenTrapTickCounts.set(locKey, 0);
+          }
+          var ticksOnGround = fallenTrapTickCounts.get(locKey) || 0;
+          fallenTrapTickCounts.set(locKey, ticksOnGround + 1);
+          if (ticksOnGround >= FALLEN_TRAP_THRESHOLD) {
+            utilState.groundTrapHandlingLocation = trapLoc;
+            utilState.groundTrapTickCount = 0;
+            _groundTrapPhase = 'looting';
+            logger(state$1, 'debug', 'handleGroundTraps', "Ground trap detected. Starting handling at (".concat(trapLoc.getX(), ", ").concat(trapLoc.getY(), ")."));
+            logger(state$1, 'debug', 'handleGroundTraps', "Looting trap from ground at (".concat(trapLoc.getX(), ", ").concat(trapLoc.getY(), ") after ").concat(ticksOnGround, " ticks."));
+            var preLootCount = bot.inventory.getQuantityOfId(Item.boxTrap);
+            _groundTrapPreLootCount = preLootCount;
+            bot.tileItems.lootItem(groundTrap);
+            profChinsUI.currentAction = 'Looting fallen trap';
+            var postLootCount = bot.inventory.getQuantityOfId(Item.boxTrap);
+            if (postLootCount > preLootCount) {
+              logger(state$1, 'debug', 'handleGroundTraps', "Loot confirmed. Relaying trap at (".concat(trapLoc.getX(), ", ").concat(trapLoc.getY(), ")."));
+              bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
+              profChinsUI.currentAction = 'Laying trap';
+              _groundTrapPhase = 'relaying';
+            }
+            var relayKey = "".concat(trapLoc.getX(), ",").concat(trapLoc.getY());
+            playerLaidTraps.add(relayKey);
+            fallenTrapTickCounts.delete(locKey);
+            return {
+              v: true
+            };
+          }
+          return {
+            v: false
+          };
+        }
+      },
+      _ret7;
+    for (_iterator1.s(); !(_step1 = _iterator1.n()).done;) {
+      _ret7 = _loop8();
+      if (_ret7 === 0) continue;
+      if (_ret7) return _ret7.v;
+    }
+  } catch (err) {
+    _iterator1.e(err);
+  } finally {
+    _iterator1.f();
+  }
+  var _iterator10 = _createForOfIteratorHelper(fallenTrapTickCounts),
+    _step10;
+  try {
+    var _loop9 = function _loop9() {
+      var _step10$value = _slicedToArray(_step10.value, 1),
+        locKey = _step10$value[0];
+      var isStillOnGround = groundTraps.some(gt => {
+        if (!gt || !gt.tile) return false;
+        var loc = gt.tile.getWorldLocation();
+        if (!loc) return false;
+        return loc.getX().toString() + ',' + loc.getY().toString() === locKey;
+      });
+      if (!isStillOnGround) {
+        fallenTrapTickCounts.delete(locKey);
+      }
+    };
+    for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
+      _loop9();
+    }
+  } catch (err) {
+    _iterator10.e(err);
+  } finally {
+    _iterator10.f();
+  }
+  var _iterator11 = _createForOfIteratorHelper(groundTraps),
+    _step11;
+  try {
+    var _loop0 = function _loop0() {
+        var groundTrap = _step11.value;
+        if (!groundTrap || !groundTrap.tile) return 0; // continue
+        var trapLoc = groundTrap.tile.getWorldLocation();
+        if (!trapLoc) return 0; // continue
+        var isAtCachedLocation = trapLocationsCache$1.some(loc => loc.getX() === trapLoc.getX() && loc.getY() === trapLoc.getY());
+        if (isAtCachedLocation) {
           return {
             v: true
           };
         }
       },
-      _ret5;
-    for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
-      _ret5 = _loop8();
-      if (_ret5 === 0) continue;
-      if (_ret5) return _ret5.v;
+      _ret8;
+    for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
+      _ret8 = _loop0();
+      if (_ret8 === 0) continue;
+      if (_ret8) return _ret8.v;
     }
   } catch (err) {
-    _iterator8.e(err);
+    _iterator11.e(err);
   } finally {
-    _iterator8.f();
+    _iterator11.f();
   }
   return false;
 }
@@ -1398,11 +1717,11 @@ function hasTrapsNeedingAttention() {
     return true;
   }
   var groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
-  var _iterator9 = _createForOfIteratorHelper(groundTraps),
-    _step9;
+  var _iterator12 = _createForOfIteratorHelper(groundTraps),
+    _step12;
   try {
-    var _loop9 = function _loop9() {
-        var groundTrap = _step9.value;
+    var _loop1 = function _loop1() {
+        var groundTrap = _step12.value;
         if (!groundTrap || !groundTrap.tile) return 0; // continue
         var trapLoc = groundTrap.tile.getWorldLocation();
         if (!trapLoc) return 0; // continue
@@ -1413,16 +1732,16 @@ function hasTrapsNeedingAttention() {
           };
         }
       },
-      _ret6;
-    for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
-      _ret6 = _loop9();
-      if (_ret6 === 0) continue;
-      if (_ret6) return _ret6.v;
+      _ret9;
+    for (_iterator12.s(); !(_step12 = _iterator12.n()).done;) {
+      _ret9 = _loop1();
+      if (_ret9 === 0) continue;
+      if (_ret9) return _ret9.v;
     }
   } catch (err) {
-    _iterator9.e(err);
+    _iterator12.e(err);
   } finally {
-    _iterator9.f();
+    _iterator12.f();
   }
   return false;
 }
@@ -1461,69 +1780,120 @@ var stuckStateTracker = {
   tickCount: 0
 };
 var MAX_TICKS_PER_STATE = 8;
-var player_location;
-try {
+var STUCK_DETECTION_EXCLUSIONS = new Set(['initial_traps', 'resetting_traps']);
+var XP_CHECK_INTERVAL = 3;
+var TRAPS_COUNT_INTERVAL = 2;
+var TRAP_CHECK_INTERVAL = 2;
+var RESET_TRAPS_COOLDOWN = 2;
+var getPlayerLocation = () => {
   var localPlayer = client.getLocalPlayer();
   if (!localPlayer) {
-    bot.printGameMessage('ERROR: Could not get local player on startup. Script stopping.');
+    log.printGameMessage('ERROR: Could not get local player on startup. Script stopping.');
     throw new Error('Local player is null at startup');
   }
-  player_location = localPlayer.getWorldLocation();
-  if (!player_location) {
-    bot.printGameMessage('ERROR: Could not get player world location on startup. Script stopping.');
+  var playerLocation = localPlayer.getWorldLocation();
+  if (!playerLocation) {
+    log.printGameMessage('ERROR: Could not get player world location on startup. Script stopping.');
     throw new Error('Player world location is null at startup');
   }
-} catch (error) {
-  bot.printGameMessage("FATAL: Player initialization failed: ".concat(String(error)));
-  throw error;
-}
-var hunterLvl;
-try {
-  hunterLvl = client.getRealSkillLevel(net.runelite.api.Skill.HUNTER);
-  if (hunterLvl === undefined || hunterLvl === null || hunterLvl < 0) {
-    bot.printGameMessage('ERROR: Could not get valid hunter level. Script stopping.');
+  return playerLocation;
+};
+var getHunterLevel = () => {
+  var hunterLevel = client.getRealSkillLevel(net.runelite.api.Skill.HUNTER);
+  if (hunterLevel < 0) {
+    log.printGameMessage('ERROR: Could not get valid hunter level. Script stopping.');
     throw new Error('Hunter level is invalid at startup');
   }
-} catch (error) {
-  bot.printGameMessage("FATAL: Hunter level initialization failed: ".concat(String(error)));
-  throw error;
-}
-initializeUtilFunctions(state, [], [], player_location, hunterLvl);
+  return hunterLevel;
+};
+var playerLocation = getPlayerLocation();
+var hunterLevel = getHunterLevel();
+initializeUtilFunctions(state, [], [], playerLocation, hunterLevel);
 var initialTrapLocations = utilFunctions.getInitialTrapLocations();
-initializeUtilFunctions(state, initialTrapLocations, [], player_location, hunterLvl);
+initializeUtilFunctions(state, initialTrapLocations, [], playerLocation, hunterLevel);
 var initialSafeTiles = utilFunctions.getSafeTiles();
-initializeUtilFunctions(state, initialTrapLocations, initialSafeTiles, player_location, hunterLvl);
+initializeUtilFunctions(state, initialTrapLocations, initialSafeTiles, playerLocation, hunterLevel);
 var trapLocationsCache = initialTrapLocations;
+var maxAllowedTraps = utilFunctions.maxTraps();
+var cachedTrapsOnGround = 0;
+var lastTrapsCountState = '';
+var cachedCriticalTrapCheck = false;
+var cachedNeedsAttentionCheck = false;
+var lastResetTrapsTick = -RESET_TRAPS_COOLDOWN;
+var countTrapsOnGround = () => {
+  var trapsOnGround = 0;
+  var _iterator = _createForOfIteratorHelper(trapLocationsCache),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var loc = _step.value;
+      if (utilFunctions.isOccupiedByTrapOrGround(loc)) {
+        trapsOnGround++;
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return trapsOnGround;
+};
+cachedTrapsOnGround = countTrapsOnGround();
+var getTrapsOnGround = () => {
+  var shouldTrackTraps = state.mainState === 'initial_traps' || state.mainState === 'awaiting_activity' || state.mainState === 'resetting_traps';
+  if (!shouldTrackTraps) {
+    lastTrapsCountState = state.mainState;
+    return cachedTrapsOnGround;
+  }
+  var shouldRefresh = state.gameTick % TRAPS_COUNT_INTERVAL === 0 || state.mainState !== lastTrapsCountState;
+  if (shouldRefresh) {
+    cachedTrapsOnGround = countTrapsOnGround();
+    lastTrapsCountState = state.mainState;
+  }
+  return cachedTrapsOnGround;
+};
+var setCurrentAction = action => {
+  if (profChinsUI.currentAction !== action) {
+    profChinsUI.currentAction = action;
+  }
+};
+var tryResetTraps = () => {
+  if (state.gameTick - lastResetTrapsTick < RESET_TRAPS_COOLDOWN) {
+    return;
+  }
+  lastResetTrapsTick = state.gameTick;
+  utilFunctions.resetTraps();
+};
 function onStart() {
   try {
     state.uiCompleted = true;
     try {
-      initializeUI(state, trapLocationsCache, utilFunctions.isOccupiedByTrapOrGround, utilFunctions.maxTraps);
-    } catch (error) {
-      bot.printGameMessage("Error in initializeUI: ".concat(String(error)));
+      initializeUI(state, trapLocationsCache, () => cachedTrapsOnGround, () => maxAllowedTraps, () => utilState.isPlayerMoving);
+    } catch (_unused) {
+      log.printGameMessage('Error in initializeUI.');
     }
     try {
       profChinsUI.disableBotMakerOverlay();
-    } catch (error) {
-      bot.printGameMessage("Error in disableBotMakerOverlay: ".concat(String(error)));
+    } catch (_unused2) {
+      log.printGameMessage('Error in disableBotMakerOverlay.');
     }
     try {
       profChinsUI.start();
-    } catch (error) {
-      bot.printGameMessage("Error in profChinsUI.start: ".concat(String(error)));
+    } catch (_unused3) {
+      log.printGameMessage('Error in profChinsUI.start.');
     }
     try {
       var hunterXp = client.getSkillExperience(net.runelite.api.Skill.HUNTER);
       profChinsUI.lastHunterXp = hunterXp;
-    } catch (error) {
-      bot.printGameMessage("Error getting hunter XP: ".concat(String(error)));
+    } catch (_unused4) {
+      log.printGameMessage('Error getting hunter XP.');
     }
     logger(state, 'all', 'script', String(state.scriptName) + ' started.');
-  } catch (error) {
+  } catch (_unused5) {
     try {
-      logger(state, 'all', 'Script', String(error));
-    } catch (_unused) {
-      bot.printGameMessage("Critical error: ".concat(String(error)));
+      logger(state, 'all', 'Script', 'Unhandled error in onStart.');
+    } catch (_unused6) {
+      log.printGameMessage('Critical error in onStart.');
     }
     bot.terminate();
   }
@@ -1537,18 +1907,28 @@ function onGameTick() {
     } else {
       return;
     }
-    if (!generalFunctions.gameTick(state)) return;
-    utilState.isPlayerMoving = bot.walking.isWebWalking();
-    utilFunctions.maintainAllTrapTimestamps();
-    var currentHunterXp = client.getSkillExperience(net.runelite.api.Skill.HUNTER);
-    if (currentHunterXp > profChinsUI.lastHunterXp) {
-      profChinsUI.totalChinsCaught++;
-      logger(state, 'debug', 'onGameTick', "Hunter XP gained. Total chins caught: ".concat(profChinsUI.totalChinsCaught));
-      profChinsUI.lastHunterXp = currentHunterXp;
+    if (!gameTick(state)) return;
+    var isWebWalking = bot.walking.isWebWalking();
+    utilState.isPlayerMoving = isWebWalking;
+    var trapsOnGround = getTrapsOnGround();
+    var isBanking = bot.bank.isBanking();
+    var isIdle = bot.localPlayerIdle();
+    if (trapsOnGround > 0) {
+      utilFunctions.maintainAllTrapTimestamps();
     }
-    if (!bot.bank.isBanking() && bot.localPlayerIdle() && !bot.walking.isWebWalking() && state.mainState == 'start_state') bot.breakHandler.setBreakHandlerStatus(true);
-    var excludeFromStuckDetection = ['initial_traps', 'resetting_traps'];
-    if (excludeFromStuckDetection.includes(state.mainState)) {
+    var shouldCheckXp = profChinsUI.currentAction === 'Maintaining traps' || profChinsUI.currentAction === 'Awaiting trap activity';
+    if (shouldCheckXp && !isWebWalking && state.gameTick % XP_CHECK_INTERVAL === 0) {
+      var currentHunterXp = client.getSkillExperience(net.runelite.api.Skill.HUNTER);
+      if (currentHunterXp > profChinsUI.lastHunterXp) {
+        profChinsUI.totalChinsCaught++;
+        logger(state, 'debug', 'onGameTick', "Hunter XP gained. Total chins caught: ".concat(profChinsUI.totalChinsCaught));
+        profChinsUI.lastHunterXp = currentHunterXp;
+      }
+    }
+    if (!isBanking && isIdle && !isWebWalking && state.mainState === 'start_state') {
+      bot.breakHandler.setBreakHandlerStatus(true);
+    }
+    if (STUCK_DETECTION_EXCLUSIONS.has(state.mainState)) {
       stuckStateTracker.currentState = state.mainState;
       stuckStateTracker.tickCount = 0;
     } else {
@@ -1565,63 +1945,55 @@ function onGameTick() {
         stuckStateTracker.tickCount = 0;
       }
     }
-    stateManager();
-  } catch (error) {
-    logger(state, 'all', 'Script', error.toString());
+    var shouldCheckTraps = state.gameTick % TRAP_CHECK_INTERVAL === 0;
+    if (shouldCheckTraps && trapsOnGround > 0) {
+      cachedCriticalTrapCheck = utilFunctions.criticalTrapChecker();
+    } else if (shouldCheckTraps) {
+      cachedCriticalTrapCheck = false;
+    }
+    if (shouldCheckTraps) {
+      cachedNeedsAttentionCheck = utilFunctions.hasTrapsNeedingAttention();
+    }
+    stateManager(trapsOnGround, cachedCriticalTrapCheck, cachedNeedsAttentionCheck);
+  } catch (_unused7) {
+    logger(state, 'all', 'Script', 'Unhandled error in onGameTick.');
     bot.terminate();
   }
 }
 function notifyScriptInitialized() {
-  bot.printGameMessage('Script initialized.');
+  log.printGameMessage('Script initialized.');
 }
 function onEnd() {
   profChinsUI.stop();
   profChinsUI.enableBotMakerOverlay();
-  generalFunctions.endScript(state);
+  endScript(state);
 }
-function stateManager() {
+function stateManager(trapsOnGround, criticalTrapCheck, needsAttentionCheck) {
   try {
     if (state.mainState !== lastLoggedState) {
       logger(state, 'debug', 'stateManager', "State changed to: ".concat(state.mainState));
       lastLoggedState = state.mainState;
     }
-    var maxAllowed = utilFunctions.maxTraps();
-    var trapsOnGround = 0;
-    var _iterator = _createForOfIteratorHelper(trapLocationsCache),
-      _step;
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var loc = _step.value;
-        if (!loc) continue;
-        if (utilFunctions.isOccupiedByTrapOrGround(loc)) {
-          trapsOnGround++;
-        }
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
-    }
     switch (state.mainState) {
       case 'start_state':
         {
           try {
-            profChinsUI.currentAction = 'Starting...';
+            setCurrentAction('Starting...');
             var trapCount = bot.inventory.getQuantityOfId(Item.boxTrap);
             if (!trapCount && trapCount !== 0) {
-              bot.printGameMessage('ERROR: Could not get trap quantity from inventory');
+              log.printGameMessage('ERROR: Could not get trap quantity from inventory');
               bot.terminate();
               return;
             }
-            if (trapCount >= maxAllowed) {
+            if (trapCount >= maxAllowedTraps) {
               state.mainState = 'initial_traps';
             } else {
-              profChinsUI.currentAction = 'Error: Not enough traps';
-              logger(state, 'debug', 'stateManager', "Not enough box traps (have ".concat(trapCount, ", need ").concat(maxAllowed, ")"));
+              setCurrentAction('Error: Not enough traps');
+              logger(state, 'debug', 'stateManager', "Not enough box traps (have ".concat(trapCount, ", need ").concat(maxAllowedTraps, ")"));
               bot.terminate();
             }
           } catch (error) {
-            bot.printGameMessage("ERROR in start_state: ".concat(String(error)));
+            log.printGameMessage("ERROR in start_state: ".concat(String(error)));
             bot.terminate();
           }
           break;
@@ -1630,33 +2002,29 @@ function stateManager() {
         {
           var action = 'Laying initial traps';
           if (profChinsUI.currentAction !== action) {
-            profChinsUI.currentAction = action;
+            setCurrentAction(action);
             logger(state, 'debug', 'stateManager', 'Placing initial traps.');
           }
-          if (trapsOnGround >= maxAllowed) {
+          if (trapsOnGround >= maxAllowedTraps) {
             state.mainState = 'awaiting_activity';
             utilState.layingLocationIndex = 0;
             return;
           }
-          utilFunctions.layingInitialTraps(maxAllowed, trapsOnGround);
+          utilFunctions.layingInitialTraps(maxAllowedTraps, trapsOnGround);
           break;
         }
       case 'awaiting_activity':
         {
           var _action = 'Awaiting trap activity';
           if (profChinsUI.currentAction !== _action) {
-            profChinsUI.currentAction = _action;
+            setCurrentAction(_action);
             logger(state, 'debug', 'stateManager', 'Awaiting trap activity.');
           }
-          if (trapsOnGround > 0) {
-            profChinsUI.currentAction = _action;
-            logger(state, 'debug', 'stateManager', 'Maintaining traps.');
-          }
-          if (!utilState.resetInProgress && utilFunctions.criticalTrapChecker()) {
+          if (!utilState.resetInProgress && criticalTrapCheck) {
             state.mainState = 'critical_trap_handling';
           } else if (utilState.resetInProgress) {
             state.mainState = 'resetting_traps';
-          } else if (utilFunctions.hasTrapsNeedingAttention()) {
+          } else if (needsAttentionCheck) {
             state.mainState = 'resetting_traps';
           }
           break;
@@ -1665,10 +2033,10 @@ function stateManager() {
         {
           var _action2 = 'Maintaining traps';
           if (profChinsUI.currentAction !== _action2) {
-            profChinsUI.currentAction = _action2;
+            setCurrentAction(_action2);
           }
-          if (!utilState.resetInProgress && utilFunctions.criticalTrapChecker()) {
-            utilFunctions.resetTraps();
+          if (!utilState.resetInProgress && criticalTrapCheck) {
+            tryResetTraps();
           } else {
             state.mainState = 'maintaining_traps';
           }
@@ -1678,9 +2046,9 @@ function stateManager() {
         {
           var _action3 = 'Maintaining traps';
           if (profChinsUI.currentAction !== _action3) {
-            profChinsUI.currentAction = _action3;
+            setCurrentAction(_action3);
           }
-          utilFunctions.resetTraps();
+          tryResetTraps();
           if (!utilState.resetInProgress) {
             state.mainState = 'maintaining_traps';
           }
@@ -1697,10 +2065,9 @@ function stateManager() {
           break;
         }
     }
-  } catch (error) {
-    var errorMessage = String(error);
-    bot.printGameMessage("CRITICAL ERROR in stateManager: ".concat(errorMessage));
-    logger(state, 'all', 'stateManager', "Critical error: ".concat(errorMessage));
+  } catch (_unused8) {
+    log.printGameMessage('CRITICAL ERROR in stateManager.');
+    logger(state, 'all', 'stateManager', 'Critical error in stateManager.');
     bot.terminate();
   }
 }

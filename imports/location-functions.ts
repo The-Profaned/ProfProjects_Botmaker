@@ -15,7 +15,7 @@ export const coordsToWP = ([x, y, z]: [
 	new net.runelite.api.coords.WorldPoint(x, y, z);
 
 // Get distance from local player to WorldPoint
-export const localPlayerDistFromWP = (
+export const localPlayerDistributionFromWP = (
 	worldPoint: net.runelite.api.coords.WorldPoint,
 ): number => client.getLocalPlayer().getWorldLocation().distanceTo(worldPoint);
 
@@ -23,7 +23,7 @@ export const localPlayerDistFromWP = (
 export const isPlayerNearWP = (
 	worldPoint: net.runelite.api.coords.WorldPoint,
 	tileThreshold: number = 5,
-): boolean => localPlayerDistFromWP(worldPoint) <= tileThreshold;
+): boolean => localPlayerDistributionFromWP(worldPoint) <= tileThreshold;
 
 // Web walk to WorldPoint with timeout
 export const wWalkTimeout = (
@@ -65,3 +65,26 @@ export const wWalkTimeout = (
 	);
 	return true;
 };
+
+// Convert instance coordinates to true world coordinates
+export function getWorldPoint(
+	worldpoint: net.runelite.api.coords.WorldPoint,
+): net.runelite.api.coords.WorldPoint | null {
+	const inInstance = client
+		.getWorldView(client.getTopLevelWorldView().getId())
+		.isInstance();
+	if (inInstance) {
+		const localPoint = net.runelite.api.coords.LocalPoint.fromWorld(
+			client.getWorldView(client.getTopLevelWorldView().getId()),
+			worldpoint,
+		);
+		if (localPoint) {
+			return net.runelite.api.coords.WorldPoint.fromLocalInstance(
+				client,
+				localPoint,
+			);
+		}
+		return null;
+	}
+	return worldpoint;
+}
