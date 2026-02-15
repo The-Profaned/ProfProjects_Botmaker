@@ -2,7 +2,7 @@ import { logger } from '../imports/logger.js';
 import { object } from '../imports/object-ids.js';
 import { Item } from '../imports/item-ids.js';
 import type { State } from '../imports/types.js';
-import { utilityFunctions } from '../imports/utility-functions.js';
+import { shuffle } from '../imports/utility-functions.js';
 import { profChinsUI } from './ui.js';
 
 // State that will be initialized by the caller
@@ -30,6 +30,7 @@ let _groundTrapHandlingLocation: net.runelite.api.coords.WorldPoint | null =
 let _groundTrapPhase: 'walking' | 'looting' | 'relaying' | null = null;
 let _groundTrapTickCount = 0;
 let _groundTrapJustLaid = false; // Track if trap was just laid, waiting for player to idle
+let _groundTrapPreLootCount: number | null = null;
 //let _moveOffTrapIssued = false; // Track if we've already issued a move off trap command
 //let _repositioningInProgress = false; // Track if player is being repositioned off traps
 //let _repositioningTickCount = 0; // Track ticks spent repositioning to prevent infinite loops
@@ -38,6 +39,10 @@ let _groundTrapJustLaid = false; // Track if trap was just laid, waiting for pla
 export const shakingTrapTimestamps = new Map<string, number>();
 export const failedTrapTimestamps = new Map<string, number>();
 export const playerLaidTraps = new Set<string>();
+
+// Track how long fallen traps have been on the ground (to avoid interrupting state transitions)
+const fallenTrapTickCounts = new Map<string, number>();
+const FALLEN_TRAP_THRESHOLD = 5; // Only interrupt reset if trap has been on ground for 5+ ticks
 
 // Export mutable state accessors
 export const utilState = {
@@ -165,7 +170,7 @@ export function getInitialTrapLocations(): net.runelite.api.coords.WorldPoint[] 
 	}
 
 	// Get shuffled indices and use them to reorder allTiles
-	const shuffledKey = utilityFunctions.shuffle(allTiles.length);
+	const shuffledKey = shuffle(allTiles.length);
 	const shuffledTiles = shuffledKey.map((index) => allTiles[index - 1]);
 
 	// Use maxTraps() to determine how many locations to select
@@ -235,6 +240,23 @@ let cachedOldestTrap: {
 	type: 'shaking' | 'failed';
 } | null = null;
 
+const buildTrapMap = (
+	ids: number[],
+): Map<string, net.runelite.api.TileObject> => {
+	const map = new Map<string, net.runelite.api.TileObject>();
+	const objects = bot.objects.getTileObjectsWithIds(ids);
+	for (const object of objects) {
+		if (!object) continue;
+		const worldLoc = object.getWorldLocation();
+		if (!worldLoc) continue;
+		const key = `${worldLoc.getX()},${worldLoc.getY()}`;
+		if (!map.has(key)) {
+			map.set(key, object);
+		}
+	}
+	return map;
+};
+
 // Maintain timestamps for ALL active shaking/failed traps every tick
 // This ensures every trap gets tracked from the moment it appears
 // Called from main game tick loop to match AutoChin's approach
@@ -248,21 +270,13 @@ export function maintainAllTrapTimestamps(): void {
 	} | null = null;
 	let oldestTime = Number.POSITIVE_INFINITY;
 
+	const shakingTrapMap = buildTrapMap([object.boxTrap_Shaking]);
+	const failedTrapMap = buildTrapMap([object.boxTrap_Failed]);
+
 	// Update timestamps for all shaking traps
 	for (const loc of trapLocationsCache) {
 		const key = `${loc.getX()},${loc.getY()}`;
-
-		const shakingTrap = bot.objects
-			.getTileObjectsWithIds([object.boxTrap_Shaking])
-			.find((o) => {
-				if (!o) return false;
-				const worldLoc = o.getWorldLocation();
-				if (!worldLoc) return false;
-				return (
-					worldLoc.getX() === loc.getX() &&
-					worldLoc.getY() === loc.getY()
-				);
-			});
+		const shakingTrap = shakingTrapMap.get(key) || null;
 
 		// If trap is shaking and we don't have a timestamp, set one NOW
 		// Assign immediately even if timing is slightly off - better to have a timestamp than none
@@ -304,18 +318,7 @@ export function maintainAllTrapTimestamps(): void {
 	// Update timestamps for all failed traps
 	for (const loc of trapLocationsCache) {
 		const key = `${loc.getX()},${loc.getY()}`;
-
-		const failedTrap = bot.objects
-			.getTileObjectsWithIds([object.boxTrap_Failed])
-			.find((o) => {
-				if (!o) return false;
-				const worldLoc = o.getWorldLocation();
-				if (!worldLoc) return false;
-				return (
-					worldLoc.getX() === loc.getX() &&
-					worldLoc.getY() === loc.getY()
-				);
-			});
+		const failedTrap = failedTrapMap.get(key) || null;
 
 		// If trap is failed and we don't have a timestamp, set one NOW
 		// Assign immediately even if timing is slightly off - better to have a timestamp than none
@@ -364,6 +367,20 @@ export function resetTraps(): boolean {
 
 	// If reset is already in progress, continue with the reset animation
 	if (_resetInProgress && _resetTargetLocation) {
+		// Don't interrupt if we're currently laying a trap (mid-animation)
+		// Otherwise, allow interruption for ground traps
+		const isCurrentlyLaying =
+			_layingTrapLocation !== null && _layingPhase === 'animating';
+		if (!isCurrentlyLaying && handleGroundTraps()) {
+			_resetInProgress = false;
+			_resetTargetLocation = null;
+			_resetPhase = null;
+			_resetTickCount = 0;
+			_nextTrapSearchAttempts = 0;
+			_tickManipulationTriggered = false;
+			return true;
+		}
+
 		const playerWp = client.getLocalPlayer().getWorldLocation();
 		const targetLoc = _resetTargetLocation;
 		const atTarget = playerWp.equals(targetLoc);
@@ -459,6 +476,17 @@ export function resetTraps(): boolean {
 					const key = `${_resetTargetLocation.getX()},${_resetTargetLocation.getY()}`;
 					shakingTrapTimestamps.delete(key);
 					failedTrapTimestamps.delete(key);
+
+					// If a trap fell and is on the ground, stop chaining resets and handle it
+					if (handleGroundTraps()) {
+						_resetInProgress = false;
+						_resetTargetLocation = null;
+						_resetPhase = null;
+						_resetTickCount = 0;
+						_nextTrapSearchAttempts = 0;
+						_tickManipulationTriggered = false;
+						return true;
+					}
 
 					// Find the next oldest trap to reset immediately
 					let nextOldestTrap: net.runelite.api.TileObject | null =
@@ -598,14 +626,20 @@ export function resetTraps(): boolean {
 		return true; // Ground trap handling in progress
 	}
 
-	// PRIORITY 2: Check if player is on a trap location - skip repositioning for now
+	// PRIORITY 2: Start handling a ground trap as soon as one is ready
+	if (handleGroundTraps()) {
+		_resetInProgress = true; // Mark that we're handling ground traps
+		return true; // Ground trap handling in progress
+	}
+
+	// PRIORITY 3: Check if player is on a trap location - skip repositioning for now
 	// TODO: Implement better repositioning logic later
 	if (isPlayerOnTrapLocation()) {
 		// Temporarily disabled - will work out safe repositioning later
 		// Just skip for now and let the script continue with trap work
 	}
 
-	// PRIORITY 3: Use ground trap handling as a fallback when no traps to reset
+	// PRIORITY 4: Use ground trap handling as a fallback when no traps to reset
 	if (!oldestTrap) {
 		// No regular traps to reset - check for ground traps as fallback
 		if (handleGroundTraps()) {
@@ -1074,6 +1108,44 @@ export function handleGroundTraps(): boolean {
 	if (utilState.groundTrapHandlingLocation) {
 		const targetLoc = utilState.groundTrapHandlingLocation;
 
+		if (_groundTrapPhase !== 'relaying') {
+			const currentTrapCount: number = bot.inventory.getQuantityOfId(
+				Item.boxTrap,
+			);
+			const previousTrapCount: number =
+				_groundTrapPreLootCount ?? currentTrapCount;
+			if (currentTrapCount > previousTrapCount) {
+				logger(
+					state,
+					'debug',
+					'handleGroundTraps',
+					`Loot confirmed. Relaying trap at (${targetLoc.getX()}, ${targetLoc.getY()}).`,
+				);
+				bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
+				profChinsUI.currentAction = 'Laying trap';
+				_groundTrapPhase = 'relaying';
+				utilState.groundTrapTickCount = 0;
+				return true;
+			}
+
+			utilState.groundTrapTickCount++;
+			if (utilState.groundTrapTickCount > 10) {
+				logger(
+					state,
+					'debug',
+					'handleGroundTraps',
+					`Timeout waiting for loot at (${targetLoc.getX()}, ${targetLoc.getY()}). Resetting state.`,
+				);
+				utilState.groundTrapHandlingLocation = null;
+				utilState.groundTrapTickCount = 0;
+				_groundTrapPhase = null;
+				_groundTrapPreLootCount = null;
+				return false;
+			}
+
+			return true;
+		}
+
 		// Check if trap has been successfully laid at this location
 		const trapLaidAtLocation = bot.objects
 			.getTileObjectsWithIds([object.boxTrapLayed])
@@ -1087,37 +1159,108 @@ export function handleGroundTraps(): boolean {
 				);
 			});
 
-		// If trap has been laid, reset state and mark that we're waiting for player to idle
+		// If trap has been laid, find next trap to reset immediately (like resetTraps does)
 		if (trapLaidAtLocation) {
 			logger(
 				state,
 				'debug',
 				'handleGroundTraps',
-				`Trap successfully laid at (${targetLoc.getX()}, ${targetLoc.getY()}). Waiting for player to idle before repositioning.`,
+				`Trap successfully laid at (${targetLoc.getX()}, ${targetLoc.getY()}). Chaining to next trap reset.`,
 			);
 			utilState.groundTrapHandlingLocation = null;
 			utilState.groundTrapTickCount = 0;
+			_groundTrapPhase = null;
+			_groundTrapPreLootCount = null;
+
+			// Find the next oldest trap to reset immediately (cancel any walk animations)
+			let nextOldestTrap: net.runelite.api.TileObject | null = null;
+			let nextOldestTime = Number.POSITIVE_INFINITY;
+
+			// Check shaking traps
+			for (const loc of trapLocationsCache) {
+				const locKey = `${loc.getX()},${loc.getY()}`;
+
+				// Only consider traps we know we laid
+				if (!playerLaidTraps.has(locKey)) continue;
+
+				// Skip the trap we just relaid
+				if (locKey === `${targetLoc.getX()},${targetLoc.getY()}`)
+					continue;
+
+				const shakingTrap = bot.objects
+					.getTileObjectsWithIds([object.boxTrap_Shaking])
+					.find((o) => {
+						if (!o) return false;
+						const worldLoc = o.getWorldLocation();
+						if (!worldLoc) return false;
+						return (
+							worldLoc.getX() === loc.getX() &&
+							worldLoc.getY() === loc.getY()
+						);
+					});
+
+				if (shakingTrap) {
+					const timestamp =
+						shakingTrapTimestamps.get(locKey) || Date.now();
+					if (timestamp < nextOldestTime) {
+						nextOldestTime = timestamp;
+						nextOldestTrap = shakingTrap;
+					}
+				}
+			}
+
+			// Check failed traps
+			for (const loc of trapLocationsCache) {
+				const locKey = `${loc.getX()},${loc.getY()}`;
+
+				// Only consider traps we know we laid
+				if (!playerLaidTraps.has(locKey)) continue;
+
+				// Skip the trap we just relaid
+				if (locKey === `${targetLoc.getX()},${targetLoc.getY()}`)
+					continue;
+
+				const failedTrap = bot.objects
+					.getTileObjectsWithIds([object.boxTrap_Failed])
+					.find((o) => {
+						if (!o) return false;
+						const worldLoc = o.getWorldLocation();
+						if (!worldLoc) return false;
+						return (
+							worldLoc.getX() === loc.getX() &&
+							worldLoc.getY() === loc.getY()
+						);
+					});
+
+				if (failedTrap) {
+					const timestamp =
+						failedTrapTimestamps.get(locKey) || Date.now();
+					if (timestamp < nextOldestTime) {
+						nextOldestTime = timestamp;
+						nextOldestTrap = failedTrap;
+					}
+				}
+			}
+
+			// If we found another trap, reset it immediately to cancel walk animation
+			if (nextOldestTrap) {
+				bot.objects.interactSuppliedObject(nextOldestTrap, 'Reset');
+
+				_resetInProgress = true;
+				_resetTargetLocation = nextOldestTrap.getWorldLocation();
+				_resetPhase = 'animating';
+				_resetTickCount = 0;
+				_nextTrapSearchAttempts = 0;
+				return true; // Continue with next trap reset
+			}
+
+			// No more traps to reset
 			_groundTrapJustLaid = true; // Flag that we're waiting for idle after laying
-			return true; // Keep returning true so we stay in this function waiting for idle
+			return true;
 		}
 
 		// Still waiting for animation or haven't laid yet
 		utilState.groundTrapTickCount++;
-
-		// On tick 2, lay the trap from inventory (give it time to loot first)
-		if (
-			utilState.groundTrapTickCount === 2 &&
-			bot.inventory.containsId(Item.boxTrap)
-		) {
-			logger(
-				state,
-				'debug',
-				'handleGroundTraps',
-				`Laying trap from inventory at (${targetLoc.getX()}, ${targetLoc.getY()}).`,
-			);
-			bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
-			profChinsUI.currentAction = 'Laying trap';
-		}
 
 		// Timeout after 10 ticks to prevent infinite waiting
 		if (utilState.groundTrapTickCount > 10) {
@@ -1129,6 +1272,8 @@ export function handleGroundTraps(): boolean {
 			);
 			utilState.groundTrapHandlingLocation = null;
 			utilState.groundTrapTickCount = 0;
+			_groundTrapPhase = null;
+			_groundTrapPreLootCount = null;
 			return false; // Done waiting
 		}
 		return true; // Still handling existing trap
@@ -1136,7 +1281,6 @@ export function handleGroundTraps(): boolean {
 
 	// No trap in progress, find next one to handle
 	// Look for ground traps at cached locations
-	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 	const groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
 
 	for (const groundTrap of groundTraps) {
@@ -1155,29 +1299,104 @@ export function handleGroundTraps(): boolean {
 		);
 
 		if (isAtCachedLocation) {
-			// Start handling this trap - loot it first, then lay from inventory
-			utilState.groundTrapHandlingLocation = trapLoc;
-			utilState.groundTrapTickCount = 0;
+			const locKey = `${trapLoc.getX()},${trapLoc.getY()}`;
 
-			logger(
-				state,
-				'debug',
-				'handleGroundTraps',
-				`Looting trap from ground at (${trapLoc.getX()}, ${trapLoc.getY()}).`,
-			);
+			// Track how long this trap has been on the ground
+			if (!fallenTrapTickCounts.has(locKey)) {
+				fallenTrapTickCounts.set(locKey, 0);
+			}
+			const ticksOnGround = fallenTrapTickCounts.get(locKey) || 0;
+			fallenTrapTickCounts.set(locKey, ticksOnGround + 1);
 
-			// Loot the ground trap item
-			bot.tileItems.lootItem(groundTrap);
-			profChinsUI.currentAction = 'Looting fallen trap';
+			// Only loot if trap has been fallen for 5+ ticks (avoids state transition overlap)
+			if (ticksOnGround >= FALLEN_TRAP_THRESHOLD) {
+				// Start handling this trap - loot it first, then lay from inventory
+				utilState.groundTrapHandlingLocation = trapLoc;
+				utilState.groundTrapTickCount = 0;
+				_groundTrapPhase = 'looting';
 
-			// Track that we just relaid the trap at this location
-			const relayKey = `${trapLoc.getX()},${trapLoc.getY()}`;
-			playerLaidTraps.add(relayKey);
-			return true; // Found and started handling a ground trap
+				logger(
+					state,
+					'debug',
+					'handleGroundTraps',
+					`Ground trap detected. Starting handling at (${trapLoc.getX()}, ${trapLoc.getY()}).`,
+				);
+
+				logger(
+					state,
+					'debug',
+					'handleGroundTraps',
+					`Looting trap from ground at (${trapLoc.getX()}, ${trapLoc.getY()}) after ${ticksOnGround} ticks.`,
+				);
+
+				const preLootCount: number = bot.inventory.getQuantityOfId(
+					Item.boxTrap,
+				);
+				_groundTrapPreLootCount = preLootCount;
+
+				// Loot the ground trap item
+				bot.tileItems.lootItem(groundTrap);
+				profChinsUI.currentAction = 'Looting fallen trap';
+
+				const postLootCount: number = bot.inventory.getQuantityOfId(
+					Item.boxTrap,
+				);
+				if (postLootCount > preLootCount) {
+					logger(
+						state,
+						'debug',
+						'handleGroundTraps',
+						`Loot confirmed. Relaying trap at (${trapLoc.getX()}, ${trapLoc.getY()}).`,
+					);
+					bot.inventory.interactWithIds([Item.boxTrap], ['Lay']);
+					profChinsUI.currentAction = 'Laying trap';
+					_groundTrapPhase = 'relaying';
+				}
+
+				// Track that we just relaid the trap at this location
+				const relayKey = `${trapLoc.getX()},${trapLoc.getY()}`;
+				playerLaidTraps.add(relayKey);
+
+				// Clear the tick counter since we're handling it now
+				fallenTrapTickCounts.delete(locKey);
+				return true; // Found and started handling a ground trap
+			}
+			// Return false to allow state machine to continue checking other things
+			return false;
 		}
 	}
-	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-	return false; // No ground traps found or handled
+
+	// Clean up fallen trap counters for traps no longer on the ground
+	for (const [locKey] of fallenTrapTickCounts) {
+		const isStillOnGround = groundTraps.some((gt) => {
+			if (!gt || !gt.tile) return false;
+			const loc = gt.tile.getWorldLocation();
+			if (!loc) return false;
+			return (
+				loc.getX().toString() + ',' + loc.getY().toString() === locKey
+			);
+		});
+		if (!isStillOnGround) {
+			fallenTrapTickCounts.delete(locKey);
+		}
+	}
+
+	// Check if there are any ground traps at our cached locations
+	for (const groundTrap of groundTraps) {
+		if (!groundTrap || !groundTrap.tile) continue;
+		const trapLoc = groundTrap.tile.getWorldLocation();
+		if (!trapLoc) continue;
+
+		const isAtCachedLocation = trapLocationsCache.some(
+			(loc) =>
+				loc.getX() === trapLoc.getX() && loc.getY() === trapLoc.getY(),
+		);
+		if (isAtCachedLocation) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 // Check if there are any traps that need resetting (shaking, failed, or ground items)
@@ -1191,7 +1410,6 @@ export function hasTrapsNeedingAttention(): boolean {
 	if (utilState.groundTrapHandlingLocation !== null) {
 		return true;
 	}
-
 	// Check if there are any ground traps at our cached locations
 	const groundTraps = bot.tileItems.getItemsWithIds([Item.boxTrap]);
 	for (const groundTrap of groundTraps) {
@@ -1210,7 +1428,6 @@ export function hasTrapsNeedingAttention(): boolean {
 
 	return false;
 }
-
 // Export utility functions through the utilFunctions object
 export const utilFunctions = {
 	maxTraps,

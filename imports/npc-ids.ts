@@ -12,7 +12,7 @@ export const NPC = {
 
 // Group NPC IDs
 export const npcGroupIds = {
-	leviathans: [NPC.leviathan, NPC.leviathanQuest],
+	leviathans: [12214, 12215],
 };
 
 // NPC Animation IDs

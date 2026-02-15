@@ -16,8 +16,6 @@ export const prayers = {
 	smite: net.runelite.api.Prayer.SMITE,
 };
 
-// Prayer-related utility functions
-
 // Check if specified prayer is currently active
 export const checkPrayer = (
 	state: State,
@@ -63,7 +61,7 @@ export const togglePrayer = (
 		logger(state, 'debug', 'togglePrayer', `${prayerKey} already active`);
 		return true;
 	}
-	bot.prayer.togglePrayer(prayer, true);
+	bot.prayer.togglePrayer(prayer, false);
 	const nowActive = client.isPrayerActive(prayer);
 	logger(
 		state,

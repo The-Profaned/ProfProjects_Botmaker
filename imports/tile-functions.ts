@@ -4,9 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { logger } from './logger.js';
 import { getWorldPoint } from './location-functions.js';
-import { dangerousObjectIds } from './object-ids.js';
 import { tileSets } from './tile-sets.js';
-import { State } from './types.js';
+import { ObjectID, State } from './types.js';
 
 // Tile object-related utility functions
 export const getAction = (
@@ -42,8 +41,8 @@ export const validTileName = (
 
 // return dangerous tiles based on provided object IDs (converts from instance to true world coordinates)
 export const getDangerousTiles = (
-	tileObjectIds?: number[],
-	graphicsObjectIds?: number[],
+	tileObjectIds: number[],
+	graphicsObjectIds: number[],
 ): net.runelite.api.coords.WorldPoint[] => {
 	const dangerousLocations: net.runelite.api.coords.WorldPoint[] = [];
 
@@ -54,7 +53,10 @@ export const getDangerousTiles = (
 			for (const obj of nearbyObjects) {
 				if (obj) {
 					const objLoc = obj.getWorldLocation();
-					dangerousLocations.push(getWorldPoint(objLoc) ?? objLoc);
+					const trueWorldPoint = getWorldPoint(objLoc);
+					if (trueWorldPoint) {
+						dangerousLocations.push(trueWorldPoint);
+					}
 				}
 			}
 		}
@@ -66,7 +68,8 @@ export const getDangerousTiles = (
 		if (graphicsObjs && graphicsObjs.length > 0) {
 			for (const obj of graphicsObjs) {
 				if (obj) {
-					const localPoint = obj.getLocation();
+					const localPoint: net.runelite.api.coords.LocalPoint | null =
+						obj.getLocation();
 					if (localPoint) {
 						const worldPoint =
 							net.runelite.api.coords.WorldPoint.fromLocalInstance(
@@ -75,9 +78,10 @@ export const getDangerousTiles = (
 							);
 						if (worldPoint) {
 							// Convert from instance to true world coordinates
-							const trueWorldPoint =
-								getWorldPoint(worldPoint) ?? worldPoint;
-							dangerousLocations.push(trueWorldPoint);
+							const trueWorldPoint = getWorldPoint(worldPoint);
+							if (trueWorldPoint) {
+								dangerousLocations.push(trueWorldPoint);
+							}
 						}
 					}
 				}
@@ -221,12 +225,14 @@ export const isPlayerInArea = (
 
 	const result = inXBounds && inYBounds && inPlane;
 
-	logger(
-		state,
-		'debug',
-		'isPlayerInArea',
-		`Player at (${playerX}, ${playerY}, ${playerPlane}). Area bounds: X[${minX}-${maxX}], Y[${minY}-${maxY}], Plane[${plane ?? 'any'}]. In area: ${result}`,
-	);
+	if (state.debugFullState) {
+		logger(
+			state,
+			'debug',
+			'isPlayerInArea',
+			`Player at (${playerX}, ${playerY}, ${playerPlane}). Area bounds: X[${minX}-${maxX}], Y[${minY}-${maxY}], Plane[${plane ?? 'any'}]. In area: ${result}`,
+		);
+	}
 
 	return result;
 };
@@ -240,6 +246,8 @@ export const areObjectsInBoundaries = (
 		minY: number;
 		maxY: number;
 	}>,
+	tileObjectIds?: number[],
+	graphicsObjectIds?: number[],
 ): boolean => {
 	interface Boundary {
 		minX: number;
@@ -253,9 +261,7 @@ export const areObjectsInBoundaries = (
 	}
 
 	// Check for leviBoulders (game objects) to detect debris special attack
-	const nearbyObjects = bot.objects.getTileObjectsWithIds([
-		dangerousObjectIds.leviBoulder,
-	]);
+	const nearbyObjects = bot.objects.getTileObjectsWithIds([47590]);
 
 	const tileObjectsFound: boolean = (nearbyObjects as TileObject[]).some(
 		(obj: TileObject) => {
@@ -274,14 +280,13 @@ export const areObjectsInBoundaries = (
 		},
 	);
 
-	// Check for leviFallingRock (graphics objects) for early detection
-	const graphicsObjs = bot.graphicsObjects.getWithIds(
-		dangerousObjectIds.leviFallingRocks,
-	);
+	const graphicsObjs = hasGraphicsObjectIds
+		? bot.graphicsObjects.getWithIds(graphicsObjectIds ?? [])
+		: [];
 
 	let graphicsObjectsFound = false;
 	if (graphicsObjs && graphicsObjs.length > 0) {
-		for (const obj of graphicsObjs) {
+		for (const obj of graphicsObjs as GraphicsObject[]) {
 			if (obj) {
 				const localPoint = obj.getLocation();
 				if (localPoint) {

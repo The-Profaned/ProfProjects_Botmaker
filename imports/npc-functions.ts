@@ -33,7 +33,7 @@ export const npcRendered = (npcId: number): boolean =>
 // Check if NPC is alive
 export const isNpcAlive = (npc: net.runelite.api.NPC | undefined): boolean => {
 	if (!npc) return false;
-	return (npc.getHealthRatio?.() ?? 0) > 0;
+	return !(npc.isDead?.() ?? false);
 };
 
 // Return first NPC with specific NPC-ID
@@ -84,7 +84,7 @@ export const initializeNpcAttackTracking = (state: State): void => {
 		}
 
 		try {
-			bot.events.register(eventName, handler);
+			bot.events.register(eventName, handler, 0);
 		} catch (error) {
 			logger(
 				state,

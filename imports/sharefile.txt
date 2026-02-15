@@ -1,0 +1,111 @@
+00:00:00 - Initialising script executor...
+00:00:00 - Preparing nodes for execution...
+00:00:00 - Preparing Sandboxed JS engine...
+00:00:00 - [JS] [script] profTears started.
+00:00:00 - Starting execution...
+00:00:00 - [JS] [start_state] Processing start_state
+00:00:00 - [JS] [start_state] Player in start bounds: true
+00:00:00 - [JS] [start_state] In bounds, attempting to unequip weapon/offhand
+00:00:00 - [JS] [getWornEquipment] Current equipment: {"head":24271,"cape":6570,"neck":6585,"weapon":4151,"body":11832,"shield":12954,"legs":7462,"hands":11773,"feet":9242}
+00:00:00 - [JS] [start_state] Unequip result: false
+00:00:00 - [JS] [start_state] Failed to unequip, waiting for next tick
+00:00:00 - [JS] [start_state] Processing start_state
+00:00:00 - [JS] [start_state] Player in start bounds: true
+00:00:01 - [JS] [start_state] In bounds, attempting to unequip weapon/offhand
+00:00:01 - [JS] [start_state] Unequip result: true
+00:00:01 - [JS] [start_state] Unequipped successfully, transitioning to talk_to_juna
+00:00:01 - [JS] [talk_to_juna] Processing talk_to_juna state
+00:00:01 - [JS] [cycle] blue wall spawned - Position: 1, Observed: 1/6 (GREEN phase)
+00:00:01 - [JS] [cycle] blue wall spawned - Position: 2, Observed: 2/6 (GREEN phase)
+00:00:01 - [JS] [cycle] green wall spawned - Position: 3, Observed: 3/6 (BLUE phase)
+00:00:01 - [JS] [cycle] green wall spawned - Position: 4, Observed: 4/6 (BLUE phase)
+00:00:01 - [JS] [cycle] blue wall spawned - Position: 5, Observed: 5/6 (BLUE phase)
+00:00:01 - [JS] [cycle] Cycle pattern verified: blue,blue,green,green,blue,green | Blue phase starts at position 0
+00:00:01 - [JS] [cycle] green wall spawned - Position: 0, Observed: 6/6 (GREEN phase)
+00:00:01 - [JS] [talk_to_juna] Cycle verified - Attempting to talk to Juna
+00:00:01 - [JS] [juna] Interacting with Juna
+00:00:02 - [JS] [talk_to_juna] Processing talk_to_juna state
+00:00:02 - [JS] [cycle] blue wall spawned - Position: 1, Observed: 7/6 (GREEN phase)
+00:00:02 - [JS] [cycle] blue wall despawned
+00:00:02 - [JS] [talk_to_juna] Waiting for dialog completion (1/5 ticks)
+00:00:02 - [JS] [talk_to_juna] Processing talk_to_juna state
+00:00:02 - [JS] [cycle] blue wall spawned - Position: 2, Observed: 8/6 (GREEN phase)
+00:00:02 - [JS] [cycle] blue wall despawned
+00:00:02 - [JS] [talk_to_juna] Waiting for dialog completion (2/5 ticks)
+00:00:03 - [JS] [talk_to_juna] Processing talk_to_juna state
+00:00:03 - [JS] [cycle] 3rd blue wall spawned - Click allowed
+00:00:03 - [JS] [cycle] blue wall spawned - Position: 3, Observed: 9/6 (BLUE phase)
+00:00:03 - [JS] [cycle] blue wall despawned
+00:00:03 - [JS] [talk_to_juna] Waiting for dialog completion (3/5 ticks)
+00:00:03 - [JS] [talk_to_juna] Processing talk_to_juna state
+00:00:03 - [JS] [cycle] green wall spawned - Position: 4, Observed: 10/6 (BLUE phase)
+00:00:03 - [JS] [cycle] green wall despawned
+00:00:03 - [JS] [talk_to_juna] Waiting for dialog completion (4/5 ticks)
+00:00:04 - [JS] [talk_to_juna] Processing talk_to_juna state
+00:00:04 - [JS] [talk_to_juna] Dialog complete, transitioning to walk_in_cave
+00:00:05 - [JS] [init] Player idle in cave, starting wall interactions
+00:00:05 - [JS] [start] Starting wall interactions from tile (3253, 9516)
+00:00:05 - [JS] [click] Click window: true, adjacentIndex: -1
+00:00:05 - [JS] [click] Clicking WEEPING_WALL at (3257, 9520)
+00:00:10 - [JS] [cycle] green wall spawned - Position: 5, Observed: 11/6 (BLUE phase)
+00:00:10 - [JS] [cycle] green wall despawned
+00:00:11 - [JS] [cycle] green wall spawned - Position: 0, Observed: 12/6 (GREEN phase)
+00:00:11 - [JS] [cycle] green wall despawned
+00:00:11 - [JS] [cycle] blue wall spawned - Position: 1, Observed: 13/6 (GREEN phase)
+00:00:11 - [JS] [cycle] blue wall despawned
+00:00:12 - [JS] [cycle] blue wall spawned - Position: 2, Observed: 14/6 (GREEN phase)
+00:00:12 - [JS] [cycle] blue wall despawned
+00:00:12 - [JS] [cycle] 3rd blue wall spawned - Click allowed
+00:00:12 - [JS] [cycle] blue wall spawned - Position: 3, Observed: 15/6 (BLUE phase)
+00:00:12 - [JS] [cycle] blue wall despawned
+00:00:12 - [JS] [click] Click window: true, adjacentIndex: -1
+00:00:12 - [JS] [click] Clicking WEEPING_WALL at (3261, 9517)
+00:00:13 - [JS] [cycle] green wall spawned - Position: 4, Observed: 16/6 (BLUE phase)
+00:00:13 - [JS] [cycle] green wall despawned
+00:00:20 - [JS] [cycle] green wall spawned - Position: 5, Observed: 17/6 (BLUE phase)
+00:00:20 - [JS] [cycle] green wall despawned
+00:00:20 - [JS] [cycle] green wall spawned - Position: 0, Observed: 18/6 (GREEN phase)
+00:00:20 - [JS] [cycle] green wall despawned
+00:00:21 - [JS] [cycle] blue wall spawned - Position: 1, Observed: 19/6 (GREEN phase)
+00:00:21 - [JS] [cycle] blue wall despawned
+00:00:21 - [JS] [cycle] blue wall spawned - Position: 2, Observed: 20/6 (GREEN phase)
+00:00:21 - [JS] [cycle] blue wall despawned
+00:00:22 - [JS] [cycle] 3rd blue wall spawned - Click allowed
+00:00:22 - [JS] [cycle] blue wall spawned - Position: 3, Observed: 21/6 (BLUE phase)
+00:00:22 - [JS] [cycle] blue wall despawned
+00:00:22 - [JS] [click] Click window: true, adjacentIndex: 4
+00:00:22 - [JS] [click] Clicking WEEPING_WALL at (3258, 9514)
+00:00:23 - [JS] [cycle] green wall spawned - Position: 4, Observed: 22/6 (BLUE phase)
+00:00:23 - [JS] [cycle] green wall despawned
+00:00:29 - [JS] [cycle] green wall spawned - Position: 5, Observed: 23/6 (BLUE phase)
+00:00:29 - [JS] [cycle] green wall despawned
+00:00:30 - [JS] [cycle] green wall spawned - Position: 0, Observed: 24/6 (GREEN phase)
+00:00:30 - [JS] [cycle] green wall despawned
+00:00:30 - [JS] [cycle] blue wall spawned - Position: 1, Observed: 25/6 (GREEN phase)
+00:00:30 - [JS] [cycle] blue wall despawned
+00:00:31 - [JS] [cycle] blue wall spawned - Position: 2, Observed: 26/6 (GREEN phase)
+00:00:31 - [JS] [cycle] blue wall despawned
+00:00:32 - [JS] [cycle] 3rd blue wall spawned - Click allowed
+00:00:32 - [JS] [cycle] blue wall spawned - Position: 3, Observed: 27/6 (BLUE phase)
+00:00:32 - [JS] [cycle] blue wall despawned
+00:00:32 - [JS] [switch] On dead wall (no decoration) - finding blue wall
+00:00:32 - [JS] [click] Click window: true, adjacentIndex: 7
+00:00:32 - [JS] [click] Clicking WEEPING_WALL at (3257, 9520)
+00:00:32 - [JS] [cycle] green wall spawned - Position: 4, Observed: 28/6 (BLUE phase)
+00:00:32 - [JS] [cycle] green wall despawned
+00:00:39 - [JS] [cycle] green wall spawned - Position: 5, Observed: 29/6 (BLUE phase)
+00:00:39 - [JS] [cycle] green wall despawned
+00:00:39 - [JS] [cycle] green wall spawned - Position: 0, Observed: 30/6 (GREEN phase)
+00:00:39 - [JS] [cycle] green wall despawned
+00:00:40 - [JS] [cycle] blue wall spawned - Position: 1, Observed: 31/6 (GREEN phase)
+00:00:40 - [JS] [cycle] blue wall despawned
+00:00:41 - [JS] [cycle] blue wall spawned - Position: 2, Observed: 32/6 (GREEN phase)
+00:00:41 - [JS] [cycle] blue wall despawned
+00:00:41 - [JS] [cycle] 3rd blue wall spawned - Click allowed
+00:00:41 - [JS] [cycle] blue wall spawned - Position: 3, Observed: 33/6 (BLUE phase)
+00:00:41 - [JS] [cycle] blue wall despawned
+00:00:41 - [JS] [click] Click window: true, adjacentIndex: 0
+00:00:41 - [JS] [click] Clicking WEEPING_WALL at (3258, 9520)
+00:00:42 - [JS] [cycle] green wall spawned - Position: 4, Observed: 34/6 (BLUE phase)
+00:00:42 - [JS] [cycle] green wall despawned
+00:00:45 - [JS] [script] profTears ended.

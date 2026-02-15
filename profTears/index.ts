@@ -1,41 +1,30 @@
 // Imports
-import { LOG_COLOR, logger } from '../imports/logger.js';
+import { logger } from '../imports/logger.js';
 import {
 	processBankOpen,
 	withdrawFirstExistingItem,
 } from '../imports/bank-functions.js';
 import { endScript, gameTick } from '../imports/general-function.js';
 import { gamesNecklace } from '../imports/item-ids.js';
-import { unequipWornEquipment } from '../imports/player-functions.js';
+import { getWornEquipment } from '../imports/player-functions.js';
 import { isPlayerInArea } from '../imports/tile-functions.js';
 import type { State } from '../imports/types.js';
 import {
-	getAverageWallDuration,
-	getBlueCycleTiming,
-	getTearsInteractionStatus,
+	clickBlueWall,
+	getCycleStatus,
 	getTearsStateFlags,
-	getTearsWallStats,
 	initializeTearsUtils,
-	interactWithBlueWall,
+	isCycleVerified,
 	resetTearsState,
 	setTearsStateFlags,
 	talkToJuna,
-	trackWallChanges,
-	updateInteractionState,
+	trackWallCycle,
 } from './tear-utils.js';
 
 type TearsStateFlags = {
 	scriptInitialized: boolean;
 	junaDialogCompleted: boolean;
-	lastPlayerMovementState: boolean;
-	playerStoppedMovingTicks: number;
 	minigameActive: boolean;
-};
-
-type TearsWallStats = {
-	blueWallCount: number;
-	greenWallCount: number;
-	historyCount: number;
 };
 
 // variables for script state
@@ -48,7 +37,7 @@ const state: State = {
 	mainState: 'start_state',
 	scriptInitalized: false,
 	scriptName: 'profTears',
-	uiCompleted: false,
+	uiCompleted: true,
 	timeout: 0,
 	gameTick: 0,
 	subState: '',
@@ -65,21 +54,25 @@ const minigameBounds = {
 const minigameStartBounds = {
 	minX: 3241,
 	maxX: 3252,
-	minY: 9503,
+	minY: 9498,
 	maxY: 9528,
 	plane: 2,
 };
 
-const ToG = new net.runelite.api.coords.WorldPoint(3249, 9515, 2);
+const ToG = new net.runelite.api.coords.WorldPoint(3250, 9516, 2);
 
 let scriptEnding = false;
 let minigameEntered = false;
+let pendingUnequipItemIds: number[] = [];
+let junaInteractionTick = -1;
 
 // On Start of Script
 export function onStart() {
 	try {
 		initializeTearsUtils(state);
 		resetTearsState();
+		// No UI for this script, mark complete to allow tick processing.
+		state.uiCompleted = true;
 		logger(state, 'all', 'script', `${state.scriptName} started.`);
 	} catch (error) {
 		logger(state, 'all', 'Script', (error as Error).toString());
@@ -107,6 +100,7 @@ export function onGameTick() {
 			state.mainState == 'start_state'
 		)
 			bot.breakHandler.setBreakHandlerStatus(true);
+		bot.widgets.handleDialogue([]);
 		stateManager();
 	} catch (error) {
 		logger(state, 'all', 'Script', (error as Error).toString());
@@ -159,7 +153,7 @@ function handleMinigameEnded(minigameActive: boolean): boolean {
 		scriptEnding = true;
 		logger(
 			state,
-			'all',
+			'debug',
 			'timer',
 			'Player left minigame area. Stopping script.',
 		);
@@ -169,20 +163,47 @@ function handleMinigameEnded(minigameActive: boolean): boolean {
 }
 
 function unequipWeaponOffhand(): boolean {
+	if (pendingUnequipItemIds.length === 0) {
+		const equipment: Record<string, number> = getWornEquipment(state);
+		pendingUnequipItemIds = ['weapon', 'shield']
+			.map((slot) => equipment[slot])
+			.filter(
+				(value): value is number =>
+					value !== undefined && value !== null,
+			);
+	}
+
+	const requiredSlots: number = pendingUnequipItemIds.length;
+	if (requiredSlots === 0) {
+		return true;
+	}
+
 	const emptySlots: number = bot.inventory.getEmptySlots();
-	if (emptySlots < 2) {
+	if (emptySlots < requiredSlots) {
 		logger(
 			state,
 			'all',
 			'equipment',
-			'Need at least 2 empty inventory slots to unequip weapon and offhand.',
-			LOG_COLOR.GOLD,
+			`Need at least ${requiredSlots} empty inventory slot${requiredSlots === 1 ? '' : 's'} to unequip weapon and offhand.`,
 		);
 		return false;
 	}
 
-	const result = unequipWornEquipment(state, ['weapon', 'shield']);
-	return result.success;
+	for (const itemId of pendingUnequipItemIds) {
+		if (bot.equipment.containsId(itemId)) {
+			bot.equipment.unequip(itemId);
+		}
+	}
+
+	const remainingIds: number[] = pendingUnequipItemIds.filter((id) =>
+		bot.equipment.containsId(id),
+	);
+	if (remainingIds.length === 0) {
+		pendingUnequipItemIds = [];
+		return true;
+	}
+
+	return false;
 }
 
 function getTickContext(): {
@@ -199,27 +220,8 @@ function getTickContext(): {
 	if (handleMinigameEnded(minigameActive)) {
 		return null;
 	}
-	trackWallChanges();
-	updateInteractionState();
 
 	return { currentTick, minigameActive };
-}
-
-function logWallStatus(currentTick: number): void {
-	const flags: TearsStateFlags = getTearsStateFlags();
-	if (currentTick % 10 !== 0 || !flags.minigameActive) {
-		return;
-	}
-
-	const avgDuration: number = getAverageWallDuration('all');
-	const stats: TearsWallStats = getTearsWallStats();
-	logger(
-		state,
-		'debug',
-		'status',
-		`Blue: ${stats.blueWallCount} | Green: ${stats.greenWallCount} | Avg duration: ${avgDuration.toFixed(1)} ticks | History: ${stats.historyCount}`,
-		LOG_COLOR.GOLD,
-	);
 }
 
 // Script Initialized Notification
@@ -235,17 +237,17 @@ export function onEnd() {
 
 // Script Decision Manager
 function stateManager() {
-	logger(
-		state,
-		'debug',
-		'stateManager',
-		`${state.mainState}`,
-		LOG_COLOR.GOLD,
-	);
 	switch (state.mainState) {
 		case 'start_state': {
+			logger(state, 'debug', 'start_state', 'Processing start_state');
 			const tickContext = getTickContext();
 			if (!tickContext) {
+				logger(
+					state,
+					'debug',
+					'start_state',
+					'No tickContext available',
+				);
 				return;
 			}
 
@@ -266,32 +268,178 @@ function stateManager() {
 				minigameStartBounds.maxY,
 				minigameStartBounds.plane,
 			);
+			logger(
+				state,
+				'debug',
+				'start_state',
+				`Player in start bounds: ${isInStartBounds}`,
+			);
+
 			if (!isInStartBounds) {
+				logger(
+					state,
+					'debug',
+					'start_state',
+					'Not in bounds, transitioning to navigate_to_cave',
+				);
 				state.mainState = 'navigate_to_cave';
 				return;
 			}
 
+			logger(
+				state,
+				'debug',
+				'start_state',
+				'In bounds, attempting to unequip weapon/offhand',
+			);
 			const unequipped: boolean = unequipWeaponOffhand();
+			logger(
+				state,
+				'debug',
+				'start_state',
+				`Unequip result: ${unequipped}`,
+			);
+
 			if (!unequipped) {
+				logger(
+					state,
+					'debug',
+					'start_state',
+					'Failed to unequip, waiting for next tick',
+				);
 				return;
 			}
 
+			logger(
+				state,
+				'debug',
+				'start_state',
+				'Unequipped successfully, transitioning to talk_to_juna',
+			);
 			state.mainState = 'talk_to_juna';
 			break;
 		}
 		case 'talk_to_juna': {
+			logger(
+				state,
+				'debug',
+				'talk_to_juna',
+				'Processing talk_to_juna state',
+			);
+			const tickContext = getTickContext();
+			if (!tickContext) {
+				logger(
+					state,
+					'debug',
+					'talk_to_juna',
+					'No tickContext available',
+				);
+				return;
+			}
+
+			// Track wall cycle to verify spawn pattern
+			trackWallCycle();
+
+			const flags: TearsStateFlags = getTearsStateFlags();
+
+			// Dialog already completed - wait for delay then transition
+			if (flags.junaDialogCompleted) {
+				const ticksSinceTalk =
+					tickContext.currentTick - junaInteractionTick;
+				if (ticksSinceTalk < 5) {
+					logger(
+						state,
+						'debug',
+						'talk_to_juna',
+						`Waiting for dialog completion (${ticksSinceTalk}/5 ticks)`,
+					);
+					return;
+				}
+
+				logger(
+					state,
+					'debug',
+					'talk_to_juna',
+					'Dialog complete, transitioning to walk_in_cave',
+				);
+				state.mainState = 'walk_in_cave';
+				break;
+			}
+
+			// Start walking to Juna immediately - continue cycle tracking during walk
+			logger(state, 'debug', 'talk_to_juna', 'Starting walk to Juna');
+			state.mainState = 'navigate_to_juna';
+			break;
+		}
+
+		case 'navigate_to_juna': {
 			const tickContext = getTickContext();
 			if (!tickContext) {
 				return;
 			}
 
-			const flags: TearsStateFlags = getTearsStateFlags();
-			if (!flags.junaDialogCompleted) {
-				talkToJuna();
+			// Continue tracking wall cycle while walking
+			trackWallCycle();
+
+			const player = client.getLocalPlayer();
+			if (!player) {
 				return;
 			}
 
-			state.mainState = 'walk_in_cave';
+			const playerLoc = player.getWorldLocation();
+			const junaLoc = new net.runelite.api.coords.WorldPoint(
+				3248,
+				9516,
+				2,
+			);
+			const distance = Math.max(
+				Math.abs(playerLoc.getX() - junaLoc.getX()),
+				Math.abs(playerLoc.getY() - junaLoc.getY()),
+			);
+
+			// Already close to Juna
+			if (distance <= 2) {
+				// Only talk if cycle is verified
+				if (!isCycleVerified()) {
+					const cycleStatus = getCycleStatus();
+					// If too many spawns observed, something is wrong
+					if (cycleStatus.observedSpawns >= 12) {
+						logger(
+							state,
+							'all',
+							'cycle',
+							'Please log into the appropriate Tears of Guthix World.',
+						);
+						bot.terminate();
+						return;
+					}
+					// Still waiting for verification
+					return;
+				}
+
+				logger(
+					state,
+					'debug',
+					'navigate_to_juna',
+					'Close to Juna and cycle verified, attempting to talk',
+				);
+				talkToJuna();
+				junaInteractionTick = tickContext.currentTick;
+				state.mainState = 'talk_to_juna';
+				break;
+			}
+
+			// Start walking to Juna if not already walking and not webwalking
+			if (!bot.localPlayerMoving() && !bot.walking.isWebWalking()) {
+				logger(
+					state,
+					'debug',
+					'navigate_to_juna',
+					`Walking to Juna (distance: ${distance}), target: (${ToG.getX()}, ${ToG.getY()})`,
+				);
+				bot.walking.walkToTrueWorldPoint(ToG.getX(), ToG.getY());
+			}
+
 			break;
 		}
 
@@ -301,39 +449,24 @@ function stateManager() {
 				return;
 			}
 
-			const flags: TearsStateFlags = getTearsStateFlags();
-			const isPlayerMoving: boolean = bot.localPlayerMoving();
-			if (isPlayerMoving) {
-				setTearsStateFlags({
-					...flags,
-					lastPlayerMovementState: true,
-					playerStoppedMovingTicks: 0,
-				});
-				return;
+			// Player still moving - wait
+			if (bot.localPlayerMoving() || !bot.localPlayerIdle()) {
+				break;
 			}
 
-			if (flags.lastPlayerMovementState) {
-				const stoppedTicks: number = flags.playerStoppedMovingTicks + 1;
-				if (stoppedTicks >= 1) {
-					setTearsStateFlags({
-						...flags,
-						scriptInitialized: true,
-						playerStoppedMovingTicks: stoppedTicks,
-					});
-					logger(
-						state,
-						'debug',
-						'init',
-						'Player stopped moving, starting wall interactions',
-					);
-					state.mainState = 'click_blue_tears';
-					return;
-				}
-				setTearsStateFlags({
-					...flags,
-					playerStoppedMovingTicks: stoppedTicks,
-				});
-			}
+			// Player is idle - transition to wall clicking
+			const flags: TearsStateFlags = getTearsStateFlags();
+			setTearsStateFlags({
+				...flags,
+				scriptInitialized: true,
+			});
+			logger(
+				state,
+				'debug',
+				'init',
+				'Player idle in cave, starting wall interactions',
+			);
+			state.mainState = 'click_blue_tears';
 			break;
 		}
 
@@ -342,27 +475,17 @@ function stateManager() {
 			if (!tickContext) {
 				return;
 			}
-			logWallStatus(tickContext.currentTick);
 
-			const interactionStatus = getTearsInteractionStatus();
-			if (!interactionStatus.lastClickedWallKey) {
-				interactWithBlueWall();
-				return;
+			trackWallCycle();
+			const clickedTile = clickBlueWall();
+			if (clickedTile) {
+				logger(
+					state,
+					'debug',
+					'click_blue_tears',
+					`Clicked tile: (${clickedTile.getX()}, ${clickedTile.getY()})`,
+				);
 			}
-
-			if (!interactionStatus.blueCycleComplete) {
-				return;
-			}
-
-			const timing = getBlueCycleTiming();
-			if (
-				timing.ticksSinceLastBlueChange !== null &&
-				timing.ticksSinceLastBlueChange < 1
-			) {
-				return;
-			}
-
-			interactWithBlueWall();
 			break;
 		}
 
@@ -374,47 +497,63 @@ function stateManager() {
 			switch (state.subState) {
 				case 'get_to_bank': {
 					processBankOpen(state, () => {
+						logger(state, 'debug', 'bank', 'Bank opened');
 						state.subState = 'find_teleport';
 					});
 					break;
 				}
 				case 'find_teleport': {
-					if (!bot.bank.isOpen()) {
+					const necklaceCandidates: number[] = gamesNecklace.slice(
+						0,
+						8,
+					);
+
+					const hasNecklace: boolean =
+						bot.inventory.containsAnyIds(necklaceCandidates);
+
+					// Don't have necklace and bank is closed - reopen bank
+					if (!hasNecklace && !bot.bank.isOpen()) {
 						state.subState = 'get_to_bank';
 						break;
 					}
 
-					const necklaceCandidates: number[] = gamesNecklace.slice(
-						1,
-						7,
-					);
-					const hasNecklace: boolean =
-						bot.inventory.containsAnyIds(necklaceCandidates);
+					// Don't have necklace but bank is open - withdraw it
 					if (!hasNecklace) {
-						const withdrew: boolean = withdrawFirstExistingItem(
+						withdrawFirstExistingItem(
 							state,
 							necklaceCandidates,
 							1,
 							'navigate_to_cave',
 						);
-						if (!withdrew) {
-							break;
-						}
-					}
-
-					bot.bank.close();
-					if (bot.bank.isOpen()) {
 						break;
 					}
 
+					// Have necklace but bank still open - close it
+					if (bot.bank.isOpen()) {
+						logger(state, 'debug', 'bank', 'Closing bank');
+						bot.bank.close();
+						break;
+					}
+
+					// Bank is closed and we have necklace
 					const selectedNecklace: number | undefined =
 						necklaceCandidates.find((id) =>
 							bot.inventory.containsId(id),
 						);
+
 					if (!selectedNecklace) {
+						state.subState = 'get_to_bank';
 						break;
 					}
+
+					logger(
+						state,
+						'debug',
+						'webwalk',
+						`Webwalking to ToG with necklace ${selectedNecklace}`,
+					);
 					bot.walking.webWalkStart(ToG);
+
 					state.subState = '';
 					state.mainState = 'talk_to_juna';
 					break;

@@ -31,6 +31,95 @@ export const LOG_COLOR = {
 	DEFAULT: LOG_COLOR_DEFAULT,
 } as const;
 
+const includesAny = (text: string, keywords: readonly string[]): boolean =>
+	keywords.some((keyword) => text.includes(keyword));
+
+const DANGER_KEYWORDS = [
+	'danger',
+	'dangerous',
+	'fatal',
+	'error',
+	'failed',
+	'failure',
+	'timeout',
+	'dead',
+	'death',
+	'low hp',
+	'critical',
+] as const;
+
+const NPC_ACTION_KEYWORDS = [
+	'npc',
+	'projectile',
+	'animation',
+	'despawn',
+	'spawn',
+] as const;
+
+const STATE_KEYWORDS = [
+	'state',
+	'substate',
+	'phase',
+	'transition',
+	'entering',
+	'exiting',
+	'resume',
+	'resuming',
+	'initialize',
+	'initialized',
+	'start',
+	'started',
+	'end',
+	'ended',
+] as const;
+
+const PLAYER_ACTION_KEYWORDS = [
+	'attack',
+	'attacking',
+	'prayer',
+	'walk',
+	'walking',
+	'move',
+	'moving',
+	'webwalk',
+	'eat',
+	'eating',
+	'drink',
+	'drinking',
+	'equip',
+	'unequip',
+	'cast',
+	'bank',
+	'withdraw',
+	'deposit',
+	'loot',
+] as const;
+
+const SYSTEM_KEYWORDS = [
+	'debug',
+	'cache',
+	'snapshot',
+	'poll',
+	'tracking',
+	'tick',
+	'status',
+	'queue',
+	'path',
+	'waypoint',
+	'distance',
+	'timer',
+] as const;
+
+const classifyLogColor = (source: string, message: string): LogColor => {
+	const text = `${source} ${message}`.toLowerCase();
+	if (includesAny(text, DANGER_KEYWORDS)) return LOG_COLOR_PINK;
+	if (includesAny(text, STATE_KEYWORDS)) return LOG_COLOR_GOLD;
+	if (includesAny(text, NPC_ACTION_KEYWORDS)) return LOG_COLOR_CORAL;
+	if (includesAny(text, PLAYER_ACTION_KEYWORDS)) return LOG_COLOR_EMERALD;
+	if (includesAny(text, SYSTEM_KEYWORDS)) return LOG_COLOR_TEAL;
+	return LOG_COLOR_BLUE;
+};
+
 export const logger = (
 	state: State | null | undefined,
 	type: 'all' | 'debug',
@@ -40,7 +129,7 @@ export const logger = (
 ): void => {
 	const logMessage = `[${source}] ${message}`;
 	const printToLog = (): void => {
-		const chosenColor = color ?? LOG_COLOR_DEFAULT;
+		const chosenColor = color ?? classifyLogColor(source, message);
 		log.printRGB(logMessage, chosenColor.r, chosenColor.g, chosenColor.b);
 	};
 	if (type === 'all') log.printGameMessage(logMessage); // Always log 'all' messages to game chat

@@ -22,7 +22,7 @@ export const disableProtectionPrayers = (state: State): void => {
 	];
 	for (const prayer of protectionPrayers) {
 		if (checkPrayer(state, prayer)) {
-			bot.prayer.togglePrayer(prayers[prayer], false);
+			bot.prayer.togglePrayer(prayers[prayer], true);
 			logger(
 				state,
 				'debug',
@@ -88,7 +88,7 @@ export const activatePrayerForProjectile = (
 };
 
 // Activate prayer for closest NPC attack animation (pre-emptive)
-export const activatePrayerForNpcAttack = (
+export const activatePrayerForNPCAttack = (
 	state: State,
 	npcAttack: { npcIndex: number; animationId: number; distance: number },
 ): boolean => {
@@ -178,7 +178,7 @@ export const handleNpcAttackAnimations = (state: State): boolean => {
 		`NPC attack queue (${sortedAttacks.length}): ${sortedAttacks.map((a) => `${a.npcIndex}:${a.animationId}(${a.distance}t)`).join(', ')}`,
 	);
 
-	return activatePrayerForNpcAttack(state, sortedAttacks[0]);
+	return activatePrayerForNPCAttack(state, sortedAttacks[0]);
 };
 
 // Attack target NPC by ID
@@ -286,8 +286,8 @@ export const getWornEquipment = (state: State): Record<string, number> => {
 	for (const [slotIndex, slotName] of Object.entries(equipmentSlots)) {
 		const index = Number(slotIndex);
 		const item = equipmentItems[index];
-		if (item && item.id > 0) {
-			equipment[slotName] = item.id;
+		if (item && item.getId?.() && item.getId() > 0) {
+			equipment[slotName] = item.getId();
 		}
 	}
 
@@ -300,6 +300,7 @@ export const getWornEquipment = (state: State): Record<string, number> => {
 	return equipment;
 };
 
+// Unequip all worn equipment or specific slots
 export const unequipWornEquipment = (
 	state: State,
 	slots?: string[],

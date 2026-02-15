@@ -62,10 +62,33 @@ export const updateProjectileDistance = (state: State): void => {
 		(bot.projectiles?.getProjectilesWithIds?.(
 			trackedProjectileIds,
 		) as any[]) ?? [];
+
+	// Debug: Log API call results using both methods
+	log.print(
+		`[DEBUG] updateProjectileDistance: API returned ${projectiles.length} projectiles for IDs [${trackedProjectileIds.join(', ')}]`,
+	);
+	logger(
+		state,
+		'debug',
+		'updateProjectileDistance',
+		`API returned ${projectiles.length} projectiles for IDs [${trackedProjectileIds.join(', ')}]`,
+	);
+
 	const player = client?.getLocalPlayer?.();
 	const playerLoc = player?.getWorldLocation?.();
 
-	if (!playerLoc) return;
+	if (!playerLoc) {
+		log.print(
+			'[DEBUG] updateProjectileDistance: No player location available',
+		);
+		logger(
+			state,
+			'debug',
+			'updateProjectileDistance',
+			'No player location available',
+		);
+		return;
+	}
 
 	const maxDistance = 10;
 	const currentProjectileIds = new Set<number>();
@@ -81,9 +104,28 @@ export const updateProjectileDistance = (state: State): void => {
 		}
 		const projLoc = projectile.getWorldLocation?.();
 
-		if (!projLoc?.distanceTo || typeof id !== 'number') continue;
+		if (!projLoc?.distanceTo || typeof id !== 'number') {
+			logger(
+				state,
+				'debug',
+				'updateProjectileDistance',
+				`Skipping projectile: invalid location or ID (id=${id})`,
+			);
+			continue;
+		}
 
 		const distance = projLoc.distanceTo(playerLoc);
+
+		// Debug: Log all projectiles, even if too far
+		log.print(
+			`[DEBUG] Projectile ${id} at distance ${distance} tiles (max: ${maxDistance})`,
+		);
+		logger(
+			state,
+			'debug',
+			'updateProjectileDistance',
+			`Projectile ${id} at distance ${distance} tiles (max: ${maxDistance})`,
+		);
 
 		if (distance <= maxDistance) {
 			currentProjectileIds.add(id);
@@ -112,6 +154,9 @@ export const updateProjectileDistance = (state: State): void => {
 					startCycle,
 					endCycle,
 				});
+				log.print(
+					`[DEBUG] Now tracking projectile ${id} at distance ${distance}, hits in ${ticksUntilHit} ticks`,
+				);
 				logger(
 					state,
 					'debug',
@@ -119,6 +164,10 @@ export const updateProjectileDistance = (state: State): void => {
 					`Tracking projectile ${id} at distance ${distance}, hits in ${ticksUntilHit} ticks at (${targetX}, ${targetY})`,
 				);
 			}
+		} else {
+			log.print(
+				`[DEBUG] Projectile ${id} too far (${distance} > ${maxDistance}), not tracking`,
+			);
 		}
 	}
 
@@ -127,6 +176,9 @@ export const updateProjectileDistance = (state: State): void => {
 		if (!currentProjectileIds.has(id)) {
 			recordProjectileHit(state, id);
 			trackedProjectiles.delete(id);
+			bot.printLogMessage(
+				`[DEBUG] Projectile ${id} removed (out of range)`,
+			);
 			logger(
 				state,
 				'debug',
@@ -135,6 +187,10 @@ export const updateProjectileDistance = (state: State): void => {
 			);
 		}
 	}
+
+	bot.printLogMessage(
+		`[DEBUG] updateProjectileDistance complete: ${trackedProjectiles.size} projectiles being tracked`,
+	);
 };
 
 // Get sorted projectiles by distance

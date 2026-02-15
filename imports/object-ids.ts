@@ -9,7 +9,7 @@ export const object = {
 // Dangerous object IDs (e.g., falling rocks/hazards)
 export const dangerousObjectIds = {
 	leviFallingRocks: [2475, 2476, 2477, 2478, 2479],
-	leviBoulder: 47590,
+	leviBoulder: [47590],
 };
 
 export function getObjectIdGroups() {

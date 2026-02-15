@@ -3,6 +3,7 @@ import { logger } from '../imports/logger.js';
 import { createUi } from '../imports/ui-functions.js';
 import { endScript, gameTick } from '../imports/general-function.js';
 import type { State } from '../imports/types.js';
+import { stateManager } from './State Manager/state-manager.js';
 
 // variables for script state
 const state: State = {
@@ -67,21 +68,4 @@ function notifyScriptInitialized(): void {
 export function onEnd() {
 	logger(state, 'all', 'script', `${state.scriptName} ended.`);
 	endScript(state);
-}
-
-// Script Decision Manager
-function stateManager() {
-	logger(state, 'debug', 'stateManager', `${state.mainState}`);
-	switch (state.mainState) {
-		case 'start_state': {
-			break;
-		}
-		case 'next_state': {
-			break;
-		}
-		default: {
-			state.mainState = 'start_state';
-			break;
-		}
-	}
 }

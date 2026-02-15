@@ -254,6 +254,54 @@ export const processBankOpen = (state: State, onOpen: () => void): void => {
 		return;
 	}
 	if (!state.bankWalkInitiated) {
+		// Check if player is already near a bank (within 3 tiles) by looking for bank objects
+		const player = client.getLocalPlayer();
+		if (player) {
+			const playerLoc = player.getWorldLocation();
+
+			// Try to find nearby bank objects
+			const bankNames = [
+				'Bank booth',
+				'Bank chest',
+				'Grand Exchange booth',
+				'Bank',
+				'Banker',
+			];
+			const nearbyBanks = bot.objects.getTileObjectsWithNames(bankNames);
+
+			if (nearbyBanks && nearbyBanks.length > 0) {
+				// Check if any bank is within 3 tiles
+				for (const bank of nearbyBanks) {
+					const bankLoc = bank.getWorldLocation();
+					const distance = Math.max(
+						Math.abs(playerLoc.getX() - bankLoc.getX()),
+						Math.abs(playerLoc.getY() - bankLoc.getY()),
+					);
+
+					if (distance <= 3) {
+						// Already near bank, skip webwalk and go straight to opening
+						logger(
+							state,
+							'debug',
+							'bankFunctions.processBankOpen',
+							`Player within ${distance} tiles of bank, skipping webwalk`,
+						);
+						state.bankWalkInitiated = true;
+						state.isAtBankLocation = false;
+						state.bankOpenAttemptTick = -1;
+						return;
+					}
+				}
+			}
+		}
+
+		// Not near bank, initiate webwalk
+		logger(
+			state,
+			'debug',
+			'bankFunctions.processBankOpen',
+			'Initiating webwalk to nearest bank',
+		);
 		bot.walking.webWalkToNearestBank();
 		state.bankWalkInitiated = true;
 		state.isAtBankLocation = false;

@@ -4,10 +4,23 @@ import { getObjectIdGroups } from '../imports/object-ids.js';
 // This will be passed in by the caller
 let state: any;
 let trapLocationsCache: net.runelite.api.coords.WorldPoint[];
-let isOccupiedByTrapOrGround: (
-	loc: net.runelite.api.coords.WorldPoint,
-) => boolean;
-let maxTraps: () => number;
+let getTrapsLaid: () => number;
+let getMaxTraps: () => number;
+let getIsWebWalking: () => boolean;
+const TILE_OVERLAY_INTERVAL: number = 2;
+const PANEL_OVERLAY_INTERVAL: number = 2;
+
+type PanelLine = {
+	left: string;
+	right: string;
+	leftColor: java.awt.Color;
+	rightColor: java.awt.Color;
+};
+
+type PanelCache = {
+	lines: PanelLine[];
+	shrink: boolean;
+};
 
 // UI Tracking Variables
 export let currentAction = 'Idle';
@@ -48,50 +61,65 @@ const overlay = {
 
 const overlayPanel = {
 	panel: null as any,
+	panelCache: null as PanelCache | null,
 	override: {
 		shrink: false,
 		maxWidth: 0,
 		panelComponent: null as any,
 		render(graphics: any): any {
-			let trapsLaid = 0;
-			for (const loc of trapLocationsCache) {
-				if (isOccupiedByTrapOrGround(loc)) {
-					trapsLaid++;
-				}
+			if (!state) {
+				return (this as any).super$render(graphics);
+			}
+			const shouldRefresh: boolean =
+				state.gameTick % PANEL_OVERLAY_INTERVAL === 0;
+			if (
+				shouldRefresh ||
+				!overlayPanel.panelCache ||
+				overlayPanel.panelCache.shrink !== this.shrink
+			) {
+				const panelText1 = this.shrink ? 'Caught:' : 'Chins caught:';
+				const trapsLaid = getTrapsLaid();
+				const maxAllowed = getMaxTraps();
+				const panelText2 = this.shrink ? 'Traps:' : 'Traps laid:';
+				const stateText = this.shrink ? 'Action:' : 'Current Action:';
+				overlayPanel.panelCache = {
+					shrink: this.shrink,
+					lines: [
+						{
+							left: panelText1,
+							right: `${totalChinsCaught}`,
+							leftColor: java.awt.Color.CYAN,
+							rightColor: java.awt.Color.YELLOW,
+						},
+						{
+							left: panelText2,
+							right: `${trapsLaid}/${maxAllowed}`,
+							leftColor: java.awt.Color.CYAN,
+							rightColor: java.awt.Color.GREEN,
+						},
+						{
+							left: stateText,
+							right: currentAction,
+							leftColor: java.awt.Color.CYAN,
+							rightColor: java.awt.Color.GREEN,
+						},
+					],
+				};
 			}
 
-			const panelText1 = this.shrink ? 'Caught:' : 'Chins caught:';
-			this.addText(
-				graphics,
-				this.panelComponent,
-				panelText1,
-				`${totalChinsCaught}`,
-				java.awt.Color.CYAN,
-				java.awt.Color.YELLOW,
-			);
-			const maxAllowed = maxTraps();
-			const panelText2 = this.shrink ? 'Traps:' : 'Traps laid:';
-			this.addText(
-				graphics,
-				this.panelComponent,
-				panelText2,
-				`${trapsLaid}/${maxAllowed}`,
-				java.awt.Color.CYAN,
-				java.awt.Color.GREEN,
-			);
-
-			const stateText = this.shrink ? 'Action:' : 'Current Action:';
-			const stateValue = currentAction;
-			const stateColor = java.awt.Color.GREEN;
-
-			this.addText(
-				graphics,
-				this.panelComponent,
-				stateText,
-				stateValue,
-				java.awt.Color.CYAN,
-				stateColor,
-			);
+			const cached = overlayPanel.panelCache;
+			if (cached) {
+				for (const line of cached.lines) {
+					this.addText(
+						graphics,
+						this.panelComponent,
+						line.left,
+						line.right,
+						line.leftColor,
+						line.rightColor,
+					);
+				}
+			}
 
 			return (this as any).super$render(graphics);
 		},
@@ -181,109 +209,133 @@ const overlayTile = {
 	override: {
 		render(graphics: any): any {
 			try {
+				if (!state) {
+					return null;
+				}
+				if (getIsWebWalking && getIsWebWalking()) {
+					return null;
+				}
+				if (getTrapsLaid() === 0) {
+					return null;
+				}
+
+				const shouldRefresh: boolean =
+					state.gameTick % TILE_OVERLAY_INTERVAL === 0;
+				const shakingTrapMap = shouldRefresh
+					? new Map(
+							bot.objects
+								.getTileObjectsWithIds(
+									getObjectIdGroups().boxTrap_Shaking,
+								)
+								.filter((o: any) => o && o.getWorldLocation())
+								.map((o: any) => {
+									const worldLoc = o.getWorldLocation();
+									const key = `${worldLoc.getX()},${worldLoc.getY()}`;
+									return [key, o] as [string, any];
+								}),
+						)
+					: null;
+				const failedTrapMap = shouldRefresh
+					? new Map(
+							bot.objects
+								.getTileObjectsWithIds(
+									getObjectIdGroups().boxTrap_Failed,
+								)
+								.filter((o: any) => o && o.getWorldLocation())
+								.map((o: any) => {
+									const worldLoc = o.getWorldLocation();
+									const key = `${worldLoc.getX()},${worldLoc.getY()}`;
+									return [key, o] as [string, any];
+								}),
+						)
+					: null;
+				const laidTrapMap = shouldRefresh
+					? new Map(
+							bot.objects
+								.getTileObjectsWithIds(
+									getObjectIdGroups().boxTrapLayed,
+								)
+								.filter((o: any) => o && o.getWorldLocation())
+								.map((o: any) => {
+									const worldLoc = o.getWorldLocation();
+									const key = `${worldLoc.getX()},${worldLoc.getY()}`;
+									return [key, o] as [string, any];
+								}),
+						)
+					: null;
+
 				trapLocationsCache.forEach((loc, index) => {
 					try {
 						const locKey = `${loc.getX()},${loc.getY()}`;
 						let stateColor = java.awt.Color.GRAY;
 						let stateText = `Box ${index + 1}`;
 
-						// Check for shaking trap (caught)
-						const shakingTrap = bot.objects
-							.getTileObjectsWithIds(
-								getObjectIdGroups().boxTrap_Shaking,
-							)
-							.find(
-								(o: any) =>
-									o &&
-									o.getWorldLocation() &&
-									o.getWorldLocation().getX() ===
-										loc.getX() &&
-									o.getWorldLocation().getY() === loc.getY(),
-							);
-
-						if (shakingTrap) {
-							stateColor = java.awt.Color.GREEN;
-							stateText = 'Caught!';
-							// Update cache to Caught!
-							overlayTile.tileStates.set(locKey, {
-								color: stateColor,
-								text: stateText,
-							});
-						} else {
-							// Check for failed trap
-							const failedTrap = bot.objects
-								.getTileObjectsWithIds(
-									getObjectIdGroups().boxTrap_Failed,
-								)
-								.find(
-									(o: any) =>
-										o &&
-										o.getWorldLocation() &&
-										o.getWorldLocation().getX() ===
-											loc.getX() &&
-										o.getWorldLocation().getY() ===
-											loc.getY(),
-								);
-
-							if (failedTrap) {
-								stateColor = java.awt.Color.RED;
-								stateText = 'Reset';
-								// Update cache to Reset
+						if (shouldRefresh) {
+							const shakingTrap =
+								shakingTrapMap && shakingTrapMap.get(locKey);
+							if (shakingTrap) {
+								stateColor = java.awt.Color.GREEN;
+								stateText = 'Caught!';
 								overlayTile.tileStates.set(locKey, {
 									color: stateColor,
 									text: stateText,
 								});
 							} else {
-								// Check for active laid trap
-								const laidTrap = bot.objects
-									.getTileObjectsWithIds(
-										getObjectIdGroups().boxTrapLayed,
-									)
-									.find(
-										(o: any) =>
-											o &&
-											o.getWorldLocation() &&
-											o.getWorldLocation().getX() ===
-												loc.getX() &&
-											o.getWorldLocation().getY() ===
-												loc.getY(),
-									);
-
-								if (laidTrap) {
-									stateColor = java.awt.Color.YELLOW;
-									stateText = 'Active';
-									// Update cache to Active
+								const failedTrap =
+									failedTrapMap && failedTrapMap.get(locKey);
+								if (failedTrap) {
+									stateColor = java.awt.Color.RED;
+									stateText = 'Reset';
 									overlayTile.tileStates.set(locKey, {
 										color: stateColor,
 										text: stateText,
 									});
 								} else {
-									// No trap object - check cached state
-									const cachedState =
-										overlayTile.tileStates.get(locKey);
-									if (cachedState) {
-										// If cached state is Caught! or Reset, change to Laying...
-										if (
-											cachedState.text === 'Caught!' ||
-											cachedState.text === 'Reset'
-										) {
-											stateColor = java.awt.Color.GRAY;
-											stateText = 'Laying...';
-											overlayTile.tileStates.set(locKey, {
-												color: stateColor,
-												text: stateText,
-											});
-										} else {
-											// Use cached state during transition
-											stateColor = cachedState.color;
-											stateText = cachedState.text;
-										}
+									const laidTrap =
+										laidTrapMap && laidTrapMap.get(locKey);
+									if (laidTrap) {
+										stateColor = java.awt.Color.YELLOW;
+										stateText = 'Active';
+										overlayTile.tileStates.set(locKey, {
+											color: stateColor,
+											text: stateText,
+										});
 									} else {
-										// No cache - show initial box number
-										stateColor = java.awt.Color.GRAY;
-										stateText = `Box ${index + 1}`;
+										const cachedState =
+											overlayTile.tileStates.get(locKey);
+										if (cachedState) {
+											if (
+												cachedState.text ===
+													'Caught!' ||
+												cachedState.text === 'Reset'
+											) {
+												stateColor =
+													java.awt.Color.GRAY;
+												stateText = 'Laying...';
+												overlayTile.tileStates.set(
+													locKey,
+													{
+														color: stateColor,
+														text: stateText,
+													},
+												);
+											} else {
+												stateColor = cachedState.color;
+												stateText = cachedState.text;
+											}
+										} else {
+											stateColor = java.awt.Color.GRAY;
+											stateText = `Box ${index + 1}`;
+										}
 									}
 								}
+							}
+						} else {
+							const cachedState =
+								overlayTile.tileStates.get(locKey);
+							if (cachedState) {
+								stateColor = cachedState.color;
+								stateText = cachedState.text;
 							}
 						}
 
@@ -469,13 +521,15 @@ function enableBotMakerOverlay(): void {
 export function initializeUI(
 	scriptState: any,
 	traps: net.runelite.api.coords.WorldPoint[],
-	isOccupied: (loc: net.runelite.api.coords.WorldPoint) => boolean,
-	maxTrapsFunction: () => number,
+	getTrapsLaidFunction: () => number,
+	getMaxTrapsFunction: () => number,
+	getIsWebWalkingFunction: () => boolean,
 ): void {
 	state = scriptState;
 	trapLocationsCache = traps;
-	isOccupiedByTrapOrGround = isOccupied;
-	maxTraps = maxTrapsFunction;
+	getTrapsLaid = getTrapsLaidFunction;
+	getMaxTraps = getMaxTrapsFunction;
+	getIsWebWalking = getIsWebWalkingFunction;
 }
 
 // Export the UI interface
