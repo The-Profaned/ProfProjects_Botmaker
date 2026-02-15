@@ -156,11 +156,6 @@ function _unsupportedIterableToArray(r, a) {
   }
 }
 
-var LOG_COLOR_GRAY = {
-  r: 128,
-  g: 128,
-  b: 128
-};
 var LOG_COLOR_PINK = {
   r: 239,
   g: 71,
@@ -191,21 +186,25 @@ var LOG_COLOR_TEAL = {
   g: 59,
   b: 76
 };
-var LOG_COLOR_DEFAULT = LOG_COLOR_GRAY;
-var LOG_COLOR = {
-  GRAY: LOG_COLOR_GRAY,
-  PINK: LOG_COLOR_PINK,
-  CORAL: LOG_COLOR_CORAL,
-  GOLD: LOG_COLOR_GOLD,
-  EMERALD: LOG_COLOR_EMERALD,
-  BLUE: LOG_COLOR_BLUE,
-  TEAL: LOG_COLOR_TEAL,
-  DEFAULT: LOG_COLOR_DEFAULT
+var includesAny = (text, keywords) => keywords.some(keyword => text.includes(keyword));
+var DANGER_KEYWORDS = ['danger', 'dangerous', 'fatal', 'error', 'failed', 'failure', 'timeout', 'dead', 'death', 'low hp', 'critical'];
+var NPC_ACTION_KEYWORDS = ['npc', 'projectile', 'animation', 'despawn', 'spawn'];
+var STATE_KEYWORDS = ['state', 'substate', 'phase', 'transition', 'entering', 'exiting', 'resume', 'resuming', 'initialize', 'initialized', 'start', 'started', 'end', 'ended'];
+var PLAYER_ACTION_KEYWORDS = ['attack', 'attacking', 'prayer', 'walk', 'walking', 'move', 'moving', 'webwalk', 'eat', 'eating', 'drink', 'drinking', 'equip', 'unequip', 'cast', 'bank', 'withdraw', 'deposit', 'loot'];
+var SYSTEM_KEYWORDS = ['debug', 'cache', 'snapshot', 'poll', 'tracking', 'tick', 'status', 'queue', 'path', 'waypoint', 'distance', 'timer'];
+var classifyLogColor = (source, message) => {
+  var text = "".concat(source, " ").concat(message).toLowerCase();
+  if (includesAny(text, DANGER_KEYWORDS)) return LOG_COLOR_PINK;
+  if (includesAny(text, STATE_KEYWORDS)) return LOG_COLOR_GOLD;
+  if (includesAny(text, NPC_ACTION_KEYWORDS)) return LOG_COLOR_CORAL;
+  if (includesAny(text, PLAYER_ACTION_KEYWORDS)) return LOG_COLOR_EMERALD;
+  if (includesAny(text, SYSTEM_KEYWORDS)) return LOG_COLOR_TEAL;
+  return LOG_COLOR_BLUE;
 };
 var logger = (state, type, source, message, color) => {
   var logMessage = "[".concat(source, "] ").concat(message);
   var printToLog = () => {
-    var chosenColor = color !== null && color !== void 0 ? color : LOG_COLOR_DEFAULT;
+    var chosenColor = classifyLogColor(source, message);
     log.printRGB(logMessage, chosenColor.r, chosenColor.g, chosenColor.b);
   };
   if (type === 'all') log.printGameMessage(logMessage);
@@ -402,6 +401,35 @@ var processBankOpen = (state, onOpen) => {
     return;
   }
   if (!state.bankWalkInitiated) {
+    var player = client.getLocalPlayer();
+    if (player) {
+      var playerLoc = player.getWorldLocation();
+      var bankNames = ['Bank booth', 'Bank chest', 'Grand Exchange booth', 'Bank', 'Banker'];
+      var nearbyBanks = bot.objects.getTileObjectsWithNames(bankNames);
+      if (nearbyBanks && nearbyBanks.length > 0) {
+        var _iterator3 = _createForOfIteratorHelper(nearbyBanks),
+          _step3;
+        try {
+          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+            var bank = _step3.value;
+            var bankLoc = bank.getWorldLocation();
+            var distance = Math.max(Math.abs(playerLoc.getX() - bankLoc.getX()), Math.abs(playerLoc.getY() - bankLoc.getY()));
+            if (distance <= 3) {
+              logger(state, 'debug', 'bankFunctions.processBankOpen', "Player within ".concat(distance, " tiles of bank, skipping webwalk"));
+              state.bankWalkInitiated = true;
+              state.isAtBankLocation = false;
+              state.bankOpenAttemptTick = -1;
+              return;
+            }
+          }
+        } catch (err) {
+          _iterator3.e(err);
+        } finally {
+          _iterator3.f();
+        }
+      }
+    }
+    logger(state, 'debug', 'bankFunctions.processBankOpen', 'Initiating webwalk to nearest bank');
     bot.walking.webWalkToNearestBank();
     state.bankWalkInitiated = true;
     state.isAtBankLocation = false;
@@ -531,7 +559,9 @@ var isPlayerInArea = (state, minX, maxX, minY, maxY, plane) => {
   var inYBounds = playerY >= minY && playerY <= maxY;
   var inPlane = plane === undefined || playerPlane === plane;
   var result = inXBounds && inYBounds && inPlane;
-  logger(state, 'debug', 'isPlayerInArea', "Player at (".concat(playerX, ", ").concat(playerY, ", ").concat(playerPlane, "). Area bounds: X[").concat(minX, "-").concat(maxX, "], Y[").concat(minY, "-").concat(maxY, "], Plane[").concat(plane , "]. In area: ").concat(result));
+  if (state.debugFullState) {
+    logger(state, 'debug', 'isPlayerInArea', "Player at (".concat(playerX, ", ").concat(playerY, ", ").concat(playerPlane, "). Area bounds: X[").concat(minX, "-").concat(maxX, "], Y[").concat(minY, "-").concat(maxY, "], Plane[").concat(plane , "]. In area: ").concat(result));
+  }
   return result;
 };
 
@@ -552,500 +582,503 @@ var getWornEquipment = state => {
     13: 'ammo'
   };
   for (var _i2 = 0, _Object$entries = Object.entries(equipmentSlots); _i2 < _Object$entries.length; _i2++) {
+    var _item$getId;
     var _Object$entries$_i = _slicedToArray(_Object$entries[_i2], 2),
       slotIndex = _Object$entries$_i[0],
       slotName = _Object$entries$_i[1];
     var index = Number(slotIndex);
     var item = equipmentItems[index];
-    if (item && item.id > 0) {
-      equipment[slotName] = item.id;
+    if (item && (_item$getId = item.getId) !== null && _item$getId !== void 0 && _item$getId.call(item) && item.getId() > 0) {
+      equipment[slotName] = item.getId();
     }
   }
   logger(state, 'debug', 'getWornEquipment', "Current equipment: ".concat(JSON.stringify(equipment)));
   return equipment;
 };
-var unequipWornEquipment = (state, slots) => {
-  var equipment = getWornEquipment(state);
-  var targetSlots = slots !== null && slots !== void 0 ? slots : Object.keys(equipment);
-  var attemptedIds = [];
-  var _iterator = _createForOfIteratorHelper(targetSlots),
-    _step;
-  try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var slot = _step.value;
-      var itemId = equipment[slot];
-      if (!itemId) {
-        continue;
-      }
-      attemptedIds.push(itemId);
-      bot.equipment.unequip(itemId);
-    }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
-  }
-  var remainingIds = attemptedIds.filter(id => bot.equipment.containsId(id));
-  var success = attemptedIds.length > 0 && remainingIds.length === 0;
-  logger(state, 'debug', 'unequipWornEquipment', "Attempted unequip: ".concat(JSON.stringify(attemptedIds), " | Remaining: ").concat(JSON.stringify(remainingIds)));
-  return {
-    attemptedIds,
-    remainingIds,
-    success
-  };
-};
 
 var BLUE_TEAR_WALLS = [6661, 6665];
 var GREEN_TEAR_WALLS = [6662, 6666];
+var WEEPING_WALL_ID = 6660;
+var STARTING_TILE = new net.runelite.api.coords.WorldPoint(3257, 9517, 2);
+var WALL_TILES = [new net.runelite.api.coords.WorldPoint(3257, 9520, 2), new net.runelite.api.coords.WorldPoint(3258, 9520, 2), new net.runelite.api.coords.WorldPoint(3259, 9520, 2), new net.runelite.api.coords.WorldPoint(3261, 9518, 2), new net.runelite.api.coords.WorldPoint(3261, 9517, 2), new net.runelite.api.coords.WorldPoint(3261, 9516, 2), new net.runelite.api.coords.WorldPoint(3259, 9514, 2), new net.runelite.api.coords.WorldPoint(3258, 9514, 2), new net.runelite.api.coords.WorldPoint(3257, 9514, 2)];
+var PLAYER_STANDING_TILES = [new net.runelite.api.coords.WorldPoint(3257, 9519, 2), new net.runelite.api.coords.WorldPoint(3258, 9519, 2), new net.runelite.api.coords.WorldPoint(3259, 9519, 2), new net.runelite.api.coords.WorldPoint(3260, 9518, 2), new net.runelite.api.coords.WorldPoint(3260, 9517, 2), new net.runelite.api.coords.WorldPoint(3260, 9516, 2), new net.runelite.api.coords.WorldPoint(3259, 9515, 2), new net.runelite.api.coords.WorldPoint(3258, 9515, 2), new net.runelite.api.coords.WorldPoint(3257, 9515, 2)];
 var state$1 = null;
-var activeBlueWalls = new Map();
-var activeGreenWalls = new Map();
-var wallSpawnHistory = [];
-var currentInteractingWall = null;
-var currentInteractingType = 'empty';
-var lastClickedWallKey = null;
-var waitingForPlayerAnimation = false;
-var lastPlayerAnimation = -1;
 var scriptInitialized = false;
 var junaDialogCompleted = false;
-var lastPlayerMovementState = false;
-var playerStoppedMovingTicks = 0;
-var blueCycleSeen = new Set();
-var blueCycleComplete = false;
-var blueRespawnOnCurrent = false;
-var blueCycleOrder = [];
-var pendingSwitchToFirst = false;
-var lastBlueChangeTick = null;
-var blueCycleCompleteTick = null;
-var blueWallCount = 0;
-var greenWallCount = 0;
 var minigameActive = true;
+var startingIdleTicks = 0;
+var hasStarted = false;
+var initialClickDone = false;
+var activeWalls = new Map();
+var spawnCycle = [];
+var cyclePosition = 0;
+var cycleVerified = false;
+var observedSpawns = 0;
+var bluePhaseStartIndex = 3;
+var blueSpawnCount = 0;
+var canClickThisCycle = false;
+var blueSpawnLocations = [null, null, null];
+var lastClickedWallLocation = null;
 function initializeTearsUtils(scriptState) {
   state$1 = scriptState;
 }
 function resetTearsState() {
-  activeBlueWalls = new Map();
-  activeGreenWalls = new Map();
-  wallSpawnHistory = [];
-  currentInteractingWall = null;
-  currentInteractingType = 'empty';
-  lastClickedWallKey = null;
-  waitingForPlayerAnimation = false;
-  lastPlayerAnimation = -1;
   scriptInitialized = false;
   junaDialogCompleted = false;
-  lastPlayerMovementState = false;
-  playerStoppedMovingTicks = 0;
   minigameActive = true;
-  blueWallCount = 0;
-  greenWallCount = 0;
-  blueCycleSeen = new Set();
-  blueCycleComplete = false;
-  blueRespawnOnCurrent = false;
-  blueCycleOrder = [];
-  pendingSwitchToFirst = false;
-  lastBlueChangeTick = null;
-  blueCycleCompleteTick = null;
+  startingIdleTicks = 0;
+  hasStarted = false;
+  initialClickDone = false;
+  activeWalls = new Map();
+  spawnCycle = [];
+  cyclePosition = 0;
+  cycleVerified = false;
+  observedSpawns = 0;
+  bluePhaseStartIndex = 3;
+  blueSpawnCount = 0;
+  canClickThisCycle = false;
+  blueSpawnLocations = [null, null, null];
+  lastClickedWallLocation = null;
 }
-function findBlueTearWalls() {
-  var _bot$objects$getTileO;
-  return (_bot$objects$getTileO = bot.objects.getTileObjectsWithIds(BLUE_TEAR_WALLS)) !== null && _bot$objects$getTileO !== void 0 ? _bot$objects$getTileO : [];
-}
-function findGreenTearWalls() {
-  var _bot$objects$getTileO2;
-  return (_bot$objects$getTileO2 = bot.objects.getTileObjectsWithIds(GREEN_TEAR_WALLS)) !== null && _bot$objects$getTileO2 !== void 0 ? _bot$objects$getTileO2 : [];
-}
-function wallUniqueKey(wall) {
-  var loc = wall.getWorldLocation();
-  return wall.getId() + '_' + loc.getX() + '_' + loc.getY() + '_' + loc.getPlane();
-}
-var logMessage = (level, source, message, color) => {
+var logMessage = (level, source, message) => {
   if (state$1) {
-    logger(state$1, level, source, message, color);
-    return;
-  }
-  if (color) {
-    log.printRGB("[".concat(source, "] ").concat(message), color.r, color.g, color.b);
+    logger(state$1, level, source, message);
     return;
   }
   log.print("[".concat(source, "] ").concat(message));
 };
-function trackWallChanges() {
-  var currentTick = client.getTickCount();
-  var blueTears = findBlueTearWalls();
-  var greenTears = findGreenTearWalls();
-  if (blueTears.length === 0) {
-    blueCycleSeen = new Set();
-    blueCycleComplete = false;
-    blueRespawnOnCurrent = false;
-    blueCycleOrder = [];
-    pendingSwitchToFirst = false;
-    lastBlueChangeTick = null;
-    blueCycleCompleteTick = null;
+function talkToJuna() {
+  var junaList = bot.objects.getTileObjectsWithNames(['Juna']);
+  if (!junaList || junaList.length === 0) {
+    logMessage('debug', 'juna', 'Could not find Juna game object');
+    return;
   }
-  var currentBlueIds = new Set();
-  if (blueTears.length > 0) {
-    blueWallCount = blueTears.length;
-    var _iterator = _createForOfIteratorHelper(blueTears),
+  var juna = junaList[0];
+  logMessage('debug', 'juna', 'Interacting with Juna');
+  bot.objects.interactSuppliedObject(juna, 'Story');
+  junaDialogCompleted = true;
+}
+function getTearsStateFlags() {
+  return {
+    scriptInitialized,
+    junaDialogCompleted,
+    minigameActive
+  };
+}
+function setTearsStateFlags(flags) {
+  if (flags.scriptInitialized !== undefined) {
+    scriptInitialized = flags.scriptInitialized;
+  }
+  if (flags.junaDialogCompleted !== undefined) {
+    junaDialogCompleted = flags.junaDialogCompleted;
+  }
+  if (flags.minigameActive !== undefined) {
+    minigameActive = flags.minigameActive;
+  }
+}
+function worldPointEquals(a, b) {
+  return a.getX() === b.getX() && a.getY() === b.getY() && a.getPlane() === b.getPlane();
+}
+function getWallTypeAtLocation(location) {
+  var blueWalls = bot.objects.getTileObjectsWithIds(BLUE_TEAR_WALLS);
+  if (blueWalls) {
+    var _iterator = _createForOfIteratorHelper(blueWalls),
       _step;
     try {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var wall = _step.value;
-        var wallId = wall.getId();
-        var location = wall.getWorldLocation();
-        var x = location.getX();
-        var y = location.getY();
-        var plane = location.getPlane();
-        var uniqueId = wallId + '_' + x + '_' + y + '_' + plane;
-        var simpleKey = wallUniqueKey(wall);
-        currentBlueIds.add(uniqueId);
-        blueCycleSeen.add(simpleKey);
-        if (!blueCycleOrder.includes(simpleKey)) {
-          blueCycleOrder.push(simpleKey);
+        if (!worldPointEquals(wall.getWorldLocation(), location)) {
+          continue;
         }
-        if (!blueCycleComplete && blueCycleSeen.size >= 3) {
-          blueCycleComplete = true;
-          blueCycleCompleteTick = currentTick;
-          logMessage('debug', 'cycle', 'All 3 blue walls observed', LOG_COLOR.BLUE);
-        }
-        var currentWallKey = currentInteractingWall ? wallUniqueKey(currentInteractingWall) : null;
-        if (currentInteractingType === 'blue' && currentWallKey !== null && currentWallKey === simpleKey) {
-          if (!blueRespawnOnCurrent) {
-            blueRespawnOnCurrent = true;
-            logMessage('debug', 'respawn', 'Blue wall reappeared on current wall; hold position', LOG_COLOR.BLUE);
-          }
-        } else {
-          blueRespawnOnCurrent = false;
-        }
-        if (!activeBlueWalls.has(uniqueId)) {
-          var spawn = {
-            wallId,
-            location,
-            spawnTick: currentTick,
-            despawnTick: null,
-            duration: null,
-            type: 'blue',
-            simpleKey
-          };
-          activeBlueWalls.set(uniqueId, spawn);
-          lastBlueChangeTick = currentTick;
-          logMessage('debug', 'spawn', "Blue wall #".concat(wallId, " at (").concat(x, ", ").concat(y, ", ").concat(plane, ") tick ").concat(currentTick), LOG_COLOR.TEAL);
-        }
+        return 'blue';
       }
     } catch (err) {
       _iterator.e(err);
     } finally {
       _iterator.f();
     }
-  } else {
-    blueWallCount = 0;
   }
-  var currentGreenIds = new Set();
-  if (greenTears.length > 0) {
-    greenWallCount = greenTears.length;
-    var _iterator2 = _createForOfIteratorHelper(greenTears),
+  var greenWalls = bot.objects.getTileObjectsWithIds(GREEN_TEAR_WALLS);
+  if (greenWalls) {
+    var _iterator2 = _createForOfIteratorHelper(greenWalls),
       _step2;
     try {
       for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
         var _wall = _step2.value;
-        var _wallId = _wall.getId();
-        var _location = _wall.getWorldLocation();
-        var _x = _location.getX();
-        var _y = _location.getY();
-        var _plane = _location.getPlane();
-        var _uniqueId = _wallId + '_' + _x + '_' + _y + '_' + _plane;
-        currentGreenIds.add(_uniqueId);
-        if (!activeGreenWalls.has(_uniqueId)) {
-          var _spawn = {
-            wallId: _wallId,
-            location: _location,
-            spawnTick: currentTick,
-            despawnTick: null,
-            duration: null,
-            type: 'green',
-            simpleKey: _uniqueId
-          };
-          activeGreenWalls.set(_uniqueId, _spawn);
-          logMessage('debug', 'spawn', "Green wall #".concat(_wallId, " at (").concat(_x, ", ").concat(_y, ", ").concat(_plane, ") tick ").concat(currentTick), LOG_COLOR.EMERALD);
+        if (!worldPointEquals(_wall.getWorldLocation(), location)) {
+          continue;
         }
+        return 'green';
       }
     } catch (err) {
       _iterator2.e(err);
     } finally {
       _iterator2.f();
     }
-  } else {
-    greenWallCount = 0;
   }
-  activeBlueWalls.forEach((spawn, id) => {
-    if (!currentBlueIds.has(id)) {
-      spawn.despawnTick = currentTick;
-      spawn.duration = spawn.despawnTick - spawn.spawnTick;
-      var thirdKey = blueCycleOrder.length >= 3 ? blueCycleOrder[2] : null;
-      if (thirdKey && spawn.simpleKey === thirdKey && currentInteractingType === 'blue' && currentInteractingWall && wallUniqueKey(currentInteractingWall) === spawn.simpleKey && blueRespawnOnCurrent) {
-        pendingSwitchToFirst = true;
-        logMessage('debug', 'cycle', '3rd blue despawned under player; queue switch to first blue', LOG_COLOR.BLUE);
-      }
-      wallSpawnHistory.push(spawn);
-      activeBlueWalls.delete(id);
-      lastBlueChangeTick = currentTick;
-      logMessage('debug', 'despawn', "Blue wall #".concat(spawn.wallId, " lasted ").concat(spawn.duration, " ticks"), LOG_COLOR.TEAL);
-    }
-  });
-  activeGreenWalls.forEach((spawn, id) => {
-    if (!currentGreenIds.has(id)) {
-      spawn.despawnTick = currentTick;
-      spawn.duration = spawn.despawnTick - spawn.spawnTick;
-      wallSpawnHistory.push(spawn);
-      activeGreenWalls.delete(id);
-      logMessage('debug', 'despawn', "Green wall #".concat(spawn.wallId, " lasted ").concat(spawn.duration, " ticks"), LOG_COLOR.EMERALD);
-    }
-  });
+  return 'none';
 }
-function getAverageWallDuration(type) {
-  var relevantSpawns = wallSpawnHistory.filter(spawn => {
-    return spawn.duration !== null;
-  });
-  if (relevantSpawns.length === 0) return 0;
-  var totalDuration = relevantSpawns.reduce((sum, spawn) => {
-    var _spawn$duration;
-    return sum + ((_spawn$duration = spawn.duration) !== null && _spawn$duration !== void 0 ? _spawn$duration : 0);
-  }, 0);
-  return totalDuration / relevantSpawns.length;
-}
-function getAdjacentWall() {
+function getAdjacentWallIndex() {
   var player = client.getLocalPlayer();
   if (!player) {
-    return {
-      type: 'empty',
-      wall: null
-    };
+    return -1;
   }
-  var playerLocation = player.getWorldLocation();
-  var playerX = playerLocation.getX();
-  var playerY = playerLocation.getY();
-  var playerPlane = playerLocation.getPlane();
-  var blueTears = findBlueTearWalls();
-  var greenTears = findGreenTearWalls();
-  var adjacentOffsets = [{
-    dx: 0,
-    dy: 1
-  }, {
-    dx: 0,
-    dy: -1
-  }, {
-    dx: 1,
-    dy: 0
-  }, {
-    dx: -1,
-    dy: 0
-  }];
-  for (var _i = 0, _adjacentOffsets = adjacentOffsets; _i < _adjacentOffsets.length; _i++) {
-    var offset = _adjacentOffsets[_i];
-    var checkX = playerX + offset.dx;
-    var checkY = playerY + offset.dy;
-    var _iterator3 = _createForOfIteratorHelper(blueTears),
-      _step3;
-    try {
-      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-        var wall = _step3.value;
-        var wallId = wall.getId();
-        var wallLoc = wall.getWorldLocation();
-        if (BLUE_TEAR_WALLS.includes(wallId) && wallLoc.getX() === checkX && wallLoc.getY() === checkY && wallLoc.getPlane() === playerPlane) {
-          return {
-            type: 'blue',
-            wall
-          };
-        }
-      }
-    } catch (err) {
-      _iterator3.e(err);
-    } finally {
-      _iterator3.f();
-    }
-    var _iterator4 = _createForOfIteratorHelper(greenTears),
-      _step4;
-    try {
-      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-        var _wall2 = _step4.value;
-        var _wallId2 = _wall2.getId();
-        var _wallLoc = _wall2.getWorldLocation();
-        if (GREEN_TEAR_WALLS.includes(_wallId2) && _wallLoc.getX() === checkX && _wallLoc.getY() === checkY && _wallLoc.getPlane() === playerPlane) {
-          return {
-            type: 'green',
-            wall: _wall2
-          };
-        }
-      }
-    } catch (err) {
-      _iterator4.e(err);
-    } finally {
-      _iterator4.f();
-    }
-  }
-  return {
-    type: 'empty',
-    wall: null
-  };
-}
-function getDistanceToWall(wall) {
-  var player = client.getLocalPlayer();
-  if (!player) return 999;
   var playerLoc = player.getWorldLocation();
-  var wallLoc = wall.getWorldLocation();
-  var dx = Math.abs(playerLoc.getX() - wallLoc.getX());
-  var dy = Math.abs(playerLoc.getY() - wallLoc.getY());
-  return dx + dy;
-}
-function selectPreferredBlueTarget() {
-  var blues = findBlueTearWalls();
-  var player = client.getLocalPlayer();
-  if (!player) return null;
-  var preferredKeys = [];
-  if (blueCycleOrder.length > 0) preferredKeys.push(blueCycleOrder[0]);
-  if (blueCycleOrder.length > 1) preferredKeys.push(blueCycleOrder[1]);
-  var candidates = [];
-  var _loop = function _loop() {
-    var key = _preferredKeys[_i2];
-    var found = blues.find(w => wallUniqueKey(w) === key);
-    if (found) candidates.push(found);
-  };
-  for (var _i2 = 0, _preferredKeys = preferredKeys; _i2 < _preferredKeys.length; _i2++) {
-    _loop();
-  }
-  if (candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0];
-  var distributionToFirst = getDistanceToWall(candidates[0]);
-  var distributionToSecond = getDistanceToWall(candidates[1]);
-  if (distributionToFirst > 3 && distributionToSecond <= distributionToFirst) {
-    logMessage('debug', 'distance', "Wall 1 too far (".concat(distributionToFirst, " tiles); choosing closer wall 2 (").concat(distributionToSecond, " tiles)"), LOG_COLOR.CORAL);
-    return candidates[1];
-  }
-  return candidates[0];
-}
-function talkToJuna() {
-  var junaList = bot.objects.getTileObjectsWithNames(['Juna']);
-  if (!junaList || junaList.length === 0) {
-    logMessage('debug', 'juna', 'Could not find Juna game object', LOG_COLOR.PINK);
-    return;
-  }
-  var juna = junaList[0];
-  logMessage('debug', 'juna', 'Found Juna, interacting with story', LOG_COLOR.PINK);
-  bot.objects.interactSuppliedObject(juna, 'Story');
-  junaDialogCompleted = true;
-  logMessage('debug', 'juna', 'Story dialog initiated', LOG_COLOR.PINK);
-}
-function updateInteractionState() {
-  var adjacent = getAdjacentWall();
-  if ((pendingSwitchToFirst || currentInteractingType !== 'blue') && blueCycleOrder.length > 0) {
-    var target = selectPreferredBlueTarget();
-    if (target) {
-      currentInteractingWall = target;
-      currentInteractingType = 'blue';
-      pendingSwitchToFirst = false;
-      var loc = target.getWorldLocation();
-      logMessage('debug', 'target', "Selecting preferred blue at (".concat(loc.getX(), ", ").concat(loc.getY(), ", ").concat(loc.getPlane(), ")"), LOG_COLOR.TEAL);
-      return;
+  var _iterator3 = _createForOfIteratorHelper(PLAYER_STANDING_TILES.entries()),
+    _step3;
+  try {
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var _step3$value = _slicedToArray(_step3.value, 2),
+        index = _step3$value[0],
+        tile = _step3$value[1];
+      if (worldPointEquals(playerLoc, tile)) {
+        return index;
+      }
     }
+  } catch (err) {
+    _iterator3.e(err);
+  } finally {
+    _iterator3.f();
   }
-  if (adjacent.type !== currentInteractingType || adjacent.wall !== currentInteractingWall) {
-    currentInteractingType = adjacent.type;
-    currentInteractingWall = adjacent.wall;
-    if (currentInteractingType === 'empty') {
-      logMessage('debug', 'interact', 'No adjacent tear wall', LOG_COLOR.GOLD);
-    } else {
-      var _currentInteractingWa;
-      var _loc = (_currentInteractingWa = currentInteractingWall) === null || _currentInteractingWa === void 0 ? void 0 : _currentInteractingWa.getWorldLocation();
-      if (_loc) {
-        logMessage('debug', 'interact', "".concat(currentInteractingType.toUpperCase(), " wall at (").concat(_loc.getX(), ", ").concat(_loc.getY(), ", ").concat(_loc.getPlane(), ")"), LOG_COLOR.GOLD);
+  return -1;
+}
+function findNearestBlueWall() {
+  var player = client.getLocalPlayer();
+  if (!player) {
+    return null;
+  }
+  var playerLoc = player.getWorldLocation();
+  var nearestWall = null;
+  var nearestDistance = 999;
+  var _iterator4 = _createForOfIteratorHelper(WALL_TILES),
+    _step4;
+  try {
+    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+      var wallTile = _step4.value;
+      var wallType = getWallTypeAtLocation(wallTile);
+      if (wallType === 'blue') {
+        var distance = Math.abs(playerLoc.getX() - wallTile.getX()) + Math.abs(playerLoc.getY() - wallTile.getY());
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestWall = wallTile;
+        }
+      }
+    }
+  } catch (err) {
+    _iterator4.e(err);
+  } finally {
+    _iterator4.f();
+  }
+  return nearestWall;
+}
+function areWallsAdjacent(wall1, wall2) {
+  var wall1Index = WALL_TILES.findIndex(w => worldPointEquals(w, wall1));
+  var wall2Index = WALL_TILES.findIndex(w => worldPointEquals(w, wall2));
+  if (wall1Index === -1 || wall2Index === -1) {
+    return false;
+  }
+  return Math.abs(wall1Index - wall2Index) === 1 || wall1Index === 0 && wall2Index === WALL_TILES.length - 1 || wall1Index === WALL_TILES.length - 1 && wall2Index === 0;
+}
+function findPriorityBlueWall() {
+  if (lastClickedWallLocation && blueSpawnLocations[0] && blueSpawnLocations[1]) {
+    var wall1Type = getWallTypeAtLocation(blueSpawnLocations[0]);
+    var wall2Type = getWallTypeAtLocation(blueSpawnLocations[1]);
+    if (wall1Type === 'blue' && wall2Type === 'blue') {
+      var isWall2Adjacent = areWallsAdjacent(lastClickedWallLocation, blueSpawnLocations[1]);
+      if (isWall2Adjacent) {
+        var player = client.getLocalPlayer();
+        if (player) {
+          var playerLoc = player.getWorldLocation();
+          var wall1Distance = Math.abs(playerLoc.getX() - blueSpawnLocations[0].getX()) + Math.abs(playerLoc.getY() - blueSpawnLocations[0].getY());
+          if (wall1Distance > 3) {
+            logMessage('debug', 'click', "Wall 2 adjacent optimization: choosing wall 2 at (".concat(blueSpawnLocations[1].getX(), ", ").concat(blueSpawnLocations[1].getY(), ") over distant wall 1"));
+            return blueSpawnLocations[1];
+          }
+        }
       }
     }
   }
+  var _iterator5 = _createForOfIteratorHelper(blueSpawnLocations),
+    _step5;
+  try {
+    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+      var location = _step5.value;
+      if (!location) {
+        continue;
+      }
+      if (getWallTypeAtLocation(location) === 'blue') {
+        return location;
+      }
+    }
+  } catch (err) {
+    _iterator5.e(err);
+  } finally {
+    _iterator5.f();
+  }
+  return null;
 }
-function interactWithBlueWall() {
-  var targetWall = selectPreferredBlueTarget();
-  if (!targetWall) {
-    return;
+function findNewestBlueWall() {
+  for (var index = blueSpawnLocations.length - 1; index >= 0; index -= 1) {
+    var location = blueSpawnLocations[index];
+    if (!location) {
+      continue;
+    }
+    if (getWallTypeAtLocation(location) === 'blue') {
+      return location;
+    }
+  }
+  return null;
+}
+function getWeepingWallAtLocation(location) {
+  var walls = bot.objects.getTileObjectsWithIds([WEEPING_WALL_ID]);
+  if (!walls) {
+    return null;
+  }
+  var _iterator6 = _createForOfIteratorHelper(walls),
+    _step6;
+  try {
+    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+      var wall = _step6.value;
+      if (worldPointEquals(wall.getWorldLocation(), location)) {
+        return wall;
+      }
+    }
+  } catch (err) {
+    _iterator6.e(err);
+  } finally {
+    _iterator6.f();
+  }
+  return null;
+}
+function locationToKey(loc) {
+  return "".concat(loc.getX(), "_").concat(loc.getY(), "_").concat(loc.getPlane());
+}
+function trackWallCycle() {
+  var currentWalls = new Map();
+  var _iterator7 = _createForOfIteratorHelper(WALL_TILES),
+    _step7;
+  try {
+    for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+      var wallTile = _step7.value;
+      var wallType = getWallTypeAtLocation(wallTile);
+      if (wallType !== 'none') {
+        var key = locationToKey(wallTile);
+        currentWalls.set(key, {
+          location: wallTile,
+          type: wallType
+        });
+      }
+    }
+  } catch (err) {
+    _iterator7.e(err);
+  } finally {
+    _iterator7.f();
+  }
+  var _iterator8 = _createForOfIteratorHelper(currentWalls),
+    _step8;
+  try {
+    var _loop = function _loop() {
+      var _step8$value = _slicedToArray(_step8.value, 2),
+        key = _step8$value[0],
+        wallState = _step8$value[1];
+      if (activeWalls.has(key)) {
+        return 1; // continue
+      }
+      if (wallState.type !== 'none') {
+        spawnCycle.push(wallState.type);
+      }
+      observedSpawns += 1;
+      if (spawnCycle.length > 6) {
+        spawnCycle.shift();
+      }
+      cyclePosition = (cyclePosition + 1) % 6;
+      if (cycleVerified) {
+        if (wallState.type === 'blue') {
+          blueSpawnCount += 1;
+          var existingIndex = blueSpawnLocations.findIndex(loc => loc && worldPointEquals(loc, wallState.location));
+          if (existingIndex >= 0) {
+            blueSpawnLocations[existingIndex] = null;
+          }
+          var slotIndex = Math.min(blueSpawnCount - 1, 2);
+          blueSpawnLocations[slotIndex] = wallState.location;
+          if (blueSpawnCount === 3) {
+            canClickThisCycle = true;
+            logMessage('debug', 'cycle', '3rd blue wall spawned - Click allowed');
+          }
+        } else {
+          blueSpawnCount = 0;
+          blueSpawnLocations = [null, null, null];
+        }
+      }
+      if (cycleVerified || observedSpawns < 6) {} else {
+        var last6 = spawnCycle.slice(-6);
+        var blueCount = last6.filter(t => t === 'blue').length;
+        var greenCount = last6.filter(t => t === 'green').length;
+        if (blueCount !== 3 || greenCount !== 3) {} else {
+          var blueStart = -1;
+          for (var index = 0; index < last6.length; index++) {
+            if (last6[index] === 'blue' && last6[(index + 1) % 6] === 'blue') {
+              blueStart = index;
+              break;
+            }
+          }
+          if (blueStart === -1) {} else {
+            bluePhaseStartIndex = blueStart;
+            cycleVerified = true;
+            logMessage('debug', 'cycle', "Cycle pattern verified: ".concat(last6.join(','), " | Blue phase starts at position ").concat(bluePhaseStartIndex));
+          }
+        }
+      }
+      logMessage('debug', 'cycle', "".concat(wallState.type, " wall spawned - Position: ").concat(cyclePosition, ", Observed: ").concat(observedSpawns, "/6 (").concat(cyclePosition < 3 ? 'GREEN phase' : 'BLUE phase', ")"));
+    };
+    for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
+      if (_loop()) continue;
+    }
+  } catch (err) {
+    _iterator8.e(err);
+  } finally {
+    _iterator8.f();
+  }
+  var _iterator9 = _createForOfIteratorHelper(activeWalls),
+    _step9;
+  try {
+    for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+      var _step9$value = _slicedToArray(_step9.value, 2),
+        _key = _step9$value[0],
+        wallState = _step9$value[1];
+      if (!currentWalls.has(_key)) {
+        logMessage('debug', 'cycle', "".concat(wallState.type, " wall despawned"));
+      }
+    }
+  } catch (err) {
+    _iterator9.e(err);
+  } finally {
+    _iterator9.f();
+  }
+  activeWalls = currentWalls;
+}
+function isCycleVerified() {
+  return cycleVerified;
+}
+function getCycleStatus() {
+  var inBluePhase = isInBluePhase();
+  return {
+    verified: cycleVerified,
+    observedSpawns: observedSpawns,
+    currentPosition: cyclePosition,
+    currentPhase: inBluePhase ? 'BLUE' : 'GREEN'
+  };
+}
+function isInBluePhase() {
+  var pos0 = bluePhaseStartIndex;
+  var pos1 = (bluePhaseStartIndex + 1) % 6;
+  var pos2 = (bluePhaseStartIndex + 2) % 6;
+  return cyclePosition === pos0 || cyclePosition === pos1 || cyclePosition === pos2;
+}
+function clickBlueWall() {
+  var _findPriorityBlueWall;
+  if (!minigameActive) {
+    return null;
   }
   var player = client.getLocalPlayer();
   if (!player) {
-    return;
+    return null;
   }
-  var wallKey = wallUniqueKey(targetWall);
-  if (lastClickedWallKey === wallKey && waitingForPlayerAnimation) {
-    var currentAnimation = player.getAnimation();
-    if (currentAnimation === -1) {
-      if (lastPlayerAnimation !== -1) {
-        logMessage('debug', 'wait', 'Player animation stopped, ready for next wall');
-        lastClickedWallKey = null;
-        waitingForPlayerAnimation = false;
-        lastPlayerAnimation = -1;
-      }
-    } else if (currentAnimation !== lastPlayerAnimation) {
-      lastPlayerAnimation = currentAnimation;
+  var playerLoc = player.getWorldLocation();
+  var isOnStartingTile = worldPointEquals(playerLoc, STARTING_TILE);
+  if (!initialClickDone) {
+    var _findNewestBlueWall;
+    if (!isOnStartingTile || bot.localPlayerMoving() || !bot.localPlayerIdle()) {
+      startingIdleTicks = 0;
+      return null;
     }
-    return;
+    startingIdleTicks += 1;
+    if (startingIdleTicks < 4) {
+      return null;
+    }
+    var firstTarget = (_findNewestBlueWall = findNewestBlueWall()) !== null && _findNewestBlueWall !== void 0 ? _findNewestBlueWall : findNearestBlueWall();
+    if (!firstTarget) {
+      return null;
+    }
+    var firstWeepingWall = getWeepingWallAtLocation(firstTarget);
+    if (!firstWeepingWall) {
+      return null;
+    }
+    logMessage('debug', 'click', "Initial click on WEEPING_WALL at (".concat(firstTarget.getX(), ", ").concat(firstTarget.getY(), ")"));
+    bot.objects.interactSuppliedObject(firstWeepingWall, 'Collect-from');
+    lastClickedWallLocation = firstTarget;
+    initialClickDone = true;
+    hasStarted = true;
+    canClickThisCycle = false;
+    return firstTarget;
   }
-  if (lastClickedWallKey !== wallKey) {
-    var distance = getDistanceToWall(targetWall);
-    if (distance > 1) {
-      return;
-    }
-    var wallLoc = targetWall.getWorldLocation();
-    var localLoc = net.runelite.api.coords.LocalPoint.fromWorld(client, new net.runelite.api.coords.WorldPoint(wallLoc.getX(), wallLoc.getY(), wallLoc.getPlane()));
-    if (!localLoc) {
-      return;
-    }
-    var sceneX = localLoc.getSceneX();
-    var sceneY = localLoc.getSceneY();
-    bot.menuAction(sceneX, sceneY, net.runelite.api.MenuAction.GAME_OBJECT_FIRST_OPTION, targetWall.getId(), 0, 'Interact', '<col=4080ff>Tear</col>');
-    logMessage('debug', 'click', "Clicking blue wall at (".concat(wallLoc.getX(), ", ").concat(wallLoc.getY(), ")"), LOG_COLOR.GOLD);
-    lastClickedWallKey = wallKey;
-    waitingForPlayerAnimation = true;
-    lastPlayerAnimation = player.getAnimation();
+  if (!hasStarted) {
+    hasStarted = true;
+    canClickThisCycle = true;
+    logMessage('debug', 'start', "Starting wall interactions from tile (".concat(playerLoc.getX(), ", ").concat(playerLoc.getY(), ")"));
   }
-}
-function getTearsStateFlags() {
-  return {
-    scriptInitialized,
-    junaDialogCompleted,
-    lastPlayerMovementState,
-    playerStoppedMovingTicks,
-    minigameActive
-  };
-}
-function setTearsStateFlags(paramaters) {
-  scriptInitialized = paramaters.scriptInitialized;
-  junaDialogCompleted = paramaters.junaDialogCompleted;
-  lastPlayerMovementState = paramaters.lastPlayerMovementState;
-  playerStoppedMovingTicks = paramaters.playerStoppedMovingTicks;
-  minigameActive = paramaters.minigameActive;
-}
-function getTearsWallStats() {
-  return {
-    blueWallCount,
-    greenWallCount,
-    historyCount: wallSpawnHistory.length
-  };
-}
-function getTearsInteractionStatus() {
-  return {
-    lastClickedWallKey,
-    blueCycleComplete,
-    blueCycleOrderLength: blueCycleOrder.length,
-    blueRespawnOnCurrent,
-    pendingSwitchToFirst,
-    currentInteractingType
-  };
-}
-function getBlueCycleTiming() {
-  var currentTick = client.getTickCount();
-  var ticksSinceLastBlueChange = lastBlueChangeTick === null ? null : currentTick - lastBlueChangeTick;
-  return {
-    lastBlueChangeTick,
-    blueCycleCompleteTick,
-    ticksSinceLastBlueChange
-  };
+  if (bot.localPlayerMoving()) {
+    return null;
+  }
+  var adjacentIndex = getAdjacentWallIndex();
+  if (adjacentIndex >= 0) {
+    var wallType = getWallTypeAtLocation(WALL_TILES[adjacentIndex]);
+    switch (wallType) {
+      case 'green':
+        {
+          if (!canClickThisCycle) {
+            return null;
+          }
+          logMessage('debug', 'switch', 'On green wall - forcing switch to blue');
+          break;
+        }
+      case 'none':
+        {
+          if (!canClickThisCycle) {
+            return null;
+          }
+          logMessage('debug', 'switch', 'On dead wall (no decoration) - finding blue wall');
+          break;
+        }
+      case 'blue':
+        {
+          if (!canClickThisCycle) {
+            return null;
+          }
+          break;
+        }
+    }
+  } else {
+    if (!canClickThisCycle) {
+      return null;
+    }
+  }
+  logMessage('debug', 'click', "Click window: ".concat(canClickThisCycle, ", adjacentIndex: ").concat(adjacentIndex));
+  if (lastClickedWallLocation) {
+    var lastWallType = getWallTypeAtLocation(lastClickedWallLocation);
+    logMessage('debug', 'click', "Current wall: (".concat(lastClickedWallLocation.getX(), ", ").concat(lastClickedWallLocation.getY(), ") type=").concat(lastWallType));
+    if (lastWallType === 'blue') {
+      canClickThisCycle = false;
+      return null;
+    }
+  } else {
+    logMessage('debug', 'click', 'Current wall: none');
+  }
+  var targetWallLoc = (_findPriorityBlueWall = findPriorityBlueWall()) !== null && _findPriorityBlueWall !== void 0 ? _findPriorityBlueWall : findNearestBlueWall();
+  if (!targetWallLoc) {
+    logMessage('debug', 'click', 'No blue wall location found');
+    return null;
+  }
+  var weepingWall = getWeepingWallAtLocation(targetWallLoc);
+  if (!weepingWall) {
+    logMessage('debug', 'click', 'No WEEPING_WALL at blue location');
+    return null;
+  }
+  logMessage('debug', 'click', "Clicking WEEPING_WALL at (".concat(targetWallLoc.getX(), ", ").concat(targetWallLoc.getY(), ")"));
+  bot.objects.interactSuppliedObject(weepingWall, 'Collect-from');
+  lastClickedWallLocation = targetWallLoc;
+  canClickThisCycle = false;
+  return targetWallLoc;
 }
 
 var state = {
@@ -1057,7 +1090,7 @@ var state = {
   mainState: 'start_state',
   scriptInitalized: false,
   scriptName: 'profTears',
-  uiCompleted: false,
+  uiCompleted: true,
   timeout: 0,
   gameTick: 0,
   subState: ''
@@ -1072,17 +1105,20 @@ var minigameBounds = {
 var minigameStartBounds = {
   minX: 3241,
   maxX: 3252,
-  minY: 9503,
+  minY: 9498,
   maxY: 9528,
   plane: 2
 };
-var ToG = new net.runelite.api.coords.WorldPoint(3249, 9515, 2);
+var ToG = new net.runelite.api.coords.WorldPoint(3250, 9516, 2);
 var scriptEnding = false;
 var minigameEntered = false;
+var pendingUnequipItemIds = [];
+var junaInteractionTick = -1;
 function onStart() {
   try {
     initializeTearsUtils(state);
     resetTearsState();
+    state.uiCompleted = true;
     logger(state, 'all', 'script', "".concat(state.scriptName, " started."));
   } catch (error) {
     logger(state, 'all', 'Script', error.toString());
@@ -1100,6 +1136,7 @@ function onGameTick() {
     }
     if (!gameTick(state)) return;
     if (!bot.bank.isBanking() && bot.localPlayerIdle() && !bot.walking.isWebWalking() && state.mainState == 'start_state') bot.breakHandler.setBreakHandlerStatus(true);
+    bot.widgets.handleDialogue([]);
     stateManager();
   } catch (error) {
     logger(state, 'all', 'Script', error.toString());
@@ -1128,19 +1165,45 @@ function handleMinigameEnded(minigameActive) {
   }
   if (!scriptEnding) {
     scriptEnding = true;
-    logger(state, 'all', 'timer', 'Player left minigame area. Stopping script.');
+    logger(state, 'debug', 'timer', 'Player left minigame area. Stopping script.');
     bot.terminate();
   }
   return true;
 }
 function unequipWeaponOffhand() {
+  if (pendingUnequipItemIds.length === 0) {
+    var equipment = getWornEquipment(state);
+    pendingUnequipItemIds = ['weapon', 'shield'].map(slot => equipment[slot]).filter(value => value !== undefined && value !== null);
+  }
+  var requiredSlots = pendingUnequipItemIds.length;
+  if (requiredSlots === 0) {
+    return true;
+  }
   var emptySlots = bot.inventory.getEmptySlots();
-  if (emptySlots < 2) {
-    logger(state, 'all', 'equipment', 'Need at least 2 empty inventory slots to unequip weapon and offhand.', LOG_COLOR.GOLD);
+  if (emptySlots < requiredSlots) {
+    logger(state, 'all', 'equipment', "Need at least ".concat(requiredSlots, " empty inventory slot").concat(requiredSlots === 1 ? '' : 's', " to unequip weapon and offhand."));
     return false;
   }
-  var result = unequipWornEquipment(state, ['weapon', 'shield']);
-  return result.success;
+  var _iterator = _createForOfIteratorHelper(pendingUnequipItemIds),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var itemId = _step.value;
+      if (bot.equipment.containsId(itemId)) {
+        bot.equipment.unequip(itemId);
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  var remainingIds = pendingUnequipItemIds.filter(id => bot.equipment.containsId(id));
+  if (remainingIds.length === 0) {
+    pendingUnequipItemIds = [];
+    return true;
+  }
+  return false;
 }
 function getTickContext() {
   var player = client.getLocalPlayer();
@@ -1152,21 +1215,10 @@ function getTickContext() {
   if (handleMinigameEnded(minigameActive)) {
     return null;
   }
-  trackWallChanges();
-  updateInteractionState();
   return {
     currentTick,
     minigameActive
   };
-}
-function logWallStatus(currentTick) {
-  var flags = getTearsStateFlags();
-  if (currentTick % 10 !== 0 || !flags.minigameActive) {
-    return;
-  }
-  var avgDuration = getAverageWallDuration();
-  var stats = getTearsWallStats();
-  logger(state, 'debug', 'status', "Blue: ".concat(stats.blueWallCount, " | Green: ").concat(stats.greenWallCount, " | Avg duration: ").concat(avgDuration.toFixed(1), " ticks | History: ").concat(stats.historyCount), LOG_COLOR.GOLD);
 }
 function notifyScriptInitialized() {
   log.printGameMessage('Script initialized.');
@@ -1176,92 +1228,121 @@ function onEnd() {
   endScript(state);
 }
 function stateManager() {
-  logger(state, 'debug', 'stateManager', "".concat(state.mainState), LOG_COLOR.GOLD);
   switch (state.mainState) {
     case 'start_state':
       {
+        logger(state, 'debug', 'start_state', 'Processing start_state');
         var tickContext = getTickContext();
         if (!tickContext) {
+          logger(state, 'debug', 'start_state', 'No tickContext available');
           return;
         }
         var isInStartBounds = isPlayerInArea(state, minigameStartBounds.minX, minigameStartBounds.maxX, minigameStartBounds.minY, minigameStartBounds.maxY, minigameStartBounds.plane);
+        logger(state, 'debug', 'start_state', "Player in start bounds: ".concat(isInStartBounds));
         if (!isInStartBounds) {
+          logger(state, 'debug', 'start_state', 'Not in bounds, transitioning to navigate_to_cave');
           state.mainState = 'navigate_to_cave';
           return;
         }
+        logger(state, 'debug', 'start_state', 'In bounds, attempting to unequip weapon/offhand');
         var unequipped = unequipWeaponOffhand();
+        logger(state, 'debug', 'start_state', "Unequip result: ".concat(unequipped));
         if (!unequipped) {
+          logger(state, 'debug', 'start_state', 'Failed to unequip, waiting for next tick');
           return;
         }
+        logger(state, 'debug', 'start_state', 'Unequipped successfully, transitioning to talk_to_juna');
         state.mainState = 'talk_to_juna';
         break;
       }
     case 'talk_to_juna':
       {
+        logger(state, 'debug', 'talk_to_juna', 'Processing talk_to_juna state');
         var _tickContext = getTickContext();
         if (!_tickContext) {
+          logger(state, 'debug', 'talk_to_juna', 'No tickContext available');
           return;
         }
+        trackWallCycle();
         var flags = getTearsStateFlags();
-        if (!flags.junaDialogCompleted) {
-          talkToJuna();
-          return;
+        if (flags.junaDialogCompleted) {
+          var ticksSinceTalk = _tickContext.currentTick - junaInteractionTick;
+          if (ticksSinceTalk < 5) {
+            logger(state, 'debug', 'talk_to_juna', "Waiting for dialog completion (".concat(ticksSinceTalk, "/5 ticks)"));
+            return;
+          }
+          logger(state, 'debug', 'talk_to_juna', 'Dialog complete, transitioning to walk_in_cave');
+          state.mainState = 'walk_in_cave';
+          break;
         }
-        state.mainState = 'walk_in_cave';
+        logger(state, 'debug', 'talk_to_juna', 'Starting walk to Juna');
+        state.mainState = 'navigate_to_juna';
         break;
       }
-    case 'walk_in_cave':
+    case 'navigate_to_juna':
       {
         var _tickContext2 = getTickContext();
         if (!_tickContext2) {
           return;
         }
-        var _flags = getTearsStateFlags();
-        var isPlayerMoving = bot.localPlayerMoving();
-        if (isPlayerMoving) {
-          setTearsStateFlags(_objectSpread2(_objectSpread2({}, _flags), {}, {
-            lastPlayerMovementState: true,
-            playerStoppedMovingTicks: 0
-          }));
+        trackWallCycle();
+        var player = client.getLocalPlayer();
+        if (!player) {
           return;
         }
-        if (_flags.lastPlayerMovementState) {
-          var stoppedTicks = _flags.playerStoppedMovingTicks + 1;
-          if (stoppedTicks >= 1) {
-            setTearsStateFlags(_objectSpread2(_objectSpread2({}, _flags), {}, {
-              scriptInitialized: true,
-              playerStoppedMovingTicks: stoppedTicks
-            }));
-            logger(state, 'debug', 'init', 'Player stopped moving, starting wall interactions');
-            state.mainState = 'click_blue_tears';
+        var playerLoc = player.getWorldLocation();
+        var junaLoc = new net.runelite.api.coords.WorldPoint(3248, 9516, 2);
+        var distance = Math.max(Math.abs(playerLoc.getX() - junaLoc.getX()), Math.abs(playerLoc.getY() - junaLoc.getY()));
+        if (distance <= 2) {
+          if (!isCycleVerified()) {
+            var cycleStatus = getCycleStatus();
+            if (cycleStatus.observedSpawns >= 12) {
+              logger(state, 'all', 'cycle', 'Please log into the appropriate Tears of Guthix World.');
+              bot.terminate();
+              return;
+            }
             return;
           }
-          setTearsStateFlags(_objectSpread2(_objectSpread2({}, _flags), {}, {
-            playerStoppedMovingTicks: stoppedTicks
-          }));
+          logger(state, 'debug', 'navigate_to_juna', 'Close to Juna and cycle verified, attempting to talk');
+          talkToJuna();
+          junaInteractionTick = _tickContext2.currentTick;
+          state.mainState = 'talk_to_juna';
+          break;
+        }
+        if (!bot.localPlayerMoving() && !bot.walking.isWebWalking()) {
+          logger(state, 'debug', 'navigate_to_juna', "Walking to Juna (distance: ".concat(distance, "), target: (").concat(ToG.getX(), ", ").concat(ToG.getY(), ")"));
+          bot.walking.walkToTrueWorldPoint(ToG.getX(), ToG.getY());
         }
         break;
       }
-    case 'click_blue_tears':
+    case 'walk_in_cave':
       {
         var _tickContext3 = getTickContext();
         if (!_tickContext3) {
           return;
         }
-        logWallStatus(_tickContext3.currentTick);
-        var interactionStatus = getTearsInteractionStatus();
-        if (!interactionStatus.lastClickedWallKey) {
-          interactWithBlueWall();
+        if (bot.localPlayerMoving() || !bot.localPlayerIdle()) {
+          break;
+        }
+        var _flags = getTearsStateFlags();
+        setTearsStateFlags(_objectSpread2(_objectSpread2({}, _flags), {}, {
+          scriptInitialized: true
+        }));
+        logger(state, 'debug', 'init', 'Player idle in cave, starting wall interactions');
+        state.mainState = 'click_blue_tears';
+        break;
+      }
+    case 'click_blue_tears':
+      {
+        var _tickContext4 = getTickContext();
+        if (!_tickContext4) {
           return;
         }
-        if (!interactionStatus.blueCycleComplete) {
-          return;
+        trackWallCycle();
+        var clickedTile = clickBlueWall();
+        if (clickedTile) {
+          logger(state, 'debug', 'click_blue_tears', "Clicked tile: (".concat(clickedTile.getX(), ", ").concat(clickedTile.getY(), ")"));
         }
-        var timing = getBlueCycleTiming();
-        if (timing.ticksSinceLastBlueChange !== null && timing.ticksSinceLastBlueChange < 1) {
-          return;
-        }
-        interactWithBlueWall();
         break;
       }
     case 'navigate_to_cave':
@@ -1273,32 +1354,34 @@ function stateManager() {
           case 'get_to_bank':
             {
               processBankOpen(state, () => {
+                logger(state, 'debug', 'bank', 'Bank opened');
                 state.subState = 'find_teleport';
               });
               break;
             }
           case 'find_teleport':
             {
-              if (!bot.bank.isOpen()) {
+              var necklaceCandidates = gamesNecklace.slice(0, 8);
+              var hasNecklace = bot.inventory.containsAnyIds(necklaceCandidates);
+              if (!hasNecklace && !bot.bank.isOpen()) {
                 state.subState = 'get_to_bank';
                 break;
               }
-              var necklaceCandidates = gamesNecklace.slice(1, 7);
-              var hasNecklace = bot.inventory.containsAnyIds(necklaceCandidates);
               if (!hasNecklace) {
-                var withdrew = withdrawFirstExistingItem(state, necklaceCandidates, 1, 'navigate_to_cave');
-                if (!withdrew) {
-                  break;
-                }
+                withdrawFirstExistingItem(state, necklaceCandidates, 1, 'navigate_to_cave');
+                break;
               }
-              bot.bank.close();
               if (bot.bank.isOpen()) {
+                logger(state, 'debug', 'bank', 'Closing bank');
+                bot.bank.close();
                 break;
               }
               var selectedNecklace = necklaceCandidates.find(id => bot.inventory.containsId(id));
               if (!selectedNecklace) {
+                state.subState = 'get_to_bank';
                 break;
               }
+              logger(state, 'debug', 'webwalk', "Webwalking to ToG with necklace ".concat(selectedNecklace));
               bot.walking.webWalkStart(ToG);
               state.subState = '';
               state.mainState = 'talk_to_juna';
