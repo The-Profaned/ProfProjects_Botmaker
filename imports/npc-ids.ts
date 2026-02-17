@@ -1,13 +1,12 @@
 import { prayers } from './prayer-functions.js';
-import { NpcID } from './types.js';
 
 // NPC IDs
 export const NPC = {
-	leviathan: NpcID.LEVIATHAN,
-	leviathanQuest: NpcID.LEVIATHAN_QUEST,
-	abbyssalPathfinder: NpcID.LEVIATHAN_BUFF_NPC,
-	graveDefault: NpcID.GRAVESTONE_DEFAULT,
-	graveAngel: NpcID.GRAVESTONE_ANGEL,
+	leviathan: net.runelite.api.gameval.NpcID.LEVIATHAN,
+	leviathanQuest: net.runelite.api.gameval.NpcID.LEVIATHAN_QUEST,
+	abbyssalPathfinder: net.runelite.api.gameval.NpcID.LEVIATHAN_BUFF_NPC,
+	graveDefault: net.runelite.api.gameval.NpcID.GRAVESTONE_DEFAULT,
+	graveAngel: net.runelite.api.gameval.NpcID.GRAVESTONE_ANGEL,
 };
 
 // Group NPC IDs
@@ -44,6 +43,8 @@ export const npcProjectileIds = {
 	leviathanMagic: 2489,
 	leviathanRanged: 2487,
 	leviathanMelee: 2488,
+	scurriousAttackMagic: 2640,
+	scurriousAttackRanged: 2642,
 };
 
 // Map numeric projectile IDs to prayer keys
@@ -51,6 +52,8 @@ export const projectilePrayerMap: Record<number, keyof typeof prayers> = {
 	[npcProjectileIds.leviathanMagic]: 'protMage',
 	[npcProjectileIds.leviathanRanged]: 'protRange',
 	[npcProjectileIds.leviathanMelee]: 'protMelee',
+	[npcProjectileIds.scurriousAttackMagic]: 'protMage',
+	[npcProjectileIds.scurriousAttackRanged]: 'protRange',
 };
 
 // Map numeric projectile IDs to attack type labels
@@ -61,4 +64,6 @@ export const projectileTypeMap: Record<
 	[npcProjectileIds.leviathanRanged]: 'ranged',
 	[npcProjectileIds.leviathanMelee]: 'melee',
 	[npcProjectileIds.leviathanMagic]: 'magic',
+	[npcProjectileIds.scurriousAttackMagic]: 'magic',
+	[npcProjectileIds.scurriousAttackRanged]: 'ranged',
 };

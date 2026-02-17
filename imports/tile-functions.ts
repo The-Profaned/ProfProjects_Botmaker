@@ -5,7 +5,7 @@
 import { logger } from './logger.js';
 import { getWorldPoint } from './location-functions.js';
 import { tileSets } from './tile-sets.js';
-import { ObjectID, State } from './types.js';
+import { State } from './types.js';
 
 // Tile object-related utility functions
 export const getAction = (
@@ -46,18 +46,22 @@ export const getDangerousTiles = (
 ): net.runelite.api.coords.WorldPoint[] => {
 	const dangerousLocations: net.runelite.api.coords.WorldPoint[] = [];
 
+	// Early return if bot APIs not ready during startup
+	if (!bot || !bot.objects || !bot.graphicsObjects) {
+		return dangerousLocations;
+	}
+
 	// Get tile objects (persistent game objects like Boulders)
 	if (tileObjectIds && tileObjectIds.length > 0) {
 		const nearbyObjects = bot.objects.getTileObjectsWithIds(tileObjectIds);
 		if (nearbyObjects && nearbyObjects.length > 0) {
 			for (const obj of nearbyObjects) {
-				if (obj) {
-					const objLoc = obj.getWorldLocation();
-					const trueWorldPoint = getWorldPoint(objLoc);
-					if (trueWorldPoint) {
-						dangerousLocations.push(trueWorldPoint);
-					}
-				}
+				if (!obj) continue;
+
+				const objLoc = obj.getWorldLocation();
+				const trueWorldPoint = getWorldPoint(objLoc) ?? objLoc;
+
+				dangerousLocations.push(trueWorldPoint);
 			}
 		}
 	}
@@ -67,24 +71,23 @@ export const getDangerousTiles = (
 		const graphicsObjs = bot.graphicsObjects.getWithIds(graphicsObjectIds);
 		if (graphicsObjs && graphicsObjs.length > 0) {
 			for (const obj of graphicsObjs) {
-				if (obj) {
-					const localPoint: net.runelite.api.coords.LocalPoint | null =
-						obj.getLocation();
-					if (localPoint) {
-						const worldPoint =
-							net.runelite.api.coords.WorldPoint.fromLocalInstance(
-								client,
-								localPoint,
-							);
-						if (worldPoint) {
-							// Convert from instance to true world coordinates
-							const trueWorldPoint = getWorldPoint(worldPoint);
-							if (trueWorldPoint) {
-								dangerousLocations.push(trueWorldPoint);
-							}
-						}
-					}
-				}
+				if (!obj) continue;
+
+				const localPoint: net.runelite.api.coords.LocalPoint | null =
+					obj.getLocation();
+				if (!localPoint) continue;
+
+				const worldPoint =
+					net.runelite.api.coords.WorldPoint.fromLocalInstance(
+						client,
+						localPoint,
+					);
+				if (!worldPoint) continue;
+
+				// Convert from instance to true world coordinates
+				const trueWorldPoint = getWorldPoint(worldPoint) ?? worldPoint;
+
+				dangerousLocations.push(trueWorldPoint);
 			}
 		}
 	}
@@ -109,12 +112,106 @@ const isValidTileSetName = (
 ): name is 'leviSafeTiles' | 'leviDebrisTiles' =>
 	name === 'leviSafeTiles' || name === 'leviDebrisTiles';
 
+/**
+ * Check if a tile is walkable using the collision map
+ * Returns true if the tile has no collision (is walkable)
+ */
+const isTileWalkable = (
+	tile: net.runelite.api.coords.WorldPoint,
+	state?: State,
+): boolean => {
+	if (!client) return true;
+
+	try {
+		const worldView = client.getWorldView(
+			client.getTopLevelWorldView()?.getId(),
+		);
+		if (!worldView) return true;
+
+		const collisionMaps = worldView.getCollisionMaps?.();
+		if (!collisionMaps) return true;
+
+		const plane = tile.getPlane();
+		if (plane < 0 || plane >= collisionMaps.length) return true;
+
+		const collisionData = collisionMaps[plane];
+		if (!collisionData || typeof collisionData.getFlags !== 'function') {
+			return true;
+		}
+
+		// Convert world point to local scene coordinates
+		const localPoint = net.runelite.api.coords.LocalPoint.fromWorld(
+			worldView,
+			tile,
+		);
+		if (!localPoint) return true;
+
+		// Get scene coordinates (relative to scene origin)
+		const sceneX = localPoint.getSceneX?.();
+		const sceneY = localPoint.getSceneY?.();
+
+		if (
+			typeof sceneX !== 'number' ||
+			typeof sceneY !== 'number' ||
+			sceneX < 0 ||
+			sceneY < 0 ||
+			sceneX >= 104 ||
+			sceneY >= 104
+		) {
+			return true;
+		}
+
+		// Get collision flags - handle Java 2D array in Rhino
+		try {
+			const flags = collisionData.getFlags();
+			if (!flags) return true;
+
+			// Java arrays in Rhino: use bracket notation for both dimensions
+			let tileFlag = 0;
+			try {
+				// Try accessing as 2D array
+				const row = flags[sceneX];
+				if (row !== null && row !== undefined) {
+					tileFlag = row[sceneY] || 0;
+				}
+			} catch {
+				// If 2D access fails, assume walkable
+				return true;
+			}
+
+			// Collision flag constants
+			const BLOCK_FLOOR = 0x100; // 256
+			const BLOCK_OBJECT = 0x20000; // 131072
+			const BLOCK_FULL = 0x40000; // 262144
+			const BLOCKED_FLAGS = BLOCK_FLOOR | BLOCK_OBJECT | BLOCK_FULL;
+
+			const isBlocked = (tileFlag & BLOCKED_FLAGS) !== 0;
+
+			if (state && isBlocked) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`Tile (${tile.getX()}, ${tile.getY()}) blocked - flag: ${tileFlag}`,
+				);
+			}
+
+			return !isBlocked;
+		} catch {
+			return true;
+		}
+	} catch {
+		return true;
+	}
+};
+
 export const getSafeTile = (
 	state: State,
 	searchRadius: number,
 	tileObjectIds?: number[],
 	graphicsObjectIds?: number[],
 	safeTilesSetName?: string,
+	dangerousTileCoordinates?: net.runelite.api.coords.WorldPoint[],
 ): net.runelite.api.coords.WorldPoint | null => {
 	logger(
 		state,
@@ -122,11 +219,32 @@ export const getSafeTile = (
 		'getSafeTile',
 		`Searching for safe tile within ${searchRadius} tiles.`,
 	);
-	const playerLoc = client.getLocalPlayer().getWorldLocation();
+
+	const player = client.getLocalPlayer();
+	if (!player) {
+		logger(state, 'debug', 'getSafeTile', 'Player not found');
+		return null;
+	}
+
+	const playerLoc = player.getWorldLocation();
+	if (!playerLoc) {
+		logger(state, 'debug', 'getSafeTile', 'Player location not found');
+		return null;
+	}
+
 	const truePlayerLoc = getWorldPoint(playerLoc) ?? playerLoc;
 
 	// Get dangerous tiles (tile objects and/or graphics objects)
-	const dangerousTiles = getDangerousTiles(tileObjectIds, graphicsObjectIds);
+	const dynamicDangerousTiles = getDangerousTiles(
+		tileObjectIds ?? [],
+		graphicsObjectIds ?? [],
+	);
+
+	// Combine dynamic and pre-defined dangerous tiles
+	const dangerousTiles = [
+		...dynamicDangerousTiles,
+		...(dangerousTileCoordinates || []),
+	];
 
 	// Get safe tiles (only if safeTilesSetName provided)
 
@@ -157,8 +275,11 @@ export const getSafeTile = (
 		// Optionally: return null or allow searching for a safe tile anyway
 	}
 
-	// Search tiles in radius around player
+	// Search tiles in radius around player, collecting valid tiles at each distance
+	// Then randomly select one to avoid predictable southwest bias
 	for (let distribution = 0; distribution <= searchRadius; distribution++) {
+		const validTilesAtDistance: net.runelite.api.coords.WorldPoint[] = [];
+
 		for (let dx = -distribution; dx <= distribution; dx++) {
 			for (let dy = -distribution; dy <= distribution; dy++) {
 				if (
@@ -179,6 +300,7 @@ export const getSafeTile = (
 				) {
 					continue;
 				}
+
 				// 2. On safeTiles if safeTiles is defined
 				if (
 					safeTiles.length > 0 &&
@@ -186,146 +308,39 @@ export const getSafeTile = (
 				) {
 					continue;
 				}
-				// If all checks pass, return this tile
-				logger(
-					state,
-					'debug',
-					'getSafeTile',
-					`Found safe tile at (${testTile.getX()}, ${testTile.getY()})`,
-				);
-				return testTile;
+
+				// 3. Tile must be walkable (check collision map)
+				if (!isTileWalkable(testTile, state)) {
+					continue;
+				}
+
+				// Tile is valid, add it to the collection
+				validTilesAtDistance.push(testTile);
 			}
 		}
+
+		// If we found valid tiles at this distance, randomly pick one
+		if (validTilesAtDistance.length > 0) {
+			const randomIndex = Math.floor(
+				Math.random() * validTilesAtDistance.length,
+			);
+			const chosenTile = validTilesAtDistance[randomIndex];
+			logger(
+				state,
+				'debug',
+				'getSafeTile',
+				`Found safe tile at (${chosenTile.getX()}, ${chosenTile.getY()})`,
+			);
+			return chosenTile;
+		}
 	}
+
 	logger(state, 'debug', 'getSafeTile', 'No safe tile found.');
 	return new net.runelite.api.coords.WorldPoint(
 		truePlayerLoc.getX(),
 		truePlayerLoc.getY(),
 		truePlayerLoc.getPlane(),
 	);
-};
-
-// Check if player is within a specified area bounds
-export const isPlayerInArea = (
-	state: State,
-	minX: number,
-	maxX: number,
-	minY: number,
-	maxY: number,
-	plane?: number,
-): boolean => {
-	const playerLoc = client.getLocalPlayer().getWorldLocation();
-	const playerX = playerLoc.getX();
-	const playerY = playerLoc.getY();
-	const playerPlane = playerLoc.getPlane();
-
-	const inXBounds = playerX >= minX && playerX <= maxX;
-	const inYBounds = playerY >= minY && playerY <= maxY;
-	const inPlane = plane === undefined || playerPlane === plane;
-
-	const result = inXBounds && inYBounds && inPlane;
-
-	if (state.debugFullState) {
-		logger(
-			state,
-			'debug',
-			'isPlayerInArea',
-			`Player at (${playerX}, ${playerY}, ${playerPlane}). Area bounds: X[${minX}-${maxX}], Y[${minY}-${maxY}], Plane[${plane ?? 'any'}]. In area: ${result}`,
-		);
-	}
-
-	return result;
-};
-
-// Check if game objects or graphics objects exist within specified boundaries
-export const areObjectsInBoundaries = (
-	state: State,
-	boundaries: Array<{
-		minX: number;
-		maxX: number;
-		minY: number;
-		maxY: number;
-	}>,
-	tileObjectIds?: number[],
-	graphicsObjectIds?: number[],
-): boolean => {
-	interface Boundary {
-		minX: number;
-		maxX: number;
-		minY: number;
-		maxY: number;
-	}
-
-	interface TileObject {
-		getWorldLocation(): net.runelite.api.coords.WorldPoint;
-	}
-
-	// Check for leviBoulders (game objects) to detect debris special attack
-	const nearbyObjects = bot.objects.getTileObjectsWithIds([47590]);
-
-	const tileObjectsFound: boolean = (nearbyObjects as TileObject[]).some(
-		(obj: TileObject) => {
-			const objLoc: net.runelite.api.coords.WorldPoint =
-				obj.getWorldLocation();
-			// Convert from instance coordinates to true world coordinates
-			const trueWorldLoc: net.runelite.api.coords.WorldPoint =
-				getWorldPoint(objLoc) ?? objLoc;
-			return (boundaries as Boundary[]).some(
-				(boundary: Boundary) =>
-					trueWorldLoc.getX() >= boundary.minX &&
-					trueWorldLoc.getX() <= boundary.maxX &&
-					trueWorldLoc.getY() >= boundary.minY &&
-					trueWorldLoc.getY() <= boundary.maxY,
-			);
-		},
-	);
-
-	const graphicsObjs = hasGraphicsObjectIds
-		? bot.graphicsObjects.getWithIds(graphicsObjectIds ?? [])
-		: [];
-
-	let graphicsObjectsFound = false;
-	if (graphicsObjs && graphicsObjs.length > 0) {
-		for (const obj of graphicsObjs as GraphicsObject[]) {
-			if (obj) {
-				const localPoint = obj.getLocation();
-				if (localPoint) {
-					const worldPoint =
-						net.runelite.api.coords.WorldPoint.fromLocalInstance(
-							client,
-							localPoint,
-						);
-					if (worldPoint) {
-						// Convert from instance to true world coordinates
-						const trueWorldLoc =
-							getWorldPoint(worldPoint) ?? worldPoint;
-						const found = (boundaries as Boundary[]).some(
-							(boundary: Boundary) =>
-								trueWorldLoc.getX() >= boundary.minX &&
-								trueWorldLoc.getX() <= boundary.maxX &&
-								trueWorldLoc.getY() >= boundary.minY &&
-								trueWorldLoc.getY() <= boundary.maxY,
-						);
-						if (found) {
-							graphicsObjectsFound = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	const objectsFound = tileObjectsFound || graphicsObjectsFound;
-
-	logger(
-		state,
-		'debug',
-		'areObjectsInBoundaries',
-		`Objects found in boundaries: ${objectsFound} (tileObjects: ${tileObjectsFound}, graphicsObjects: ${graphicsObjectsFound})`,
-	);
-
-	return objectsFound;
 };
 
 // Analyze webwalk path and log waypoints and destination. Returns the path for use in walking.

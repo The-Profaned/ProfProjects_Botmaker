@@ -16,6 +16,8 @@ export const prayers = {
 	smite: net.runelite.api.Prayer.SMITE,
 };
 
+const pendingPrayerTicks = new Map<keyof typeof prayers, number>();
+
 // Check if specified prayer is currently active
 export const checkPrayer = (
 	state: State,
@@ -47,7 +49,6 @@ export const togglePrayer = (
 	prayerKey: keyof typeof prayers,
 ): boolean => {
 	const prayer = prayers[prayerKey];
-	logger(state, 'debug', 'togglePrayer', `Activating prayer: ${prayerKey}`);
 	if (!prayer) {
 		logger(
 			state,
@@ -58,17 +59,33 @@ export const togglePrayer = (
 		return false;
 	}
 	if (client.isPrayerActive(prayer)) {
-		logger(state, 'debug', 'togglePrayer', `${prayerKey} already active`);
+		pendingPrayerTicks.delete(prayerKey);
 		return true;
 	}
+
+	const currentTick = state.gameTick;
+	const lastRequestedTick = pendingPrayerTicks.get(prayerKey);
+	if (
+		typeof lastRequestedTick === 'number' &&
+		currentTick - lastRequestedTick <= 1
+	) {
+		return true;
+	}
+
+	pendingPrayerTicks.set(prayerKey, currentTick);
 	bot.prayer.togglePrayer(prayer, false);
 	const nowActive = client.isPrayerActive(prayer);
-	logger(
-		state,
-		'debug',
-		'togglePrayer',
-		`${prayerKey} activated ${nowActive ? 'successfully' : '(failed)'}`,
-	);
+	if (nowActive) {
+		pendingPrayerTicks.delete(prayerKey);
+		logger(state, 'debug', 'togglePrayer', `${prayerKey} activated`);
+	} else {
+		logger(
+			state,
+			'debug',
+			'togglePrayer',
+			`${prayerKey} activation requested (state pending)`,
+		);
+	}
 	return nowActive;
 };
 

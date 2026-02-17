@@ -25,6 +25,32 @@ export const isPlayerNearWP = (
 	tileThreshold: number = 5,
 ): boolean => localPlayerDistributionFromWP(worldPoint) <= tileThreshold;
 
+// Check if player is within specified area bounds
+export const isPlayerInArea = (
+	state: State,
+	minX: number,
+	maxX: number,
+	minY: number,
+	maxY: number,
+	plane?: number,
+): boolean => {
+	const player = client.getLocalPlayer();
+	if (!player) {
+		logger(state, 'debug', 'isPlayerInArea', 'Player not found');
+		return false;
+	}
+
+	const location = player.getWorldLocation();
+	const x = location.getX();
+	const y = location.getY();
+	const currentPlane = location.getPlane();
+
+	const inBounds = x >= minX && x <= maxX && y >= minY && y <= maxY;
+	const onPlane = plane === undefined || currentPlane === plane;
+
+	return inBounds && onPlane;
+};
+
 // Web walk to WorldPoint with timeout
 export const wWalkTimeout = (
 	state: State,
@@ -70,12 +96,21 @@ export const wWalkTimeout = (
 export function getWorldPoint(
 	worldpoint: net.runelite.api.coords.WorldPoint,
 ): net.runelite.api.coords.WorldPoint | null {
-	const inInstance = client
-		.getWorldView(client.getTopLevelWorldView().getId())
-		.isInstance();
+	// Null safety checks for client views (may not be ready during startup)
+	const topLevelView = client.getTopLevelWorldView();
+	if (!topLevelView) {
+		return worldpoint;
+	}
+
+	const worldView = client.getWorldView(topLevelView.getId());
+	if (!worldView) {
+		return worldpoint;
+	}
+
+	const inInstance = worldView.isInstance();
 	if (inInstance) {
 		const localPoint = net.runelite.api.coords.LocalPoint.fromWorld(
-			client.getWorldView(client.getTopLevelWorldView().getId()),
+			worldView,
 			worldpoint,
 		);
 		if (localPoint) {

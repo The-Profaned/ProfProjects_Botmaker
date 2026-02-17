@@ -1,5 +1,3 @@
-import { ItemID } from './types.js';
-
 // Consumable delays in ticks (1 tick = 600ms)
 export const NORMAL_FOOD_DELAY = 3;
 export const COMBO_FOOD_DELAY = 2;
@@ -7,35 +5,35 @@ export const POTION_DELAY = 3;
 
 // Item ID's (inventory)
 export const Item = {
-	boxTrap: ItemID.BOX_TRAP,
-	gamesNecklace1: ItemID.GAMES_NECKLACE1,
-	gamesNecklace2: ItemID.GAMES_NECKLACE2,
-	gamesNecklace3: ItemID.GAMES_NECKLACE3,
-	gamesNecklace4: ItemID.GAMES_NECKLACE4,
-	gamesNecklace5: ItemID.GAMES_NECKLACE5,
-	gamesNecklace6: ItemID.GAMES_NECKLACE6,
-	gamesNecklace7: ItemID.GAMES_NECKLACE7,
-	gamesNecklace8: ItemID.GAMES_NECKLACE8,
+	boxTrap: net.runelite.api.ItemID.BOX_TRAP,
+	gamesNecklace1: net.runelite.api.ItemID.GAMES_NECKLACE1,
+	gamesNecklace2: net.runelite.api.ItemID.GAMES_NECKLACE2,
+	gamesNecklace3: net.runelite.api.ItemID.GAMES_NECKLACE3,
+	gamesNecklace4: net.runelite.api.ItemID.GAMES_NECKLACE4,
+	gamesNecklace5: net.runelite.api.ItemID.GAMES_NECKLACE5,
+	gamesNecklace6: net.runelite.api.ItemID.GAMES_NECKLACE6,
+	gamesNecklace7: net.runelite.api.ItemID.GAMES_NECKLACE7,
+	gamesNecklace8: net.runelite.api.ItemID.GAMES_NECKLACE8,
 };
 
 export const gamesNecklace = [
-	ItemID.GAMES_NECKLACE1,
-	ItemID.GAMES_NECKLACE2,
-	ItemID.GAMES_NECKLACE3,
-	ItemID.GAMES_NECKLACE4,
-	ItemID.GAMES_NECKLACE5,
-	ItemID.GAMES_NECKLACE6,
-	ItemID.GAMES_NECKLACE7,
-	ItemID.GAMES_NECKLACE8,
+	net.runelite.api.ItemID.GAMES_NECKLACE1,
+	net.runelite.api.ItemID.GAMES_NECKLACE2,
+	net.runelite.api.ItemID.GAMES_NECKLACE3,
+	net.runelite.api.ItemID.GAMES_NECKLACE4,
+	net.runelite.api.ItemID.GAMES_NECKLACE5,
+	net.runelite.api.ItemID.GAMES_NECKLACE6,
+	net.runelite.api.ItemID.GAMES_NECKLACE7,
+	net.runelite.api.ItemID.GAMES_NECKLACE8,
 ];
 
 // Gear-related Item ID's
 export const gear = {
-	tBow: ItemID.TWISTED_BOW,
-	bowfa: ItemID.BOW_OF_FAERDHINEN,
-	bowfac: ItemID.BOW_OF_FAERDHINEN_C,
-	blowpipe: ItemID.TOXIC_BLOWPIPE,
-	rcbow: ItemID.RUNE_CROSSBOW,
+	tBow: net.runelite.api.ItemID.TWISTED_BOW,
+	bowfa: net.runelite.api.ItemID.BOW_OF_FAERDHINEN,
+	bowfac: net.runelite.api.ItemID.BOW_OF_FAERDHINEN_C,
+	blowpipe: net.runelite.api.ItemID.TOXIC_BLOWPIPE,
+	rcbow: net.runelite.api.ItemID.RUNE_CROSSBOW,
 };
 
 // Food Item ID's organized by delay type
@@ -43,16 +41,16 @@ export const food = {
 	normalDelay: {
 		delay: NORMAL_FOOD_DELAY,
 		item: {
-			monkFish: ItemID.MONKFISH,
-			shark: ItemID.SHARK,
-			mantaRay: ItemID.MANTA_RAY,
-			anglerFish: ItemID.ANGLERFISH,
+			monkFish: net.runelite.api.ItemID.MONKFISH,
+			shark: net.runelite.api.ItemID.SHARK,
+			mantaRay: net.runelite.api.ItemID.MANTA_RAY,
+			anglerFish: net.runelite.api.ItemID.ANGLERFISH,
 		},
 	},
 	comboDelay: {
 		delay: COMBO_FOOD_DELAY,
 		item: {
-			karambwan: ItemID.COOKED_KARAMBWAN,
+			karambwan: net.runelite.api.ItemID.COOKED_KARAMBWAN,
 		},
 	},
 };
@@ -71,26 +69,26 @@ export const potion = {
 	normalDelay: {
 		delay: POTION_DELAY,
 		item: {
-			stamina_potion_1: ItemID.STAMINA_POTION1,
-			stamina_potion_2: ItemID.STAMINA_POTION2,
-			stamina_potion_3: ItemID.STAMINA_POTION3,
-			stamina_potion_4: ItemID.STAMINA_POTION4,
-			prayer_potion_1: ItemID.PRAYER_POTION1,
-			prayer_potion_2: ItemID.PRAYER_POTION2,
-			prayer_potion_3: ItemID.PRAYER_POTION3,
-			prayer_potion_4: ItemID.PRAYER_POTION4,
-			saradomin_brew_1: ItemID.SARADOMIN_BREW1,
-			saradomin_brew_2: ItemID.SARADOMIN_BREW2,
-			saradomin_brew_3: ItemID.SARADOMIN_BREW3,
-			saradomin_brew_4: ItemID.SARADOMIN_BREW4,
-			super_restore_1: ItemID.SUPER_RESTORE1,
-			super_restore_2: ItemID.SUPER_RESTORE2,
-			super_restore_3: ItemID.SUPER_RESTORE3,
-			super_restore_4: ItemID.SUPER_RESTORE4,
-			drange_potion_1: ItemID.DIVINE_RANGING_POTION1,
-			drange_potion_2: ItemID.DIVINE_RANGING_POTION2,
-			drange_potion_3: ItemID.DIVINE_RANGING_POTION3,
-			drange_potion_4: ItemID.DIVINE_RANGING_POTION4,
+			stamina_potion_1: net.runelite.api.ItemID.STAMINA_POTION1,
+			stamina_potion_2: net.runelite.api.ItemID.STAMINA_POTION2,
+			stamina_potion_3: net.runelite.api.ItemID.STAMINA_POTION3,
+			stamina_potion_4: net.runelite.api.ItemID.STAMINA_POTION4,
+			prayer_potion_1: net.runelite.api.ItemID.PRAYER_POTION1,
+			prayer_potion_2: net.runelite.api.ItemID.PRAYER_POTION2,
+			prayer_potion_3: net.runelite.api.ItemID.PRAYER_POTION3,
+			prayer_potion_4: net.runelite.api.ItemID.PRAYER_POTION4,
+			saradomin_brew_1: net.runelite.api.ItemID.SARADOMIN_BREW1,
+			saradomin_brew_2: net.runelite.api.ItemID.SARADOMIN_BREW2,
+			saradomin_brew_3: net.runelite.api.ItemID.SARADOMIN_BREW3,
+			saradomin_brew_4: net.runelite.api.ItemID.SARADOMIN_BREW4,
+			super_restore_1: net.runelite.api.ItemID.SUPER_RESTORE1,
+			super_restore_2: net.runelite.api.ItemID.SUPER_RESTORE2,
+			super_restore_3: net.runelite.api.ItemID.SUPER_RESTORE3,
+			super_restore_4: net.runelite.api.ItemID.SUPER_RESTORE4,
+			drange_potion_1: net.runelite.api.ItemID.DIVINE_RANGING_POTION1,
+			drange_potion_2: net.runelite.api.ItemID.DIVINE_RANGING_POTION2,
+			drange_potion_3: net.runelite.api.ItemID.DIVINE_RANGING_POTION3,
+			drange_potion_4: net.runelite.api.ItemID.DIVINE_RANGING_POTION4,
 		},
 	},
 };

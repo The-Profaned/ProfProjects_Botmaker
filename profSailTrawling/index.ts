@@ -2,24 +2,10 @@
 import { logger } from '../imports/logger.js';
 import { createUi } from '../imports/ui-functions.js';
 import { endScript, gameTick } from '../imports/general-function.js';
-import type { State } from '../imports/types.js';
-import { stateManager } from './State Manager/state-manager.js';
+import { stateManager, state, MainStates } from './State Manager/state-manager.js';
 
-// variables for script state
-const state: State = {
-	debugEnabled: true,
-	debugFullState: false,
-	failureCounts: {},
-	failureOrigin: '',
-	lastFailureKey: '',
-	mainState: 'start_state',
-	scriptInitalized: false,
-	scriptName: 'profSailTrawling',
-	uiCompleted: false,
-	timeout: 0,
-	gameTick: 0,
-	subState: '',
-};
+// Re-export state for backward compatibility
+export { state } from './State Manager/state-manager.js';
 
 // On Start of Script
 export function onStart() {
@@ -49,7 +35,7 @@ export function onGameTick() {
 			!bot.bank.isBanking() &&
 			bot.localPlayerIdle() &&
 			!bot.walking.isWebWalking() &&
-			state.mainState == 'start_state'
+			state.mainState == MainStates.MOVEMENT
 		)
 			bot.breakHandler.setBreakHandlerStatus(true);
 		stateManager();

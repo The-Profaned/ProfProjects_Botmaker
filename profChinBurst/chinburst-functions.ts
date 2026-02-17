@@ -578,3 +578,56 @@ function getNextObliterationLog(): string {
 	);
 	return CHINBURST_CONSTANTS.obliterationLogs[index];
 }
+
+/*
+function checkLawAirWaterRunes() {
+    var rune1 = client.getVarbitValue(29);
+    var rune2 = client.getVarbitValue(1622);
+    var rune3 = client.getVarbitValue(1623);
+    var rune4 = client.getVarbitValue(14285);
+
+    var lawRuneID = 11;
+    var airRuneID = 1;
+    var waterRuneID = 2;
+    var mistRuneID = 15;
+    var mudRuneID = 16;
+    var dustRuneID = 17;
+    var steamRuneID = 19;
+    var smokeRuneID = 20;
+
+    var pouchHasLawRune = rune1 === lawRuneID || rune2 === lawRuneID || rune3 === lawRuneID || rune4 === lawRuneID;
+    var pouchHasAirRune = rune1 === airRuneID || rune2 === airRuneID || rune3 === airRuneID || rune4 === airRuneID || rune1 === mistRuneID || rune2 === mistRuneID || rune3 === mistRuneID || rune4 === mistRuneID || rune1 === dustRuneID || rune2 === dustRuneID || rune3 === dustRuneID || rune4 === dustRuneID || rune1 === smokeRuneID || rune2 === smokeRuneID || rune3 === smokeRuneID || rune4 === smokeRuneID;
+    var pouchHasWaterRune = rune1 === waterRuneID || rune2 === waterRuneID || rune3 === waterRuneID || rune4 === waterRuneID || rune1 === mistRuneID || rune2 === mistRuneID || rune3 === mistRuneID || rune4 === mistRuneID || rune1 === mudRuneID || rune2 === mudRuneID || rune3 === mudRuneID || rune4 === mudRuneID || rune1 === steamRuneID || rune2 === steamRuneID || rune3 === steamRuneID || rune4 === steamRuneID;
+
+    if (pouchHasLawRune && pouchHasAirRune && pouchHasWaterRune) {
+        return true; 
+    }
+
+    var inventory = client.getItemContainer(93);
+
+    var lawRuneActualID = 563;
+    var airRuneActualID = 556;
+    var waterRuneActualID = 557;
+    var mistRuneID = 4695;
+    var mudRuneID = 4698;
+    var dustRuneID = 4696;
+    var steamRuneID = 4694;
+    var smokeRuneID = 4697;
+    
+    if (inventory != null) {
+        for (var i = 0; i < 28; i++) {
+            var item = inventory.getItem(i);
+            if (item != null) {
+                var itemID = item.getId();
+                if (!pouchHasLawRune && itemID === lawRuneActualID) {
+                    pouchHasLawRune = true;
+                }
+                if (!pouchHasAirRune && (itemID === airRuneActualID || itemID === mistRuneID || itemID === dustRuneID || itemID === smokeRuneID)) {
+                    pouchHasAirRune = true;
+                }
+                if (!pouchHasWaterRune && (itemID === waterRuneActualID || itemID === mistRuneID || itemID === mudRuneID || itemID === steamRuneID)) {
+                    pouchHasWaterRune = true;
+                }
+            }
+        }
+    }*/

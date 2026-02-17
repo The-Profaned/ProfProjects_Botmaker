@@ -3,13 +3,17 @@ import { getClosestNPC, getPrayerKeyForAnimation } from './npc-functions.js';
 import { checkPrayer, prayers, togglePrayer } from './prayer-functions.js';
 import {
 	getPrayerKeyForProjectile,
-	getSortedNpcAttacksByDistance,
-	getSortedProjectiles,
+	getClosestProjectile,
+	type TrackedProjectile,
 } from './projectile-functions.js';
 import { logger } from './logger.js';
 import { State } from './types.js';
-import { Projectile } from './projectile-functions.js';
-import { isPlayerInArea } from './tile-functions.js';
+import {
+	getDangerousTiles,
+	getSafeTile,
+	isInTileList,
+} from './tile-functions.js';
+import { getWorldPoint, isPlayerInArea } from './location-functions.js';
 
 // Player-related utility functions
 
@@ -73,17 +77,13 @@ export const activatePrayerForThreat = (
 // Activate prayer for closest projectile
 export const activatePrayerForProjectile = (
 	state: State,
-	projectile: Projectile,
+	trackedProjectile: TrackedProjectile,
 ): boolean => {
-	const projectileId = projectile.getId?.() ?? projectile.id ?? -1;
-	const prayerKey = getPrayerKeyForProjectile(projectileId);
-	const distance = projectile
-		.getWorldLocation?.()
-		?.distanceTo(client.getLocalPlayer().getWorldLocation());
+	const prayerKey = getPrayerKeyForProjectile(trackedProjectile.id);
 	return activatePrayerForThreat(
 		state,
 		prayerKey,
-		`projectile ${projectileId} at distance ${distance}`,
+		`projectile ${trackedProjectile.id} hitting in ${trackedProjectile.ticksUntilHit} ticks`,
 	);
 };
 
@@ -100,85 +100,73 @@ export const activatePrayerForNPCAttack = (
 	);
 };
 
-// Handle prayer activation for closest projectile + all projectiles in range
-export const handleIncomingProjectiles = (
-	state: State & { currentPrayProjectileId?: number },
-): boolean => {
-	const sortedProjectiles = getSortedProjectiles(state);
+// Handle incoming projectiles by activating prayer for closest one
+// Tracks last projectile time and only disables prayer if none seen for 3 seconds
+let lastProjectileSeenTick = 0;
+let lastActivatedPrayer: keyof typeof prayers | null = null;
 
-	// if no projectiles, disable prayers
-	if (sortedProjectiles.length === 0) {
-		logger(
-			state,
-			'debug',
-			'handleIncomingProjectiles',
-			'No tracked projectiles within range.',
-		);
-		disableProtectionPrayers(state);
-		state.currentPrayProjectileId = undefined;
-		return false;
-	}
+export const handleIncomingProjectiles = (state: State): boolean => {
+	const closest = getClosestProjectile();
+	const currentTick = state.gameTick;
+	const DISABLE_DELAY_TICKS = 5; // 3 seconds at 0.6s per tick
 
-	// Check if we're already praying for a projectile
-	let targetProjectile = sortedProjectiles[0];
+	// If projectile exists, activate appropriate prayer
+	if (closest) {
+		lastProjectileSeenTick = currentTick;
 
-	if (state.currentPrayProjectileId === undefined) {
-		// No projectile being prayed for yet, set the closest one
-		state.currentPrayProjectileId = targetProjectile.id;
-	} else {
-		// Find the projectile we're currently praying for
-		const currentProjectile = sortedProjectiles.find(
-			(p) => p.id === state.currentPrayProjectileId,
-		);
+		const prayerKey = getPrayerKeyForProjectile(closest.id);
 
-		// If current projectile still exists and hasn't hit, keep praying for it
-		if (currentProjectile && !currentProjectile.hasHit) {
-			targetProjectile = currentProjectile;
-		} else {
-			// Current projectile has hit, switch to next one
-			state.currentPrayProjectileId = targetProjectile.id;
+		if (!prayerKey) {
 			logger(
 				state,
 				'debug',
 				'handleIncomingProjectiles',
-				`Previous projectile hit. Switching to projectile ${targetProjectile.id}.`,
+				`No prayer mapped for projectile ID ${closest.id}`,
+			);
+			return false;
+		}
+
+		// Only log if prayer changed
+		if (lastActivatedPrayer !== prayerKey) {
+			logger(
+				state,
+				'debug',
+				'handleIncomingProjectiles',
+				`Incoming projectile ID ${closest.id} in ${closest.ticksUntilHit} ticks. Activating ${prayerKey}`,
 			);
 		}
+
+		lastActivatedPrayer = prayerKey;
+		return togglePrayer(state, prayerKey);
 	}
 
-	logger(
-		state,
-		'debug',
-		'handleIncomingProjectiles',
-		`Projectile queue (${sortedProjectiles.length}): ${sortedProjectiles.map((p) => `${p.id}(${p.distance}t)`).join(', ')} | Praying for: ${targetProjectile.id}`,
-	);
-
-	return activatePrayerForProjectile(state, targetProjectile);
-};
-
-// Handle pre-emptive prayer activation for closest NPC attack animation
-// TODO: This function will not work until getSortedNpcAttacksByDistance is implemented
-export const handleNpcAttackAnimations = (state: State): boolean => {
-	const sortedAttacks = getSortedNpcAttacksByDistance();
-
-	if (sortedAttacks.length === 0) {
+	// No projectile - check if enough time has passed to disable prayer
+	if (
+		lastActivatedPrayer &&
+		currentTick - lastProjectileSeenTick >= DISABLE_DELAY_TICKS
+	) {
 		logger(
 			state,
 			'debug',
-			'handleNpcAttackAnimations',
-			'No tracked NPC attack animations within range (or stub not implemented).',
+			'handleIncomingProjectiles',
+			`No projectile for 3s. Disabling ${lastActivatedPrayer}`,
 		);
-		return false;
+		bot.prayer.togglePrayer(prayers[lastActivatedPrayer], true);
+		lastActivatedPrayer = null;
 	}
 
+	return false;
+};
+
+// Handle pre-emptive prayer activation for closest NPC attack animation (stub - NPC attack tracking not implemented)
+export const handleNpcAttackAnimations = (state: State): boolean => {
 	logger(
 		state,
 		'debug',
 		'handleNpcAttackAnimations',
-		`NPC attack queue (${sortedAttacks.length}): ${sortedAttacks.map((a) => `${a.npcIndex}:${a.animationId}(${a.distance}t)`).join(', ')}`,
+		'NPC attack animation tracking not implemented.',
 	);
-
-	return activatePrayerForNPCAttack(state, sortedAttacks[0]);
+	return false;
 };
 
 // Attack target NPC by ID
@@ -203,12 +191,6 @@ export const attackTargetNpc = (state: State, npcId: number): boolean => {
 	}
 
 	if (interacting && interacting === npc) {
-		logger(
-			state,
-			'debug',
-			'attackTargetNpc',
-			`Already attacking NPC ${npcId}`,
-		);
 		return true;
 	}
 
@@ -227,14 +209,13 @@ export const moveToSafeTile = (
 	state: State,
 	moveToSafeTile: { x: number; y: number },
 ): boolean => {
-	const player = client?.getLocalPlayer?.();
-	const playerLoc = player.getWorldLocation?.();
-
+	const player = client.getLocalPlayer();
 	if (!player) {
 		logger(state, 'debug', 'moveToSafeTile', 'Player not found');
 		return false;
 	}
 
+	const playerLoc = player.getWorldLocation();
 	if (!playerLoc) {
 		logger(state, 'debug', 'moveToSafeTile', 'Player location not found');
 		return false;
@@ -253,7 +234,8 @@ export const moveToSafeTile = (
 		return true;
 	}
 
-	bot.walking.walkToWorldPoint(moveToSafeTile.x, moveToSafeTile.y);
+	// Use walkToTrueWorldPoint when working with converted instance coordinates
+	bot.walking.walkToTrueWorldPoint(moveToSafeTile.x, moveToSafeTile.y);
 	logger(
 		state,
 		'debug',
@@ -261,6 +243,143 @@ export const moveToSafeTile = (
 		`Moving to safe tile (${moveToSafeTile.x}, ${moveToSafeTile.y})`,
 	);
 	return true;
+};
+
+// Track the last movement target to prevent spam-clicking
+let lastMovementTarget: { x: number; y: number; tick: number } | null = null;
+
+// High-level function to handle dangerous tile detection and automatic movement to safety
+export const avoidDangerousTiles = (
+	state: State,
+	options: {
+		tileObjectIds?: number[];
+		graphicsObjectIds?: number[];
+		searchRadius?: number;
+		dangerousTileCoordinates?: net.runelite.api.coords.WorldPoint[];
+	},
+): boolean => {
+	// Early return if bot APIs not ready
+	if (!bot || !client) {
+		return false;
+	}
+
+	const {
+		tileObjectIds = [],
+		graphicsObjectIds = [],
+		dangerousTileCoordinates = [],
+	} = options;
+	const searchRadius = options.searchRadius || 5;
+
+	// Get all dangerous tiles from tile objects and graphics objects, plus pre-defined coordinates
+	const dynamicDangerousTiles = getDangerousTiles(
+		tileObjectIds,
+		graphicsObjectIds,
+	);
+	const dangerousTiles = [
+		...dynamicDangerousTiles,
+		...dangerousTileCoordinates,
+	];
+
+	// If no danger detected, clear last target and return
+	if (dangerousTiles.length === 0) {
+		lastMovementTarget = null;
+		return false;
+	}
+
+	// Get player location to check if they're on a dangerous tile
+	const player = client.getLocalPlayer();
+	if (!player) {
+		logger(state, 'debug', 'avoidDangerousTiles', 'Player not found');
+		return false;
+	}
+
+	const playerLoc = player.getWorldLocation();
+	if (!playerLoc) {
+		logger(
+			state,
+			'debug',
+			'avoidDangerousTiles',
+			'Could not get player location',
+		);
+		return false;
+	}
+
+	// Convert player location to true world coordinates for comparison
+	const truePlayerLoc = getWorldPoint(playerLoc) ?? playerLoc;
+
+	// ONLY move if player is actually standing on a dangerous tile
+	if (!isInTileList(truePlayerLoc, dangerousTiles)) {
+		// Player is not in danger, no need to move
+		lastMovementTarget = null;
+		return false;
+	}
+
+	// Player is on a dangerous tile, find a safe tile within the search radius
+	const safeTile = getSafeTile(
+		state,
+		searchRadius,
+		tileObjectIds,
+		graphicsObjectIds,
+		undefined,
+		dangerousTileCoordinates,
+	);
+
+	if (!safeTile) {
+		logger(
+			state,
+			'debug',
+			'avoidDangerousTiles',
+			`No safe tile found within ${searchRadius} tiles`,
+		);
+		return false;
+	}
+
+	// If we're already at the safe tile, no need to move
+	if (
+		playerLoc.getX() === safeTile.getX() &&
+		playerLoc.getY() === safeTile.getY()
+	) {
+		lastMovementTarget = null;
+		return false;
+	}
+
+	// Check if we're already walking to this same tile (prevent spam-clicking)
+	const targetX = safeTile.getX();
+	const targetY = safeTile.getY();
+	const currentTick = state.gameTick;
+
+	// Prevent any movement if we issued a command recently (global debounce)
+	if (lastMovementTarget && currentTick - lastMovementTarget.tick < 2) {
+		// Too soon since last movement command, wait
+		return false;
+	}
+
+	// Also check if we're already walking to this exact tile
+	if (
+		lastMovementTarget &&
+		lastMovementTarget.x === targetX &&
+		lastMovementTarget.y === targetY &&
+		currentTick - lastMovementTarget.tick < 3
+	) {
+		// Already walking to this tile, don't spam click
+		return false;
+	}
+
+	// Update last movement target
+	lastMovementTarget = { x: targetX, y: targetY, tick: currentTick };
+
+	// Move to the safe tile
+	logger(
+		state,
+		'debug',
+		'avoidDangerousTiles',
+		`Detected ${dangerousTiles.length} dangerous tiles. Moving to safety at (${safeTile.getX()}, ${safeTile.getY()})`,
+	);
+
+	return moveToSafeTile(state, {
+		x: safeTile.getX(),
+		y: safeTile.getY(),
+	});
 };
 
 // Get player's currently worn equipment
@@ -520,6 +639,7 @@ export const eatFood = (
 	state: State,
 	foodItemIds: number[],
 	foodDelay: number,
+	fallbackFoodIds?: number[],
 ): boolean => {
 	// Check if we're still in food lockout
 	if (state.lastFoodEatTick && state.lastFoodDelay) {
@@ -535,8 +655,16 @@ export const eatFood = (
 		}
 	}
 
+	// Try primary food items first
 	for (const itemIds of foodItemIds) {
-		if (bot.inventory.containsId(itemIds)) {
+		const hasFood = bot.inventory.containsId(itemIds);
+		if (hasFood) {
+			logger(
+				state,
+				'debug',
+				'eatFood',
+				`Found food ${itemIds}, attempting to eat`,
+			);
 			bot.inventory.interactWithIds([itemIds], ['Eat']);
 			state.lastFoodEatTick = state.gameTick;
 			state.lastFoodDelay = foodDelay;
@@ -544,11 +672,43 @@ export const eatFood = (
 				state,
 				'debug',
 				'eatFood',
-				`Eating food item ID ${itemIds} with ${foodDelay} tick delay`,
+				`Ate food item ID ${itemIds} with ${foodDelay} tick delay`,
 			);
 			return true;
 		}
 	}
+
+	// Fallback to combo foods if no primary food found
+	if (fallbackFoodIds && fallbackFoodIds.length > 0) {
+		logger(
+			state,
+			'debug',
+			'eatFood',
+			`No primary food found, trying fallback combo foods`,
+		);
+		for (const itemIds of fallbackFoodIds) {
+			const hasFood = bot.inventory.containsId(itemIds);
+			if (hasFood) {
+				bot.inventory.interactWithIds([itemIds], ['Eat']);
+				state.lastFoodEatTick = state.gameTick;
+				state.lastFoodDelay = foodDelay;
+				logger(
+					state,
+					'debug',
+					'eatFood',
+					`Ate fallback food item ID ${itemIds} with ${foodDelay} tick delay`,
+				);
+				return true;
+			}
+		}
+	}
+
+	logger(
+		state,
+		'debug',
+		'eatFood',
+		`No food found from IDs: ${foodItemIds.join(', ')}${fallbackFoodIds ? ` or fallback: ${fallbackFoodIds.join(', ')}` : ''}`,
+	);
 	return false;
 };
 

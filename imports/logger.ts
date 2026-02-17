@@ -141,5 +141,8 @@ export const logger = (
 	}
 	if (type === 'all' || (type === 'debug' && state.debugEnabled)) {
 		printToLog(); // Log 'debug' messages to log only if debug is enabled in state
+		if (state && typeof state === 'object') {
+			state.lastLoggedSource = source;
+		}
 	}
 };

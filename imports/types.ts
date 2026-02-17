@@ -20,6 +20,7 @@ export type State = {
 	bankWalkInitiated?: boolean;
 	isAtBankLocation?: boolean;
 	bankOpenAttemptTick?: number;
+	lastLoggedSource?: string;
 };
 
 // Location coordinates type definition
@@ -37,10 +38,3 @@ export interface GroundItem {
 export interface GroundItemsAPI {
 	getTileItemsWithIds(ids: number[]): GroundItem[];
 }
-
-// NpcID, ProjectileID, ItemID, AnimationID, and ObjectID exports
-export const NpcID = net.runelite.api.gameval.NpcID;
-export const ProjectileID = net.runelite.api.Projectile;
-export const ObjectID = net.runelite.api.ObjectID;
-export const ItemID = net.runelite.api.ItemID;
-export const AnimationID = net.runelite.api.AnimationID;
