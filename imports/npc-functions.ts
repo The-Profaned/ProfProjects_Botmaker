@@ -3,6 +3,7 @@ import { animationPrayerMap, animationTypeMap } from './npc-ids.js';
 import { prayers } from './prayer-functions.js';
 import { logger } from './logger.js';
 import { State } from './types.js';
+import { getWorldPoint } from './location-functions.js';
 
 type AnimationActor = net.runelite.api.Actor & {
 	isNpc?: () => boolean;
@@ -63,6 +64,28 @@ export const getClosestNPC = (
 	});
 
 	return closest || undefined;
+};
+
+export const getNpcCenterTile = (
+	npc: net.runelite.api.NPC,
+): net.runelite.api.coords.WorldPoint | null => {
+	const npcLoc: net.runelite.api.coords.WorldPoint | null =
+		npc.getWorldLocation?.() ?? null;
+	if (!npcLoc) return null;
+
+	const trueNpcLoc: net.runelite.api.coords.WorldPoint =
+		getWorldPoint(npcLoc) ?? npcLoc;
+	const composition: net.runelite.api.NPCComposition | null =
+		npc.getComposition?.() ?? null;
+	const size: number | undefined = composition?.getSize?.();
+	const sizeNumber: number = typeof size === 'number' && size > 0 ? size : 1;
+	const offset: number = Math.floor(sizeNumber / 2);
+
+	return new net.runelite.api.coords.WorldPoint(
+		trueNpcLoc.getX() + offset,
+		trueNpcLoc.getY() + offset,
+		trueNpcLoc.getPlane(),
+	);
 };
 
 // Initialize event listeners for NPC attack tracking

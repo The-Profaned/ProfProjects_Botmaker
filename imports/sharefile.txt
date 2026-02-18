@@ -1,130 +1,34 @@
-00:00:00 - Initialising script executor...
-00:00:00 - Preparing nodes for execution...
-00:00:00 - Preparing Sandboxed JS engine...
-00:00:00 - [JS] [script] profLeviathan started.
-00:00:00 - Starting execution...
-00:00:00 - [JS] [stateManager] TRAVEL
-00:00:00 - [JS] [Travel] TRAVEL
-00:00:00 - [JS] [Travel] Interacting with hand holds, Preparing to murder Leviathan
-00:00:01 - [JS] [Travel] Waiting for handhold to disappear...
-00:00:02 - [JS] [Travel] Entered arena, starting combat!
-00:00:03 - [JS] [stateManager] COMBAT
-00:00:03 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2487 in 5 ticks. Activating protRange
-00:00:03 - [JS] [togglePrayer] protRange activation requested (state pending)
-00:00:03 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:03 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:04 - [JS] [manageFood] Health: 87, Can eat: true
-00:00:04 - [JS] [handlePrayerLevel] Prayer: 59, Can drink: true
-00:00:05 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:06 - [JS] [manageFood] Health: 87, Can eat: true
-00:00:07 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2489 in 4 ticks. Activating protMage
-00:00:07 - [JS] [handlePrayerLevel] Prayer: 58, Can drink: true
-00:00:08 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:08 - [JS] [manageFood] Health: 87, Can eat: true
-00:00:09 - [JS] [handlePrayerLevel] Prayer: 57, Can drink: true
-00:00:10 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:11 - [JS] [manageFood] Health: 79, Can eat: true
-00:00:11 - [JS] [handlePrayerLevel] Prayer: 57, Can drink: true
-00:00:13 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:13 - [JS] [manageFood] Health: 79, Can eat: true
-00:00:14 - [JS] [handlePrayerLevel] Prayer: 56, Can drink: true
-00:00:15 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:16 - [JS] [manageFood] Health: 73, Can eat: true
-00:00:16 - [JS] [handlePrayerLevel] Prayer: 55, Can drink: true
-00:00:17 - [JS] [handleIncomingProjectiles] No projectile for 3s. Disabling protMage
-00:00:17 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:18 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2489 in 5 ticks. Activating protMage
-00:00:18 - [JS] [manageFood] Health: 73, Can eat: true
-00:00:19 - [JS] [handlePrayerLevel] Prayer: 55, Can drink: true
-00:00:20 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:20 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:20 - [JS] [manageFood] Health: 55, Can eat: true
-00:00:21 - [JS] [handlePrayerLevel] Prayer: 54, Can drink: true
-00:00:22 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:23 - [JS] [manageFood] Health: 55, Can eat: true
-00:00:23 - [JS] [handlePrayerLevel] Prayer: 54, Can drink: true
-00:00:25 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:25 - [JS] [manageFood] Health: 50, Can eat: true
-00:00:26 - [JS] [handlePrayerLevel] Prayer: 53, Can drink: true
-00:00:27 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:28 - [JS] [manageFood] Health: 50, Can eat: true
-00:00:28 - [JS] [handlePrayerLevel] Prayer: 53, Can drink: true
-00:00:29 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:30 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:30 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:30 - [JS] [getSafeTile] Found safe tile at (2070, 6368)
-00:00:30 - [JS] [avoidDangerousTiles] Detected 45 dangerous tiles. Moving to safety at (2070, 6368)
-00:00:30 - [JS] [moveToSafeTile] Moving to safe tile (2070, 6368)
-00:00:30 - [JS] [manageFood] Health: 51, Can eat: true
-00:00:31 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:31 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:31 - [JS] [getSafeTile] Found safe tile at (2070, 6367)
-00:00:31 - [JS] [avoidDangerousTiles] Detected 45 dangerous tiles. Moving to safety at (2070, 6367)
-00:00:31 - [JS] [moveToSafeTile] Moving to safe tile (2070, 6367)
-00:00:31 - [JS] [handlePrayerLevel] Prayer: 52, Can drink: true
-00:00:31 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:31 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:31 - [JS] [getSafeTile] Found safe tile at (2071, 6368)
-00:00:31 - [JS] [avoidDangerousTiles] Detected 45 dangerous tiles. Moving to safety at (2071, 6368)
-00:00:31 - [JS] [moveToSafeTile] Moving to safe tile (2071, 6368)
-00:00:32 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:32 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:32 - [JS] [getSafeTile] Found safe tile at (2071, 6368)
-00:00:32 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:32 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:32 - [JS] [handleIncomingProjectiles] No projectile for 3s. Disabling protMage
-00:00:32 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:32 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:32 - [JS] [getSafeTile] Found safe tile at (2071, 6366)
-00:00:32 - [JS] [avoidDangerousTiles] Detected 45 dangerous tiles. Moving to safety at (2071, 6366)
-00:00:32 - [JS] [moveToSafeTile] Moving to safe tile (2071, 6366)
-00:00:32 - [JS] [manageFood] Health: 46, Can eat: true
-00:00:33 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2489 in 5 ticks. Activating protMage
-00:00:33 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:33 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:33 - [JS] [getSafeTile] Found safe tile at (2072, 6366)
-00:00:33 - [JS] [avoidDangerousTiles] Detected 45 dangerous tiles. Moving to safety at (2072, 6366)
-00:00:33 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6366)
-00:00:33 - [JS] [handlePrayerLevel] Prayer: 51, Can drink: true
-00:00:34 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:34 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:35 - [JS] [manageFood] Health: 46, Can eat: true
-00:00:35 - [JS] [handlePrayerLevel] Prayer: 51, Can drink: true
-00:00:37 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:37 - [JS] [manageFood] Health: 42, Can eat: true
-00:00:37 - [JS] [manageFood] Low health (42), eating...
-00:00:37 - [JS] [eatFood] Found food 7946, attempting to eat
-00:00:37 - [JS] [eatFood] Ate food item ID 7946 with 3 tick delay
-00:00:38 - [JS] [handlePrayerLevel] Prayer: 50, Can drink: true
-00:00:39 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2487 in 3 ticks. Activating protRange
-00:00:39 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:39 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:40 - [JS] [manageFood] Health: 58, Can eat: true
-00:00:40 - [JS] [handlePrayerLevel] Prayer: 50, Can drink: true
-00:00:42 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2489 in 3 ticks. Activating protMage
-00:00:42 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:42 - [JS] [manageFood] Health: 58, Can eat: true
-00:00:43 - [JS] [handlePrayerLevel] Prayer: 49, Can drink: true
-00:00:44 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:44 - [JS] [manageFood] Health: 58, Can eat: true
-00:00:45 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
-00:00:45 - [JS] [getSafeTile] Player is standing on DangerousTiles.
-00:00:45 - [JS] [getSafeTile] Found safe tile at (2073, 6367)
-00:00:45 - [JS] [avoidDangerousTiles] Detected 44 dangerous tiles. Moving to safety at (2073, 6367)
-00:00:45 - [JS] [moveToSafeTile] Moving to safe tile (2073, 6367)
-00:00:45 - [JS] [handlePrayerLevel] Prayer: 48, Can drink: true
-00:00:46 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:46 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:47 - [JS] [manageFood] Health: 55, Can eat: true
-00:00:47 - [JS] [handlePrayerLevel] Prayer: 48, Can drink: true
-00:00:48 - [JS] [handleIncomingProjectiles] Incoming projectile ID 2487 in 5 ticks. Activating protRange
-00:00:48 - [JS] [togglePrayer] protRange activation requested (state pending)
-00:00:49 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:49 - [JS] [manageFood] Health: 55, Can eat: true
-00:00:50 - [JS] [handlePrayerLevel] Prayer: 47, Can drink: true
-00:00:51 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:52 - [JS] [manageFood] Health: 55, Can eat: true
-00:00:52 - [JS] [handlePrayerLevel] Prayer: 47, Can drink: true
-00:00:53 - [JS] [attackTargetNpc] Attacking NPC 12215 at 11134, 13185, 0
-00:00:53 - [JS] [Combat] Attacking NPC with ID: 12215
-00:00:54 - [JS] [script] profLeviathan ended.
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6363) -> instance (2072, 6363)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6363) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6364) -> instance (2072, 6364)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6364) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6365) -> instance (2072, 6365)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6365) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6366) -> instance (2072, 6366)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6366) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6367) -> instance (2072, 6367)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6367) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6368) -> instance (2072, 6368)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6368) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6369) -> instance (2072, 6369)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6369) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6370) -> instance (2072, 6370)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6370) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6371) -> instance (2072, 6371)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6371) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6372) -> instance (2072, 6372)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6372) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6373) -> instance (2072, 6373)
+00:00:15 - [JS] [isTileWalkable] Tile (2072, 6373) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2073, 6363) -> instance (2073, 6363)
+00:00:15 - [JS] [isTileWalkable] Tile (2073, 6363) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2074, 6363) -> instance (2074, 6363)
+00:00:15 - [JS] [isTileWalkable] Tile (2074, 6363) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2075, 6363) -> instance (2075, 6363)
+00:00:15 - [JS] [isTileWalkable] Tile (2075, 6363) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [isTileWalkable] Instance: true world (2076, 6363) -> instance (2076, 6363)
+00:00:15 - [JS] [isTileWalkable] Tile (2076, 6363) outside loaded scene - no collision check available, assuming walkable
+00:00:15 - [JS] [getPreferredDistanceTile] Found 15 valid tiles at distance 9
+00:00:15 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 10, Checking: 5
+00:00:15 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6369) at distance 1 from player
+00:00:15 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6369)

@@ -1,6 +1,6 @@
 // imports
 import { handleFailure } from './general-function.js';
-import { logger } from './logger.js';
+import { LOG_COLOR_PINK, logger } from './logger.js';
 import { timeoutManager } from './timeout-manager.js';
 import { State } from './types.js';
 
@@ -122,4 +122,66 @@ export function getWorldPoint(
 		return null;
 	}
 	return worldpoint;
+}
+
+// Toggle collision debugging logs on/off - set to true to enable getInstancePoint logging
+const ENABLE_COLLISION_LOGGING = false;
+
+// Convert true world coordinates to instance coordinates using proper API
+export function getInstancePoint(
+	trueWorldPoint: net.runelite.api.coords.WorldPoint,
+): net.runelite.api.coords.WorldPoint | null {
+	// Null safety checks for client views
+	const topLevelView = client.getTopLevelWorldView();
+	if (!topLevelView) {
+		return null;
+	}
+
+	const worldView = client.getWorldView(topLevelView.getId());
+	if (!worldView) {
+		return null;
+	}
+
+	const inInstance = worldView.isInstance();
+	if (!inInstance) {
+		// Not in instance, use tile as-is
+		return trueWorldPoint;
+	}
+
+	// In instance - use WorldPoint.toLocalInstance() to get where the true world tile appears
+	// This returns Collection<WorldPoint> of tile occurrences in the instance
+	const instanceOccurrences =
+		net.runelite.api.coords.WorldPoint.toLocalInstance(
+			worldView,
+			trueWorldPoint,
+		);
+
+	if (!instanceOccurrences || instanceOccurrences.size() === 0) {
+		// Tile does not appear in this instance
+		if (typeof log !== 'undefined' && ENABLE_COLLISION_LOGGING) {
+			logger(
+				undefined,
+				'debug',
+				'getInstancePoint',
+				`[getInstancePoint] True world (${trueWorldPoint.getX()}, ${trueWorldPoint.getY()}) -> no instance occurrence`,
+				LOG_COLOR_PINK,
+			);
+		}
+		return null;
+	}
+
+	// Get the first occurrence (typically only one per instance)
+	const iterator = instanceOccurrences.iterator();
+	const instanceTile = iterator.next();
+
+	if (typeof log !== 'undefined' && ENABLE_COLLISION_LOGGING) {
+		logger(
+			undefined,
+			'debug',
+			'getInstancePoint',
+			`[getInstancePoint] True world (${trueWorldPoint.getX()}, ${trueWorldPoint.getY()}) -> instance occurrence (${instanceTile.getX()}, ${instanceTile.getY()})`,
+		);
+	}
+
+	return instanceTile;
 }

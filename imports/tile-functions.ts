@@ -2,10 +2,13 @@
 /* eslint-disable unicorn/prevent-abbreviations */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { logger } from './logger.js';
-import { getWorldPoint } from './location-functions.js';
+import { LOG_COLOR_TEAL, logger } from './logger.js';
+import { getWorldPoint, getInstancePoint } from './location-functions.js';
 import { tileSets } from './tile-sets.js';
 import { State } from './types.js';
+
+// Toggle collision debugging logs on/off - set to true to enable all tile collision logging
+const ENABLE_COLLISION_LOGGING = false;
 
 // Tile object-related utility functions
 export const getAction = (
@@ -120,16 +123,49 @@ const isTileWalkable = (
 	tile: net.runelite.api.coords.WorldPoint,
 	state?: State,
 ): boolean => {
-	if (!client) return true;
+	if (!client) {
+		if (state && ENABLE_COLLISION_LOGGING) {
+			logger(
+				state,
+				'debug',
+				'isTileWalkable',
+				`Client not available for tile (${tile.getX()}, ${tile.getY()})`,
+				LOG_COLOR_TEAL,
+			);
+		}
+		return true;
+	}
 
 	try {
 		const worldView = client.getWorldView(
 			client.getTopLevelWorldView()?.getId(),
 		);
-		if (!worldView) return true;
+		if (!worldView) {
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`WorldView not available for tile (${tile.getX()}, ${tile.getY()})`,
+					LOG_COLOR_TEAL,
+				);
+			}
+			return true;
+		}
 
 		const collisionMaps = worldView.getCollisionMaps?.();
-		if (!collisionMaps) return true;
+		if (!collisionMaps) {
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`CollisionMaps not available for tile (${tile.getX()}, ${tile.getY()})`,
+					LOG_COLOR_TEAL,
+				);
+			}
+			return true;
+		}
 
 		const plane = tile.getPlane();
 		if (plane < 0 || plane >= collisionMaps.length) return true;
@@ -139,16 +175,71 @@ const isTileWalkable = (
 			return true;
 		}
 
-		// Convert world point to local scene coordinates
+		// Check if we're in an instanced location
+		const isInInstance = worldView.isInstance?.();
+
+		// Determine which tile to use for collision checking
+		let tileForCollision = tile;
+		if (isInInstance) {
+			// If in instance, convert true world to instance coordinates for collision map
+			const instanceTile = getInstancePoint(tile) ?? tile;
+			tileForCollision = instanceTile;
+
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`Instance: true world (${tile.getX()}, ${tile.getY()}) -> instance occurrence (${tileForCollision.getX()}, ${tileForCollision.getY()})`,
+					LOG_COLOR_TEAL,
+				);
+			}
+		} else {
+			// Not in instance, use tile directly for collision check
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`Non-instance: using true world tile (${tile.getX()}, ${tile.getY()}) directly`,
+					LOG_COLOR_TEAL,
+				);
+			}
+		}
+
+		// Convert to LocalPoint to get scene coordinates (0-104 range for collision map)
 		const localPoint = net.runelite.api.coords.LocalPoint.fromWorld(
 			worldView,
-			tile,
+			tileForCollision,
 		);
-		if (!localPoint) return true;
+		if (!localPoint) {
+			// Tile is outside the loaded scene (can't check collision)
+			// Return true (walkable) and rely on dangerous tiles list for blocking
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`Tile (${tileForCollision.getX()}, ${tileForCollision.getY()}) could not convert to LocalPoint - outside scene, assuming walkable`,
+					LOG_COLOR_TEAL,
+				);
+			}
+			return true; // Outside scene = assume walkable, rely on dangerous tiles list
+		}
 
-		// Get scene coordinates (relative to scene origin)
+		// Get scene coordinates from LocalPoint (these are in 0-104 range for collision map)
 		const sceneX = localPoint.getSceneX?.();
 		const sceneY = localPoint.getSceneY?.();
+
+		if (state && ENABLE_COLLISION_LOGGING) {
+			logger(
+				state,
+				'debug',
+				'isTileWalkable',
+				`True world (${tile.getX()}, ${tile.getY()}) -> instance (${tileForCollision.getX()}, ${tileForCollision.getY()}) -> LocalPoint/scene (${sceneX}, ${sceneY})`,
+				LOG_COLOR_TEAL,
+			);
+		}
 
 		if (
 			typeof sceneX !== 'number' ||
@@ -158,52 +249,131 @@ const isTileWalkable = (
 			sceneX >= 104 ||
 			sceneY >= 104
 		) {
-			return true;
-		}
-
-		// Get collision flags - handle Java 2D array in Rhino
-		try {
-			const flags = collisionData.getFlags();
-			if (!flags) return true;
-
-			// Java arrays in Rhino: use bracket notation for both dimensions
-			let tileFlag = 0;
-			try {
-				// Try accessing as 2D array
-				const row = flags[sceneX];
-				if (row !== null && row !== undefined) {
-					tileFlag = row[sceneY] || 0;
-				}
-			} catch {
-				// If 2D access fails, assume walkable
-				return true;
-			}
-
-			// Collision flag constants
-			const BLOCK_FLOOR = 0x100; // 256
-			const BLOCK_OBJECT = 0x20000; // 131072
-			const BLOCK_FULL = 0x40000; // 262144
-			const BLOCKED_FLAGS = BLOCK_FLOOR | BLOCK_OBJECT | BLOCK_FULL;
-
-			const isBlocked = (tileFlag & BLOCKED_FLAGS) !== 0;
-
-			if (state && isBlocked) {
+			if (state && ENABLE_COLLISION_LOGGING) {
 				logger(
 					state,
 					'debug',
 					'isTileWalkable',
-					`Tile (${tile.getX()}, ${tile.getY()}) blocked - flag: ${tileFlag}`,
+					`Scene coordinates out of bounds: sceneX=${sceneX}, sceneY=${sceneY} for tile (${tile.getX()}, ${tile.getY()})`,
+					LOG_COLOR_TEAL,
 				);
 			}
-
-			return !isBlocked;
-		} catch {
 			return true;
 		}
-	} catch {
+
+		// Get collision flags - handle Java 2D array in Rhino
+		const flags = collisionData.getFlags();
+		if (!flags) {
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`No collision flags available for tile (${tile.getX()}, ${tile.getY()})`,
+					LOG_COLOR_TEAL,
+				);
+			}
+			return true;
+		}
+
+		// Access 2D Java array in Rhino
+		let tileFlag = 0;
+		try {
+			const row = flags[sceneX];
+			if (row && typeof row === 'object') {
+				tileFlag = row[sceneY] ?? 0;
+			} else {
+				if (state) {
+					logger(
+						state,
+						'debug',
+						'isTileWalkable',
+						`Row is not an object at sceneX=${sceneX} for tile (${tile.getX()}, ${tile.getY()})`,
+						LOG_COLOR_TEAL,
+					);
+				}
+				return true;
+			}
+		} catch (error) {
+			if (state && ENABLE_COLLISION_LOGGING) {
+				logger(
+					state,
+					'debug',
+					'isTileWalkable',
+					`Error accessing collision flags: ${(error as Error).toString()}`,
+					LOG_COLOR_TEAL,
+				);
+			}
+			return true;
+		}
+
+		// Log the flag value to help debug
+		if (state && ENABLE_COLLISION_LOGGING && tileFlag !== 0) {
+			logger(
+				state,
+				'debug',
+				'isTileWalkable',
+				`Tile (${tile.getX()}, ${tile.getY()}) has collision flag: 0x${tileFlag.toString(16)} (${tileFlag})`,
+				LOG_COLOR_TEAL,
+			);
+		}
+
+		// Collision flags from CollisionDataFlag API
+		// Check each movement type individually using bitwise AND
+		const BLOCK_MOVEMENT_OBJECT = 0x100; // 256
+		const BLOCK_MOVEMENT_FLOOR_DECORATION = 0x40000; // 262144
+		const BLOCK_MOVEMENT_FLOOR = 0x200000; // 2097152
+		const BLOCK_LINE_OF_SIGHT_FULL = 0x20000; // 131072
+
+		// Check if each specific movement type flag is set
+		const blockedByObject = (tileFlag & BLOCK_MOVEMENT_OBJECT) !== 0;
+		const blockedByDecoration =
+			(tileFlag & BLOCK_MOVEMENT_FLOOR_DECORATION) !== 0;
+		const blockedByFloor = (tileFlag & BLOCK_MOVEMENT_FLOOR) !== 0;
+		const blockedLineOfSight = (tileFlag & BLOCK_LINE_OF_SIGHT_FULL) !== 0;
+
+		// Tile is blocked if any movement type flag is set
+		const isBlocked =
+			blockedByObject || blockedByDecoration || blockedByFloor;
+
+		if (state && ENABLE_COLLISION_LOGGING && isBlocked) {
+			const blockReason = [
+				blockedByObject ? 'Object' : null,
+				blockedByDecoration ? 'Decoration' : null,
+				blockedByFloor ? 'Floor' : null,
+				blockedLineOfSight ? 'LineOfSight' : null,
+			]
+				.filter((x): x is string => x !== null)
+				.join(', ');
+
+			logger(
+				state,
+				'debug',
+				'isTileWalkable',
+				`Tile (${tile.getX()}, ${tile.getY()}) sceneX=${sceneX} sceneY=${sceneY} flag=0x${tileFlag.toString(16)} blocked by: ${blockReason}`,
+				LOG_COLOR_TEAL,
+			);
+		}
+
+		return !isBlocked;
+	} catch (error) {
+		if (state && ENABLE_COLLISION_LOGGING) {
+			logger(
+				state,
+				'debug',
+				'isTileWalkable',
+				`Outer catch error for tile (${tile.getX()}, ${tile.getY()}): ${(error as Error).toString()}`,
+			);
+		}
 		return true;
 	}
 };
+
+const getDistanceScope = (
+	a: net.runelite.api.coords.WorldPoint,
+	b: net.runelite.api.coords.WorldPoint,
+): number =>
+	Math.max(Math.abs(a.getX() - b.getX()), Math.abs(a.getY() - b.getY()));
 
 export const getSafeTile = (
 	state: State,
@@ -212,6 +382,12 @@ export const getSafeTile = (
 	graphicsObjectIds?: number[],
 	safeTilesSetName?: string,
 	dangerousTileCoordinates?: net.runelite.api.coords.WorldPoint[],
+	preferredDistanceOptions?: {
+		centerTile: net.runelite.api.coords.WorldPoint;
+		preferredDistance: number;
+		fallbackDistance?: number;
+	},
+	neverSelectTiles?: net.runelite.api.coords.WorldPoint[],
 ): net.runelite.api.coords.WorldPoint | null => {
 	logger(
 		state,
@@ -261,6 +437,142 @@ export const getSafeTile = (
 			)
 		: [];
 
+	const getPreferredDistanceTile = (
+		desiredDistance: number,
+		centerTile: net.runelite.api.coords.WorldPoint,
+	): net.runelite.api.coords.WorldPoint | null => {
+		if (desiredDistance < 0) return null;
+
+		const validTiles: net.runelite.api.coords.WorldPoint[] = [];
+		for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+			for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+				const testTile = new net.runelite.api.coords.WorldPoint(
+					truePlayerLoc.getX() + dx,
+					truePlayerLoc.getY() + dy,
+					truePlayerLoc.getPlane(),
+				);
+
+				if (
+					getDistanceScope(testTile, centerTile) !== desiredDistance
+				) {
+					continue;
+				}
+
+				if (
+					dangerousTiles.length > 0 &&
+					isInTileList(testTile, dangerousTiles)
+				) {
+					continue;
+				}
+
+				if (
+					safeTiles.length > 0 &&
+					!isInTileList(testTile, safeTiles)
+				) {
+					continue;
+				}
+
+				if (
+					neverSelectTiles &&
+					neverSelectTiles.length > 0 &&
+					isInTileList(testTile, neverSelectTiles)
+				) {
+					logger(
+						state,
+						'debug',
+						'getPreferredDistanceTile',
+						`Tile (${testTile.getX()}, ${testTile.getY()}) is in neverSelectTiles, skipping`,
+					);
+					continue;
+				}
+
+				if (!isTileWalkable(testTile, state)) {
+					continue;
+				}
+
+				validTiles.push(testTile);
+			}
+		}
+
+		if (validTiles.length === 0) return null;
+
+		if (state) {
+			logger(
+				state,
+				'debug',
+				'getPreferredDistanceTile',
+				`Found ${validTiles.length} valid tiles at distance ${desiredDistance}`,
+			);
+		}
+
+		// Calculate angle from center to each tile and prefer clockwise tiles
+		const getAngle = (tile: net.runelite.api.coords.WorldPoint): number => {
+			const dx: number = tile.getX() - centerTile.getX();
+			const dy: number = tile.getY() - centerTile.getY();
+			return Math.atan2(dy, dx);
+		};
+
+		const playerAngle: number = getAngle(truePlayerLoc);
+		const clockwiseTiles: net.runelite.api.coords.WorldPoint[] = [];
+		const counterClockwiseTiles: net.runelite.api.coords.WorldPoint[] = [];
+
+		for (const tile of validTiles) {
+			const tileAngle: number = getAngle(tile);
+			let angleDiff: number = tileAngle - playerAngle;
+
+			// Normalize angle difference to -PI to PI range
+			if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+			if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+			// Negative angle = clockwise, positive = counter-clockwise
+			// (clockwise means rotating in decreasing angle direction)
+			if (angleDiff < 0) {
+				clockwiseTiles.push(tile);
+			} else {
+				counterClockwiseTiles.push(tile);
+			}
+		}
+
+		// Prefer clockwise tiles, fallback to counter-clockwise
+		const tilesToCheck: net.runelite.api.coords.WorldPoint[] =
+			clockwiseTiles.length > 0 ? clockwiseTiles : counterClockwiseTiles;
+
+		if (state) {
+			logger(
+				state,
+				'debug',
+				'getPreferredDistanceTile',
+				`Clockwise tiles: ${clockwiseTiles.length}, Counter-clockwise: ${counterClockwiseTiles.length}, Checking: ${tilesToCheck.length}`,
+			);
+		}
+
+		// Return the closest tile to the player from preferred direction
+		let closestTile: net.runelite.api.coords.WorldPoint | null = null;
+		let minDistanceToPlayer: number = Number.POSITIVE_INFINITY;
+
+		for (const tile of tilesToCheck) {
+			const distanceToPlayer: number = getDistanceScope(
+				tile,
+				truePlayerLoc,
+			);
+			if (distanceToPlayer < minDistanceToPlayer) {
+				minDistanceToPlayer = distanceToPlayer;
+				closestTile = tile;
+			}
+		}
+
+		if (state && closestTile) {
+			logger(
+				state,
+				'debug',
+				'getPreferredDistanceTile',
+				`Selected tile (${closestTile.getX()}, ${closestTile.getY()}) at distance ${minDistanceToPlayer} from player`,
+			);
+		}
+
+		return closestTile;
+	};
+
 	// Before the search loop
 	if (
 		dangerousTiles.length > 0 &&
@@ -273,6 +585,64 @@ export const getSafeTile = (
 			'Player is standing on DangerousTiles.',
 		);
 		// Optionally: return null or allow searching for a safe tile anyway
+	}
+
+	if (preferredDistanceOptions) {
+		const { centerTile, preferredDistance, fallbackDistance } =
+			preferredDistanceOptions;
+		const trueCenterTile = getWorldPoint(centerTile) ?? centerTile;
+
+		if (preferredDistance < 0) {
+			logger(
+				state,
+				'debug',
+				'getSafeTile',
+				'Preferred distance must be non-negative.',
+			);
+			return null;
+		}
+
+		const preferredTile = getPreferredDistanceTile(
+			preferredDistance,
+			trueCenterTile,
+		);
+		if (preferredTile) {
+			logger(
+				state,
+				'debug',
+				'getSafeTile',
+				`Found preferred-distance safe tile at (${preferredTile.getX()}, ${preferredTile.getY()})`,
+			);
+			return preferredTile;
+		}
+
+		const fallbackTarget =
+			typeof fallbackDistance === 'number'
+				? fallbackDistance
+				: preferredDistance - 1;
+		if (fallbackTarget >= 0) {
+			const fallbackTile = getPreferredDistanceTile(
+				fallbackTarget,
+				trueCenterTile,
+			);
+			if (fallbackTile) {
+				logger(
+					state,
+					'debug',
+					'getSafeTile',
+					`Found fallback-distance safe tile at (${fallbackTile.getX()}, ${fallbackTile.getY()})`,
+				);
+				return fallbackTile;
+			}
+		}
+
+		logger(
+			state,
+			'debug',
+			'getSafeTile',
+			'No preferred-distance safe tile found.',
+		);
+		return null;
 	}
 
 	// Search tiles in radius around player, collecting valid tiles at each distance
@@ -309,7 +679,16 @@ export const getSafeTile = (
 					continue;
 				}
 
-				// 3. Tile must be walkable (check collision map)
+				// 3. Never select tiles in neverSelectTiles list
+				if (
+					neverSelectTiles &&
+					neverSelectTiles.length > 0 &&
+					isInTileList(testTile, neverSelectTiles)
+				) {
+					continue;
+				}
+
+				// 4. Tile must be walkable (check collision map)
 				if (!isTileWalkable(testTile, state)) {
 					continue;
 				}

@@ -256,6 +256,10 @@ export const avoidDangerousTiles = (
 		graphicsObjectIds?: number[];
 		searchRadius?: number;
 		dangerousTileCoordinates?: net.runelite.api.coords.WorldPoint[];
+		bossCenterTile?: net.runelite.api.coords.WorldPoint;
+		preferredBossDistance?: number;
+		fallbackBossDistance?: number;
+		neverSelectTiles?: net.runelite.api.coords.WorldPoint[];
 	},
 ): boolean => {
 	// Early return if bot APIs not ready
@@ -267,6 +271,10 @@ export const avoidDangerousTiles = (
 		tileObjectIds = [],
 		graphicsObjectIds = [],
 		dangerousTileCoordinates = [],
+		bossCenterTile,
+		preferredBossDistance,
+		fallbackBossDistance,
+		neverSelectTiles,
 	} = options;
 	const searchRadius = options.searchRadius || 5;
 
@@ -315,6 +323,22 @@ export const avoidDangerousTiles = (
 	}
 
 	// Player is on a dangerous tile, find a safe tile within the search radius
+	const preferredDistanceOptions =
+		bossCenterTile && typeof preferredBossDistance === 'number'
+			? {
+					centerTile: bossCenterTile,
+					preferredDistance: preferredBossDistance,
+					fallbackDistance: fallbackBossDistance,
+				}
+			: undefined;
+
+	logger(
+		state,
+		'debug',
+		'avoidDangerousTiles',
+		`Finding safe tile: ${dangerousTiles.length} dangerous tiles, ${neverSelectTiles?.length ?? 0} never-select tiles, searchRadius: ${searchRadius}`,
+	);
+
 	const safeTile = getSafeTile(
 		state,
 		searchRadius,
@@ -322,6 +346,8 @@ export const avoidDangerousTiles = (
 		graphicsObjectIds,
 		undefined,
 		dangerousTileCoordinates,
+		preferredDistanceOptions,
+		neverSelectTiles,
 	);
 
 	if (!safeTile) {
