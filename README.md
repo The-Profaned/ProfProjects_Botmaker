@@ -56,11 +56,11 @@ ProfProjects_Botmaker/
 │   ├── profSailTrawling.js
 │   ├── profTears.js
 │   └── profWoodcutting.js
-├── profChinBurst/                  # Chinchompa burst bot script
+├── profChinBurst/                  # Chinchompa burst bot script / Pre-state Machien workflow
 │   ├── chinburst-functions.ts
 │   ├── index.ts
 │   └── ui.ts
-├── profChins/                      # Chinchompa trapping bot script
+├── profChins/                      # Chinchompa trapping bot script / Pre-state Machine workflow
 │   ├── index.ts
 │   ├── ui.ts
 │   ├── util-functions.ts
