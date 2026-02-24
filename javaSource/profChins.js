@@ -138,16 +138,55 @@ function _unsupportedIterableToArray(r, a) {
   }
 }
 
-var LOG_COLOR_GRAY = {
-  r: 128,
-  g: 128,
-  b: 128
+var LOG_COLOR_PINK = {
+  r: 239,
+  g: 71,
+  b: 111
 };
-var LOG_COLOR_DEFAULT = LOG_COLOR_GRAY;
+var LOG_COLOR_CORAL = {
+  r: 247,
+  g: 140,
+  b: 107
+};
+var LOG_COLOR_GOLD = {
+  r: 255,
+  g: 209,
+  b: 102
+};
+var LOG_COLOR_EMERALD = {
+  r: 6,
+  g: 214,
+  b: 160
+};
+var LOG_COLOR_BLUE = {
+  r: 17,
+  g: 138,
+  b: 178
+};
+var LOG_COLOR_TEAL = {
+  r: 7,
+  g: 59,
+  b: 76
+};
+var includesAny = (text, keywords) => keywords.some(keyword => text.includes(keyword));
+var DANGER_KEYWORDS = ['danger', 'dangerous', 'fatal', 'error', 'failed', 'failure', 'timeout', 'dead', 'death', 'low hp', 'critical'];
+var NPC_ACTION_KEYWORDS = ['npc', 'projectile', 'animation', 'despawn', 'spawn'];
+var STATE_KEYWORDS = ['state', 'substate', 'phase', 'transition', 'entering', 'exiting', 'resume', 'resuming', 'initialize', 'initialized', 'start', 'started', 'end', 'ended'];
+var PLAYER_ACTION_KEYWORDS = ['attack', 'attacking', 'prayer', 'walk', 'walking', 'move', 'moving', 'webwalk', 'eat', 'eating', 'drink', 'drinking', 'equip', 'unequip', 'cast', 'bank', 'withdraw', 'deposit', 'loot'];
+var SYSTEM_KEYWORDS = ['debug', 'cache', 'snapshot', 'poll', 'tracking', 'tick', 'status', 'queue', 'path', 'waypoint', 'distance', 'timer'];
+var classifyLogColor = (source, message) => {
+  var text = "".concat(source, " ").concat(message).toLowerCase();
+  if (includesAny(text, DANGER_KEYWORDS)) return LOG_COLOR_PINK;
+  if (includesAny(text, STATE_KEYWORDS)) return LOG_COLOR_GOLD;
+  if (includesAny(text, NPC_ACTION_KEYWORDS)) return LOG_COLOR_CORAL;
+  if (includesAny(text, PLAYER_ACTION_KEYWORDS)) return LOG_COLOR_EMERALD;
+  if (includesAny(text, SYSTEM_KEYWORDS)) return LOG_COLOR_TEAL;
+  return LOG_COLOR_BLUE;
+};
 var logger = (state, type, source, message, color) => {
   var logMessage = "[".concat(source, "] ").concat(message);
   var printToLog = () => {
-    var chosenColor = LOG_COLOR_DEFAULT;
+    var chosenColor = classifyLogColor(source, message);
     log.printRGB(logMessage, chosenColor.r, chosenColor.g, chosenColor.b);
   };
   if (type === 'all') log.printGameMessage(logMessage);
@@ -159,6 +198,9 @@ var logger = (state, type, source, message, color) => {
   }
   if (type === 'all' || type === 'debug' && state.debugEnabled) {
     printToLog();
+    if (state && _typeof(state) === 'object') {
+      state.lastLoggedSource = source;
+    }
   }
 };
 
@@ -257,6 +299,9 @@ var gameTick = state => {
 var onFailures = (state, failureLocation, failureMessage, failureResetState) => {
   var failureKey = "".concat(failureLocation, " - ").concat(failureMessage);
   logger(state, 'debug', 'onFailures', failureMessage);
+  if (!state.failureCounts) {
+    state.failureCounts = {};
+  }
   state.failureCounts[failureKey] = state.lastFailureKey === failureKey ? (state.failureCounts[failureKey] || 1) + 1 : 1;
   state.lastFailureKey = failureKey;
   state.failureOrigin = failureKey;
@@ -280,88 +325,17 @@ var endScript = state => {
   bot.events.unregisterAll();
 };
 
-var ItemID = net.runelite.api.ItemID;
-
-var Item = {
-  boxTrap: ItemID.BOX_TRAP,
-  gamesNecklace1: ItemID.GAMES_NECKLACE1,
-  gamesNecklace2: ItemID.GAMES_NECKLACE2,
-  gamesNecklace3: ItemID.GAMES_NECKLACE3,
-  gamesNecklace4: ItemID.GAMES_NECKLACE4,
-  gamesNecklace5: ItemID.GAMES_NECKLACE5,
-  gamesNecklace6: ItemID.GAMES_NECKLACE6,
-  gamesNecklace7: ItemID.GAMES_NECKLACE7,
-  gamesNecklace8: ItemID.GAMES_NECKLACE8
-};
-({
-  tBow: ItemID.TWISTED_BOW,
-  bowfa: ItemID.BOW_OF_FAERDHINEN,
-  bowfac: ItemID.BOW_OF_FAERDHINEN_C,
-  blowpipe: ItemID.TOXIC_BLOWPIPE,
-  rcbow: ItemID.RUNE_CROSSBOW
-});
-({
-  normalDelay: {
-    item: {
-      monkFish: ItemID.MONKFISH,
-      shark: ItemID.SHARK,
-      mantaRay: ItemID.MANTA_RAY,
-      anglerFish: ItemID.ANGLERFISH
-    }
-  },
-  comboDelay: {
-    item: {
-      karambwan: ItemID.COOKED_KARAMBWAN
-    }
-  }
-});
-var potion = {
-  normalDelay: {
-    item: {
-      stamina_potion_1: ItemID.STAMINA_POTION1,
-      stamina_potion_2: ItemID.STAMINA_POTION2,
-      stamina_potion_3: ItemID.STAMINA_POTION3,
-      stamina_potion_4: ItemID.STAMINA_POTION4,
-      prayer_potion_1: ItemID.PRAYER_POTION1,
-      prayer_potion_2: ItemID.PRAYER_POTION2,
-      prayer_potion_3: ItemID.PRAYER_POTION3,
-      prayer_potion_4: ItemID.PRAYER_POTION4,
-      saradomin_brew_1: ItemID.SARADOMIN_BREW1,
-      saradomin_brew_2: ItemID.SARADOMIN_BREW2,
-      saradomin_brew_3: ItemID.SARADOMIN_BREW3,
-      saradomin_brew_4: ItemID.SARADOMIN_BREW4,
-      super_restore_1: ItemID.SUPER_RESTORE1,
-      super_restore_2: ItemID.SUPER_RESTORE2,
-      super_restore_3: ItemID.SUPER_RESTORE3,
-      super_restore_4: ItemID.SUPER_RESTORE4,
-      drange_potion_1: ItemID.DIVINE_RANGING_POTION1,
-      drange_potion_2: ItemID.DIVINE_RANGING_POTION2,
-      drange_potion_3: ItemID.DIVINE_RANGING_POTION3,
-      drange_potion_4: ItemID.DIVINE_RANGING_POTION4
-    }
-  }
-};
-var potionGroups = {
-  stam1_4: [potion.normalDelay.item.stamina_potion_1, potion.normalDelay.item.stamina_potion_2, potion.normalDelay.item.stamina_potion_3, potion.normalDelay.item.stamina_potion_4],
-  ppots1_4: [potion.normalDelay.item.prayer_potion_1, potion.normalDelay.item.prayer_potion_2, potion.normalDelay.item.prayer_potion_3, potion.normalDelay.item.prayer_potion_4],
-  brews1_4: [potion.normalDelay.item.saradomin_brew_1, potion.normalDelay.item.saradomin_brew_2, potion.normalDelay.item.saradomin_brew_3, potion.normalDelay.item.saradomin_brew_4],
-  restores1_4: [potion.normalDelay.item.super_restore_1, potion.normalDelay.item.super_restore_2, potion.normalDelay.item.super_restore_3, potion.normalDelay.item.super_restore_4],
-  drange1_4: [potion.normalDelay.item.drange_potion_1, potion.normalDelay.item.drange_potion_2, potion.normalDelay.item.drange_potion_3, potion.normalDelay.item.drange_potion_4]
-};
-_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.prayer_potion_1, 1), potion.normalDelay.item.prayer_potion_2, 2), potion.normalDelay.item.prayer_potion_3, 3), potion.normalDelay.item.prayer_potion_4, 4);
-_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.super_restore_1, 1), potion.normalDelay.item.super_restore_2, 2), potion.normalDelay.item.super_restore_3, 3), potion.normalDelay.item.super_restore_4, 4);
-_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.drange_potion_1, 1), potion.normalDelay.item.drange_potion_2, 2), potion.normalDelay.item.drange_potion_3, 3), potion.normalDelay.item.drange_potion_4, 4);
-
 var object = {
   boxTrapLayed: 9380,
   boxTrap_Failed: 9385,
+  boxTrap_ShakingG: 9382,
   boxTrap_Shaking: 9383,
   leviHandHolds: 47593
 };
 function getObjectIdGroups() {
   return {
-    boxTrap: [9380, 9385, 9383],
-    boxTrap_Shaking: [9383],
+    boxTrap: [9380, 9385, 9383, 9382],
+    boxTrap_Shaking: [9383, 9382],
     boxTrap_Failed: [9385],
     boxTrapLayed: [9380]
   };
@@ -734,6 +708,77 @@ var profChinsUI = {
   }
 };
 
+var Item = {
+  boxTrap: 10008,
+  gamesNecklace1: 3867,
+  gamesNecklace2: 3865,
+  gamesNecklace3: 3863,
+  gamesNecklace4: 3861,
+  gamesNecklace5: 3859,
+  gamesNecklace6: 3857,
+  gamesNecklace7: 3855,
+  gamesNecklace8: 3853
+};
+({
+  tBow: 20997,
+  bowfa: 25865,
+  bowfac: 25867,
+  blowpipe: 12926,
+  rcbow: 9185,
+  rcbowOR: 26486
+});
+({
+  normalDelay: {
+    item: {
+      monkFish: 7946,
+      shark: 385,
+      mantaRay: 391,
+      anglerFish: 13441
+    }
+  },
+  comboDelay: {
+    item: {
+      karambwan: 3144
+    }
+  }
+});
+var potion = {
+  normalDelay: {
+    item: {
+      stamina_potion_1: 12631,
+      stamina_potion_2: 12629,
+      stamina_potion_3: 12627,
+      stamina_potion_4: 12625,
+      prayer_potion_1: 143,
+      prayer_potion_2: 141,
+      prayer_potion_3: 139,
+      prayer_potion_4: 2434,
+      saradomin_brew_1: 6691,
+      saradomin_brew_2: 6689,
+      saradomin_brew_3: 6687,
+      saradomin_brew_4: 6685,
+      super_restore_1: 3030,
+      super_restore_2: 3028,
+      super_restore_3: 3026,
+      super_restore_4: 3024,
+      drange_potion_1: 23742,
+      drange_potion_2: 23739,
+      drange_potion_3: 23736,
+      drange_potion_4: 23733
+    }
+  }
+};
+var potionGroups = {
+  stam1_4: [potion.normalDelay.item.stamina_potion_1, potion.normalDelay.item.stamina_potion_2, potion.normalDelay.item.stamina_potion_3, potion.normalDelay.item.stamina_potion_4],
+  ppots1_4: [potion.normalDelay.item.prayer_potion_1, potion.normalDelay.item.prayer_potion_2, potion.normalDelay.item.prayer_potion_3, potion.normalDelay.item.prayer_potion_4],
+  brews1_4: [potion.normalDelay.item.saradomin_brew_1, potion.normalDelay.item.saradomin_brew_2, potion.normalDelay.item.saradomin_brew_3, potion.normalDelay.item.saradomin_brew_4],
+  restores1_4: [potion.normalDelay.item.super_restore_1, potion.normalDelay.item.super_restore_2, potion.normalDelay.item.super_restore_3, potion.normalDelay.item.super_restore_4],
+  drange1_4: [potion.normalDelay.item.drange_potion_1, potion.normalDelay.item.drange_potion_2, potion.normalDelay.item.drange_potion_3, potion.normalDelay.item.drange_potion_4]
+};
+_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.prayer_potion_1, 1), potion.normalDelay.item.prayer_potion_2, 2), potion.normalDelay.item.prayer_potion_3, 3), potion.normalDelay.item.prayer_potion_4, 4);
+_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.super_restore_1, 1), potion.normalDelay.item.super_restore_2, 2), potion.normalDelay.item.super_restore_3, 3), potion.normalDelay.item.super_restore_4, 4);
+_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, potion.normalDelay.item.drange_potion_1, 1), potion.normalDelay.item.drange_potion_2, 2), potion.normalDelay.item.drange_potion_3, 3), potion.normalDelay.item.drange_potion_4, 4);
+
 var shuffle = length => {
   var random = Array.from({
     length
@@ -752,6 +797,7 @@ var trapLocationsCache$1;
 var safeTilesCache;
 var player_location;
 var hunterLvl;
+var SHAKING_TRAP_IDS = [object.boxTrap_Shaking, object.boxTrap_ShakingG];
 var _resetInProgress = false;
 var _resetTargetLocation = null;
 var _resetPhase = null;
@@ -902,7 +948,7 @@ function getSafeTiles() {
   return safeTiles;
 }
 function isOccupiedByTrapOrGround(loc) {
-  var allTrapIds = [object.boxTrapLayed, object.boxTrap_Failed, object.boxTrap_Shaking];
+  var allTrapIds = [object.boxTrapLayed, object.boxTrap_Failed].concat(SHAKING_TRAP_IDS);
   var objectAtLoc = bot.objects.getTileObjectsWithIds(allTrapIds).find(o => {
     if (!o) return false;
     var worldLoc = o.getWorldLocation();
@@ -939,7 +985,7 @@ function maintainAllTrapTimestamps() {
   var now = Date.now();
   var oldestTrap = null;
   var oldestTime = Number.POSITIVE_INFINITY;
-  var shakingTrapMap = buildTrapMap([object.boxTrap_Shaking]);
+  var shakingTrapMap = buildTrapMap(SHAKING_TRAP_IDS);
   var failedTrapMap = buildTrapMap([object.boxTrap_Failed]);
   var _iterator2 = _createForOfIteratorHelper(trapLocationsCache$1),
     _step2;
@@ -1031,14 +1077,14 @@ function resetTraps() {
     var atTarget = playerWp.equals(targetLoc);
     if (_resetPhase === 'walking') {
       if (atTarget || Math.abs(playerWp.getX() - targetLoc.getX()) <= 2 && Math.abs(playerWp.getY() - targetLoc.getY()) <= 2) {
-        var trapToReset = bot.objects.getTileObjectsWithIds([object.boxTrapLayed, object.boxTrap_Shaking, object.boxTrap_Failed]).find(o => {
+        var trapToReset = bot.objects.getTileObjectsWithIds([object.boxTrapLayed].concat(SHAKING_TRAP_IDS, [object.boxTrap_Failed])).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
           return worldLoc.getX() === targetLoc.getX() && worldLoc.getY() === targetLoc.getY();
         });
         if (trapToReset) {
-          var isShaking = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+          var isShaking = bot.objects.getTileObjectsWithIds(SHAKING_TRAP_IDS).find(o => {
             if (!o) return false;
             var worldLoc = o.getWorldLocation();
             if (!worldLoc) return false;
@@ -1095,7 +1141,7 @@ function resetTraps() {
                 var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
                 if (!playerLaidTraps.has(locKey)) return 0; // continue
                 if (locKey === _key2) return 0; // continue
-                var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+                var shakingTrap = bot.objects.getTileObjectsWithIds(SHAKING_TRAP_IDS).find(o => {
                   if (!o) return false;
                   var worldLoc = o.getWorldLocation();
                   if (!worldLoc) return false;
@@ -1370,7 +1416,7 @@ function criticalTrapChecker() {
         var loc = _step7.value;
         var key = "".concat(loc.getX(), ",").concat(loc.getY());
         if (!playerLaidTraps.has(key)) return 0; // continue
-        var shaking = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+        var shaking = bot.objects.getTileObjectsWithIds(SHAKING_TRAP_IDS).find(o => {
           if (!o) return false;
           var worldLoc = o.getWorldLocation();
           if (!worldLoc) return false;
@@ -1382,7 +1428,7 @@ function criticalTrapChecker() {
           var ageInTicks = Math.floor(ageInSeconds / 0.6);
           if (ageInTicks >= CRITICAL_TICK_THRESHOLD) {
             logger(state$1, 'all', 'criticalTrapChecker', "CRITICAL: Shaking trap at (".concat(loc.getX(), ", ").concat(loc.getY(), ") hit 80-tick timeout! Age: ").concat(ageInTicks, " ticks. Forcing reset!"));
-            var criticalTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+            var criticalTrap = bot.objects.getTileObjectsWithIds(SHAKING_TRAP_IDS).find(o => {
               if (!o) return false;
               var worldLoc = o.getWorldLocation();
               if (!worldLoc) return false;
@@ -1521,7 +1567,7 @@ function handleGroundTraps() {
             var locKey = "".concat(loc.getX(), ",").concat(loc.getY());
             if (!playerLaidTraps.has(locKey)) return 0; // continue
             if (locKey === "".concat(targetLoc.getX(), ",").concat(targetLoc.getY())) return 0; // continue
-            var shakingTrap = bot.objects.getTileObjectsWithIds([object.boxTrap_Shaking]).find(o => {
+            var shakingTrap = bot.objects.getTileObjectsWithIds(SHAKING_TRAP_IDS).find(o => {
               if (!o) return false;
               var worldLoc = o.getWorldLocation();
               if (!worldLoc) return false;
@@ -1760,13 +1806,22 @@ var utilFunctions = {
   hasTrapsNeedingAttention
 };
 
+var MainStates;
+(function (MainStates) {
+  MainStates["START_STATE"] = "start_state";
+  MainStates["INITIAL_TRAPS"] = "initial_traps";
+  MainStates["AWAITING_ACTIVITY"] = "awaiting_activity";
+  MainStates["CRITICAL_TRAP_HANDLING"] = "critical_trap_handling";
+  MainStates["RESETTING_TRAPS"] = "resetting_traps";
+  MainStates["MAINTAINING_TRAPS"] = "maintaining_traps";
+})(MainStates || (MainStates = {}));
 var state = {
   debugEnabled: true,
   debugFullState: false,
   failureCounts: {},
   failureOrigin: '',
   lastFailureKey: '',
-  mainState: 'start_state',
+  mainState: MainStates.START_STATE,
   scriptInitialized: false,
   scriptName: 'profChins',
   uiCompleted: false,
@@ -1774,17 +1829,135 @@ var state = {
   gameTick: 0,
   subState: ''
 };
+
 var lastLoggedState = '';
+var lastResetTrapsTick = -2;
+var RESET_TRAPS_COOLDOWN = 2;
+var setCurrentAction = action => {
+  if (profChinsUI.currentAction !== action) {
+    profChinsUI.currentAction = action;
+  }
+};
+var tryResetTraps = () => {
+  if (state.gameTick - lastResetTrapsTick < RESET_TRAPS_COOLDOWN) {
+    return;
+  }
+  lastResetTrapsTick = state.gameTick;
+  utilFunctions.resetTraps();
+};
+function stateManager(trapsOnGround, criticalTrapCheck, needsAttentionCheck, maxAllowedTraps) {
+  try {
+    if (state.mainState !== lastLoggedState) {
+      logger(state, 'debug', 'stateManager', "State changed to: ".concat(state.mainState));
+      lastLoggedState = state.mainState;
+    }
+    switch (state.mainState) {
+      case MainStates.START_STATE:
+        {
+          try {
+            setCurrentAction('Starting...');
+            var trapCount = bot.inventory.getQuantityOfId(Item.boxTrap);
+            if (!trapCount && trapCount !== 0) {
+              log.printGameMessage('ERROR: Could not get trap quantity from inventory');
+              bot.terminate();
+              return;
+            }
+            if (trapCount >= maxAllowedTraps) {
+              state.mainState = MainStates.INITIAL_TRAPS;
+            } else {
+              setCurrentAction('Error: Not enough traps');
+              logger(state, 'debug', 'stateManager', "Not enough box traps (have ".concat(trapCount, ", need ").concat(maxAllowedTraps, ")"));
+              bot.terminate();
+            }
+          } catch (error) {
+            log.printGameMessage("ERROR in start_state: ".concat(String(error)));
+            bot.terminate();
+          }
+          break;
+        }
+      case MainStates.INITIAL_TRAPS:
+        {
+          var action = 'Laying initial traps';
+          if (profChinsUI.currentAction !== action) {
+            setCurrentAction(action);
+            logger(state, 'debug', 'stateManager', 'Placing initial traps.');
+          }
+          if (trapsOnGround >= maxAllowedTraps) {
+            state.mainState = MainStates.AWAITING_ACTIVITY;
+            utilState.layingLocationIndex = 0;
+            return;
+          }
+          utilFunctions.layingInitialTraps(maxAllowedTraps, trapsOnGround);
+          break;
+        }
+      case MainStates.AWAITING_ACTIVITY:
+        {
+          var _action = 'Awaiting trap activity';
+          if (profChinsUI.currentAction !== _action) {
+            setCurrentAction(_action);
+            logger(state, 'debug', 'stateManager', 'Awaiting trap activity.');
+          }
+          if (!utilState.resetInProgress && criticalTrapCheck) {
+            state.mainState = MainStates.CRITICAL_TRAP_HANDLING;
+          } else if (utilState.resetInProgress) {
+            state.mainState = MainStates.RESETTING_TRAPS;
+          } else if (needsAttentionCheck) {
+            state.mainState = MainStates.RESETTING_TRAPS;
+          }
+          break;
+        }
+      case MainStates.CRITICAL_TRAP_HANDLING:
+        {
+          var _action2 = 'Maintaining traps';
+          if (profChinsUI.currentAction !== _action2) {
+            setCurrentAction(_action2);
+          }
+          if (!utilState.resetInProgress && criticalTrapCheck) {
+            tryResetTraps();
+          } else {
+            state.mainState = MainStates.MAINTAINING_TRAPS;
+          }
+          break;
+        }
+      case MainStates.RESETTING_TRAPS:
+        {
+          var _action3 = 'Maintaining traps';
+          if (profChinsUI.currentAction !== _action3) {
+            setCurrentAction(_action3);
+          }
+          tryResetTraps();
+          if (!utilState.resetInProgress) {
+            state.mainState = MainStates.MAINTAINING_TRAPS;
+          }
+          break;
+        }
+      case MainStates.MAINTAINING_TRAPS:
+        {
+          state.mainState = MainStates.AWAITING_ACTIVITY;
+          break;
+        }
+      default:
+        {
+          state.mainState = MainStates.START_STATE;
+          break;
+        }
+    }
+  } catch (_unused) {
+    log.printGameMessage('CRITICAL ERROR in stateManager.');
+    logger(state, 'all', 'stateManager', 'Critical error in stateManager.');
+    bot.terminate();
+  }
+}
+
 var stuckStateTracker = {
   currentState: '',
   tickCount: 0
 };
 var MAX_TICKS_PER_STATE = 8;
-var STUCK_DETECTION_EXCLUSIONS = new Set(['initial_traps', 'resetting_traps']);
+var STUCK_DETECTION_EXCLUSIONS = new Set([MainStates.INITIAL_TRAPS, MainStates.RESETTING_TRAPS]);
 var XP_CHECK_INTERVAL = 3;
 var TRAPS_COUNT_INTERVAL = 2;
 var TRAP_CHECK_INTERVAL = 2;
-var RESET_TRAPS_COOLDOWN = 2;
 var getPlayerLocation = () => {
   var localPlayer = client.getLocalPlayer();
   if (!localPlayer) {
@@ -1819,7 +1992,6 @@ var cachedTrapsOnGround = 0;
 var lastTrapsCountState = '';
 var cachedCriticalTrapCheck = false;
 var cachedNeedsAttentionCheck = false;
-var lastResetTrapsTick = -RESET_TRAPS_COOLDOWN;
 var countTrapsOnGround = () => {
   var trapsOnGround = 0;
   var _iterator = _createForOfIteratorHelper(trapLocationsCache),
@@ -1840,7 +2012,7 @@ var countTrapsOnGround = () => {
 };
 cachedTrapsOnGround = countTrapsOnGround();
 var getTrapsOnGround = () => {
-  var shouldTrackTraps = state.mainState === 'initial_traps' || state.mainState === 'awaiting_activity' || state.mainState === 'resetting_traps';
+  var shouldTrackTraps = state.mainState === MainStates.INITIAL_TRAPS || state.mainState === MainStates.AWAITING_ACTIVITY || state.mainState === MainStates.RESETTING_TRAPS;
   if (!shouldTrackTraps) {
     lastTrapsCountState = state.mainState;
     return cachedTrapsOnGround;
@@ -1851,18 +2023,6 @@ var getTrapsOnGround = () => {
     lastTrapsCountState = state.mainState;
   }
   return cachedTrapsOnGround;
-};
-var setCurrentAction = action => {
-  if (profChinsUI.currentAction !== action) {
-    profChinsUI.currentAction = action;
-  }
-};
-var tryResetTraps = () => {
-  if (state.gameTick - lastResetTrapsTick < RESET_TRAPS_COOLDOWN) {
-    return;
-  }
-  lastResetTrapsTick = state.gameTick;
-  utilFunctions.resetTraps();
 };
 function onStart() {
   try {
@@ -1925,7 +2085,7 @@ function onGameTick() {
         profChinsUI.lastHunterXp = currentHunterXp;
       }
     }
-    if (!isBanking && isIdle && !isWebWalking && state.mainState === 'start_state') {
+    if (!isBanking && isIdle && !isWebWalking && state.mainState === MainStates.START_STATE) {
       bot.breakHandler.setBreakHandlerStatus(true);
     }
     if (STUCK_DETECTION_EXCLUSIONS.has(state.mainState)) {
@@ -1936,7 +2096,7 @@ function onGameTick() {
         stuckStateTracker.tickCount++;
         if (stuckStateTracker.tickCount > MAX_TICKS_PER_STATE) {
           logger(state, 'debug', 'stuckStateDetection', "Stuck in ".concat(state.mainState, " for ").concat(stuckStateTracker.tickCount, " ticks. Resetting to maintaining_traps."));
-          state.mainState = 'maintaining_traps';
+          state.mainState = MainStates.MAINTAINING_TRAPS;
           stuckStateTracker.currentState = '';
           stuckStateTracker.tickCount = 0;
         }
@@ -1954,7 +2114,7 @@ function onGameTick() {
     if (shouldCheckTraps) {
       cachedNeedsAttentionCheck = utilFunctions.hasTrapsNeedingAttention();
     }
-    stateManager(trapsOnGround, cachedCriticalTrapCheck, cachedNeedsAttentionCheck);
+    stateManager(trapsOnGround, cachedCriticalTrapCheck, cachedNeedsAttentionCheck, maxAllowedTraps);
   } catch (_unused7) {
     logger(state, 'all', 'Script', 'Unhandled error in onGameTick.');
     bot.terminate();
@@ -1967,108 +2127,5 @@ function onEnd() {
   profChinsUI.stop();
   profChinsUI.enableBotMakerOverlay();
   endScript(state);
-}
-function stateManager(trapsOnGround, criticalTrapCheck, needsAttentionCheck) {
-  try {
-    if (state.mainState !== lastLoggedState) {
-      logger(state, 'debug', 'stateManager', "State changed to: ".concat(state.mainState));
-      lastLoggedState = state.mainState;
-    }
-    switch (state.mainState) {
-      case 'start_state':
-        {
-          try {
-            setCurrentAction('Starting...');
-            var trapCount = bot.inventory.getQuantityOfId(Item.boxTrap);
-            if (!trapCount && trapCount !== 0) {
-              log.printGameMessage('ERROR: Could not get trap quantity from inventory');
-              bot.terminate();
-              return;
-            }
-            if (trapCount >= maxAllowedTraps) {
-              state.mainState = 'initial_traps';
-            } else {
-              setCurrentAction('Error: Not enough traps');
-              logger(state, 'debug', 'stateManager', "Not enough box traps (have ".concat(trapCount, ", need ").concat(maxAllowedTraps, ")"));
-              bot.terminate();
-            }
-          } catch (error) {
-            log.printGameMessage("ERROR in start_state: ".concat(String(error)));
-            bot.terminate();
-          }
-          break;
-        }
-      case 'initial_traps':
-        {
-          var action = 'Laying initial traps';
-          if (profChinsUI.currentAction !== action) {
-            setCurrentAction(action);
-            logger(state, 'debug', 'stateManager', 'Placing initial traps.');
-          }
-          if (trapsOnGround >= maxAllowedTraps) {
-            state.mainState = 'awaiting_activity';
-            utilState.layingLocationIndex = 0;
-            return;
-          }
-          utilFunctions.layingInitialTraps(maxAllowedTraps, trapsOnGround);
-          break;
-        }
-      case 'awaiting_activity':
-        {
-          var _action = 'Awaiting trap activity';
-          if (profChinsUI.currentAction !== _action) {
-            setCurrentAction(_action);
-            logger(state, 'debug', 'stateManager', 'Awaiting trap activity.');
-          }
-          if (!utilState.resetInProgress && criticalTrapCheck) {
-            state.mainState = 'critical_trap_handling';
-          } else if (utilState.resetInProgress) {
-            state.mainState = 'resetting_traps';
-          } else if (needsAttentionCheck) {
-            state.mainState = 'resetting_traps';
-          }
-          break;
-        }
-      case 'critical_trap_handling':
-        {
-          var _action2 = 'Maintaining traps';
-          if (profChinsUI.currentAction !== _action2) {
-            setCurrentAction(_action2);
-          }
-          if (!utilState.resetInProgress && criticalTrapCheck) {
-            tryResetTraps();
-          } else {
-            state.mainState = 'maintaining_traps';
-          }
-          break;
-        }
-      case 'resetting_traps':
-        {
-          var _action3 = 'Maintaining traps';
-          if (profChinsUI.currentAction !== _action3) {
-            setCurrentAction(_action3);
-          }
-          tryResetTraps();
-          if (!utilState.resetInProgress) {
-            state.mainState = 'maintaining_traps';
-          }
-          break;
-        }
-      case 'maintaining_traps':
-        {
-          state.mainState = 'awaiting_activity';
-          break;
-        }
-      default:
-        {
-          state.mainState = 'start_state';
-          break;
-        }
-    }
-  } catch (_unused8) {
-    log.printGameMessage('CRITICAL ERROR in stateManager.');
-    logger(state, 'all', 'stateManager', 'Critical error in stateManager.');
-    bot.terminate();
-  }
 }
 

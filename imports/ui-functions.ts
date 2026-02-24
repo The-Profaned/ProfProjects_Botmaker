@@ -9,7 +9,9 @@ export type ColorScheme = {
 	PANEL: java.awt.Color;
 };
 
-export function createUi(_state?: State): void {}
+export function createUi(state?: State): void {
+	void state;
+}
 
 //==================================================================================
 //                     Ripped functions from discord for UI's
@@ -32,7 +34,10 @@ let pulseTime = 0;
  * Draws the route path with a pulsing/blinking effect
  * @param waypoints - Array of WorldPoint waypoints to draw
  */
-const drawRoutePath = (graphics: any, waypoints: any[]): void => {
+export const drawRoutePath = (
+	graphics: java.awt.Graphics2D,
+	waypoints: net.runelite.api.coords.WorldPoint[],
+): void => {
 	try {
 		if (!waypoints || waypoints.length < 2) return;
 
@@ -116,7 +121,7 @@ const drawRoutePath = (graphics: any, waypoints: any[]): void => {
 				nextCanvas.getY(),
 			);
 		}
-	} catch (error) {
+	} catch {
 		// Silently handle errors
 	}
 };

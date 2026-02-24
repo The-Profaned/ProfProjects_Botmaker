@@ -1,33 +1,41 @@
-import { State } from '../../imports/types.js';
 import { logger } from '../../imports/logger.js';
+import { Travel } from './State/travel.js';
+import { Combat } from './State/combat.js';
+import { Looting } from './State/looting.js';
+import { Inventory } from './State/inventory.js';
+import { Banking } from './State/banking.js';
+import { state, MainStates } from './script-state.js';
 
-// variables for script state
-const state: State = {
-	debugEnabled: true,
-	debugFullState: false,
-	failureCounts: {},
-	failureOrigin: '',
-	lastFailureKey: '',
-	mainState: 'start_state',
-	scriptInitalized: false,
-	scriptName: 'script name',
-	uiCompleted: false,
-	timeout: 0,
-	gameTick: 0,
-	subState: '',
-};
+// Export all state-related types and the state manager function
+export * from './script-state.js';
+
 // Script Decision Manager
 export function stateManager() {
-	logger(state, 'debug', 'stateManager', `${state.mainState}`);
+	// Only log when main state changes
+	if (state.lastLoggedMainState !== state.mainState) {
+		logger(state, 'debug', 'stateManager', `${state.mainState}`);
+		state.lastLoggedMainState = state.mainState;
+	}
+
 	switch (state.mainState) {
-		case 'start_state': {
+		case MainStates.TRAVEL: {
+			Travel();
 			break;
 		}
-		case 'next_state': {
+		case MainStates.COMBAT: {
+			Combat();
 			break;
 		}
-		default: {
-			state.mainState = 'start_state';
+		case MainStates.LOOTING: {
+			Looting();
+			break;
+		}
+		case MainStates.INVENTORY: {
+			Inventory();
+			break;
+		}
+		case MainStates.BANKING: {
+			Banking();
 			break;
 		}
 	}

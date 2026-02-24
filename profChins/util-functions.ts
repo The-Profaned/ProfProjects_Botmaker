@@ -11,6 +11,10 @@ let trapLocationsCache: net.runelite.api.coords.WorldPoint[];
 let safeTilesCache: net.runelite.api.coords.WorldPoint[];
 let player_location: net.runelite.api.coords.WorldPoint;
 let hunterLvl: number;
+const SHAKING_TRAP_IDS: number[] = [
+	object.boxTrap_Shaking,
+	object.boxTrap_ShakingG,
+];
 
 // Dynamic Variables For Traps (internal, not exported)
 let _resetInProgress = false;
@@ -217,7 +221,7 @@ export function isOccupiedByTrapOrGround(
 	const allTrapIds = [
 		object.boxTrapLayed,
 		object.boxTrap_Failed,
-		object.boxTrap_Shaking,
+		...SHAKING_TRAP_IDS,
 	];
 	const objectAtLoc = bot.objects
 		.getTileObjectsWithIds(allTrapIds)
@@ -270,7 +274,7 @@ export function maintainAllTrapTimestamps(): void {
 	} | null = null;
 	let oldestTime = Number.POSITIVE_INFINITY;
 
-	const shakingTrapMap = buildTrapMap([object.boxTrap_Shaking]);
+	const shakingTrapMap = buildTrapMap(SHAKING_TRAP_IDS);
 	const failedTrapMap = buildTrapMap([object.boxTrap_Failed]);
 
 	// Update timestamps for all shaking traps
@@ -396,7 +400,7 @@ export function resetTraps(): boolean {
 				const trapToReset = bot.objects
 					.getTileObjectsWithIds([
 						object.boxTrapLayed,
-						object.boxTrap_Shaking,
+						...SHAKING_TRAP_IDS,
 						object.boxTrap_Failed,
 					])
 					.find((o) => {
@@ -412,7 +416,7 @@ export function resetTraps(): boolean {
 				if (trapToReset) {
 					// Check if it's a shaking trap (caught a chin)
 					const isShaking = bot.objects
-						.getTileObjectsWithIds([object.boxTrap_Shaking])
+						.getTileObjectsWithIds(SHAKING_TRAP_IDS)
 						.find((o) => {
 							if (!o) return false;
 							const worldLoc = o.getWorldLocation();
@@ -504,7 +508,7 @@ export function resetTraps(): boolean {
 						if (locKey === key) continue;
 
 						const shakingTrap = bot.objects
-							.getTileObjectsWithIds([object.boxTrap_Shaking])
+							.getTileObjectsWithIds(SHAKING_TRAP_IDS)
 							.find((o) => {
 								if (!o) return false;
 								const worldLoc = o.getWorldLocation();
@@ -971,7 +975,7 @@ export function criticalTrapChecker(): boolean {
 		if (!playerLaidTraps.has(key)) continue;
 
 		const shaking = bot.objects
-			.getTileObjectsWithIds([object.boxTrap_Shaking])
+			.getTileObjectsWithIds(SHAKING_TRAP_IDS)
 			.find((o) => {
 				if (!o) return false;
 				const worldLoc = o.getWorldLocation();
@@ -997,7 +1001,7 @@ export function criticalTrapChecker(): boolean {
 
 				// Find the actual trap object to interact with
 				const criticalTrap = bot.objects
-					.getTileObjectsWithIds([object.boxTrap_Shaking])
+					.getTileObjectsWithIds(SHAKING_TRAP_IDS)
 					.find((o) => {
 						if (!o) return false;
 						const worldLoc = o.getWorldLocation();
@@ -1188,7 +1192,7 @@ export function handleGroundTraps(): boolean {
 					continue;
 
 				const shakingTrap = bot.objects
-					.getTileObjectsWithIds([object.boxTrap_Shaking])
+					.getTileObjectsWithIds(SHAKING_TRAP_IDS)
 					.find((o) => {
 						if (!o) return false;
 						const worldLoc = o.getWorldLocation();

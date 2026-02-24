@@ -41,13 +41,27 @@ export const animationTypeMap: Record<
 // NPC Projectile IDs
 export const npcProjectileIds = {
 	leviathanMagic: 2489,
-	leviathanRanged: 2487,
 	leviathanMelee: 2488,
+	leviathanRanged: 2487,
 	scurriousAttackMagic: 2640,
 	scurriousAttackRanged: 2642,
 };
 
-// Map numeric projectile IDs to prayer keys
+// NPC Graphic Animation IDs (Spot Animations - G: in debugger)
+export const npcGraphicIds = {
+	leviathanMagic: 2486,
+	leviathanMelee: 2482,
+	leviathanRanged: 2484,
+};
+
+// Map graphic animation IDs to prayer keys (PRIORITY - earliest detection)
+export const graphicPrayerMap: Record<number, keyof typeof prayers> = {
+	[npcGraphicIds.leviathanMagic]: 'protMage',
+	[npcGraphicIds.leviathanRanged]: 'protRange',
+	[npcGraphicIds.leviathanMelee]: 'protMelee',
+};
+
+// Map numeric projectile IDs to prayer keys (FALLBACK - 1-2 tick delay)
 export const projectilePrayerMap: Record<number, keyof typeof prayers> = {
 	[npcProjectileIds.leviathanMagic]: 'protMage',
 	[npcProjectileIds.leviathanRanged]: 'protRange',

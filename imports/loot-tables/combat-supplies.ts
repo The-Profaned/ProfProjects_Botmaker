@@ -1,5 +1,6 @@
-import { ItemID } from '../types.js';
 import type { PriorityOverrides } from './loot-priority.js';
+
+const ItemID = net.runelite.api.ItemID;
 
 const cookedFoodIds: number[] = [
 	ItemID.CHEESE as number,

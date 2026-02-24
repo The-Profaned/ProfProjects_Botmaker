@@ -23,24 +23,12 @@ export const checkPrayer = (
 	state: State,
 	prayerKey: keyof typeof prayers,
 ): boolean => {
+	void state;
 	const prayer = prayers[prayerKey];
 	if (!prayer) {
-		logger(
-			state,
-			'debug',
-			'checkPrayer',
-			`Unknown prayer key: ${prayerKey}`,
-		);
 		return false;
 	}
-	const active = client.isPrayerActive(prayer);
-	logger(
-		state,
-		'debug',
-		'checkPrayer',
-		`${prayerKey} is ${active ? 'active' : 'inactive'}`,
-	);
-	return active;
+	return client.isPrayerActive(prayer);
 };
 
 // Activate specified prayer
@@ -58,6 +46,8 @@ export const togglePrayer = (
 		);
 		return false;
 	}
+
+	// If prayer is already active, no need to toggle
 	if (client.isPrayerActive(prayer)) {
 		pendingPrayerTicks.delete(prayerKey);
 		return true;
@@ -65,11 +55,25 @@ export const togglePrayer = (
 
 	const currentTick = state.gameTick;
 	const lastRequestedTick = pendingPrayerTicks.get(prayerKey);
+
+	// Only apply cooldown if prayer is NOT active and was recently requested
+	// This prevents spam while allowing retries if prayer failed to activate
 	if (
 		typeof lastRequestedTick === 'number' &&
 		currentTick - lastRequestedTick <= 1
 	) {
-		return true;
+		// Check if prayer actually activated since last request
+		if (client.isPrayerActive(prayer)) {
+			pendingPrayerTicks.delete(prayerKey);
+			return true;
+		}
+		// Prayer still not active but within cooldown - allow one more retry
+		logger(
+			state,
+			'debug',
+			'togglePrayer',
+			`${prayerKey} not active after ${currentTick - lastRequestedTick} tick(s), retrying`,
+		);
 	}
 
 	pendingPrayerTicks.set(prayerKey, currentTick);

@@ -1,52 +1,19 @@
 // Imports
 import { logger } from '../imports/logger.js';
 import { endScript, gameTick } from '../imports/general-function.js';
-import { Item } from '../imports/item-ids.js';
 import { profChinsUI, initializeUI } from './ui.js';
 import {
 	utilFunctions,
 	initializeUtilFunctions,
 	utilState,
 } from './util-functions.js';
-
-type ProfChinsState = {
-	debugEnabled: boolean;
-	debugFullState: boolean;
-	failureCounts: Record<string, number>;
-	failureOrigin: string;
-	lastFailureKey: string;
-	mainState: string;
-	scriptInitialized: boolean;
-	scriptName: string;
-	uiCompleted: boolean;
-	timeout: number;
-	gameTick: number;
-	subState: string;
-};
+import { state, MainStates } from './State Manager/script-state.js';
+import { stateManager } from './State Manager/state-manager.js';
 
 type StuckStateTracker = {
-	currentState: string;
+	currentState: MainStates | '';
 	tickCount: number;
 };
-
-// variables for script state
-const state: ProfChinsState = {
-	debugEnabled: true,
-	debugFullState: false,
-	failureCounts: {},
-	failureOrigin: '',
-	lastFailureKey: '',
-	mainState: 'start_state',
-	scriptInitialized: false,
-	scriptName: 'profChins',
-	uiCompleted: false,
-	timeout: 0,
-	gameTick: 0,
-	subState: '',
-};
-
-// Debug throttling - track last logged state to avoid spam
-let lastLoggedState: string = '';
 
 // Stuck state detection - track how long we've been in current state
 const stuckStateTracker: StuckStateTracker = {
@@ -54,14 +21,13 @@ const stuckStateTracker: StuckStateTracker = {
 	tickCount: 0,
 };
 const MAX_TICKS_PER_STATE: number = 8;
-const STUCK_DETECTION_EXCLUSIONS: Set<string> = new Set([
-	'initial_traps',
-	'resetting_traps',
+const STUCK_DETECTION_EXCLUSIONS: Set<MainStates> = new Set([
+	MainStates.INITIAL_TRAPS,
+	MainStates.RESETTING_TRAPS,
 ]);
 const XP_CHECK_INTERVAL: number = 3;
 const TRAPS_COUNT_INTERVAL: number = 2;
 const TRAP_CHECK_INTERVAL: number = 2;
-const RESET_TRAPS_COOLDOWN: number = 2;
 
 //============================================================================================================================================================================================
 // Script Specific Functions + variables
@@ -138,10 +104,9 @@ const trapLocationsCache: net.runelite.api.coords.WorldPoint[] =
 	initialTrapLocations;
 const maxAllowedTraps: number = utilFunctions.maxTraps();
 let cachedTrapsOnGround: number = 0;
-let lastTrapsCountState: string = '';
+let lastTrapsCountState: MainStates | '' = '';
 let cachedCriticalTrapCheck: boolean = false;
 let cachedNeedsAttentionCheck: boolean = false;
-let lastResetTrapsTick: number = -RESET_TRAPS_COOLDOWN;
 
 const countTrapsOnGround = (): number => {
 	let trapsOnGround: number = 0;
@@ -157,9 +122,9 @@ cachedTrapsOnGround = countTrapsOnGround();
 
 const getTrapsOnGround = (): number => {
 	const shouldTrackTraps: boolean =
-		state.mainState === 'initial_traps' ||
-		state.mainState === 'awaiting_activity' ||
-		state.mainState === 'resetting_traps';
+		state.mainState === MainStates.INITIAL_TRAPS ||
+		state.mainState === MainStates.AWAITING_ACTIVITY ||
+		state.mainState === MainStates.RESETTING_TRAPS;
 	if (!shouldTrackTraps) {
 		lastTrapsCountState = state.mainState;
 		return cachedTrapsOnGround;
@@ -173,21 +138,6 @@ const getTrapsOnGround = (): number => {
 	}
 	return cachedTrapsOnGround;
 };
-
-const setCurrentAction = (action: string): void => {
-	if (profChinsUI.currentAction !== action) {
-		profChinsUI.currentAction = action;
-	}
-};
-
-const tryResetTraps = (): void => {
-	if (state.gameTick - lastResetTrapsTick < RESET_TRAPS_COOLDOWN) {
-		return;
-	}
-	lastResetTrapsTick = state.gameTick;
-	utilFunctions.resetTraps();
-};
-
 //============================================================================================================================================================================================
 // Script Event Handlers
 //============================================================================================================================================================================================
@@ -293,7 +243,7 @@ export function onGameTick(): void {
 			!isBanking &&
 			isIdle &&
 			!isWebWalking &&
-			state.mainState === 'start_state'
+			state.mainState === MainStates.START_STATE
 		) {
 			bot.breakHandler.setBreakHandlerStatus(true);
 		}
@@ -315,7 +265,7 @@ export function onGameTick(): void {
 						`Stuck in ${state.mainState} for ${stuckStateTracker.tickCount} ticks. Resetting to maintaining_traps.`,
 					);
 					// Reset to maintaining_traps state to recover
-					state.mainState = 'maintaining_traps';
+					state.mainState = MainStates.MAINTAINING_TRAPS;
 					stuckStateTracker.currentState = '';
 					stuckStateTracker.tickCount = 0;
 				}
@@ -342,6 +292,7 @@ export function onGameTick(): void {
 			trapsOnGround,
 			cachedCriticalTrapCheck,
 			cachedNeedsAttentionCheck,
+			maxAllowedTraps,
 		);
 	} catch {
 		logger(state, 'all', 'Script', 'Unhandled error in onGameTick.');
@@ -359,161 +310,4 @@ export function onEnd(): void {
 	profChinsUI.stop();
 	profChinsUI.enableBotMakerOverlay();
 	endScript(state);
-}
-
-// Script Decision Manager
-function stateManager(
-	trapsOnGround: number,
-	criticalTrapCheck: boolean,
-	needsAttentionCheck: boolean,
-): void {
-	try {
-		// Only log state changes, not every tick
-		if (state.mainState !== lastLoggedState) {
-			logger(
-				state,
-				'debug',
-				'stateManager',
-				`State changed to: ${state.mainState}`,
-			);
-			lastLoggedState = state.mainState;
-		}
-
-		switch (state.mainState) {
-			// Initial State - Check inventory for traps
-			case 'start_state': {
-				try {
-					setCurrentAction('Starting...');
-					const trapCount: number = bot.inventory.getQuantityOfId(
-						Item.boxTrap,
-					);
-					if (!trapCount && trapCount !== 0) {
-						log.printGameMessage(
-							'ERROR: Could not get trap quantity from inventory',
-						);
-						bot.terminate();
-						return;
-					}
-					if (trapCount >= maxAllowedTraps) {
-						state.mainState = 'initial_traps';
-					} else {
-						setCurrentAction('Error: Not enough traps');
-						logger(
-							state,
-							'debug',
-							'stateManager',
-							`Not enough box traps (have ${trapCount}, need ${maxAllowedTraps})`,
-						);
-						bot.terminate();
-					}
-				} catch (error) {
-					log.printGameMessage(
-						`ERROR in start_state: ${String(error)}`,
-					);
-					bot.terminate();
-				}
-				break;
-			}
-			// Laying initial traps - place traps until max reached
-			case 'initial_traps': {
-				const action: string = 'Laying initial traps';
-				if (profChinsUI.currentAction !== action) {
-					setCurrentAction(action);
-					logger(
-						state,
-						'debug',
-						'stateManager',
-						'Placing initial traps.',
-					);
-				}
-				if (trapsOnGround >= maxAllowedTraps) {
-					state.mainState = 'awaiting_activity';
-					utilState.layingLocationIndex = 0;
-					return;
-				}
-				utilFunctions.layingInitialTraps(
-					maxAllowedTraps,
-					trapsOnGround,
-				);
-				break;
-			}
-			// Awaiting activity - all traps laid, waiting for them to be caught
-			case 'awaiting_activity': {
-				const action: string = 'Awaiting trap activity';
-				if (profChinsUI.currentAction !== action) {
-					setCurrentAction(action);
-					logger(
-						state,
-						'debug',
-						'stateManager',
-						'Awaiting trap activity.',
-					);
-				}
-
-				// Route to appropriate handler based on priority
-				// CRITICAL: Always check for critical traps first, even during ground trap handling
-				if (!utilState.resetInProgress && criticalTrapCheck) {
-					state.mainState = 'critical_trap_handling';
-				} else if (utilState.resetInProgress) {
-					// If reset is in progress, go straight to resetting_traps
-					state.mainState = 'resetting_traps';
-				} else if (needsAttentionCheck) {
-					// Only proceed to reset traps if there's actually something to reset
-					state.mainState = 'resetting_traps';
-				}
-				// Otherwise stay in awaiting_activity
-				break;
-			}
-			// PRIORITY 1: Handle critical traps (80+ ticks) - prevents despawn
-			case 'critical_trap_handling': {
-				const action: string = 'Maintaining traps';
-				if (profChinsUI.currentAction !== action) {
-					setCurrentAction(action);
-				}
-
-				if (!utilState.resetInProgress && criticalTrapCheck) {
-					tryResetTraps();
-				} else {
-					// No more critical traps, return to main maintenance
-					state.mainState = 'maintaining_traps';
-				}
-				break;
-			}
-			// PRIORITY 2: Normal reset flow - oldest trap first (with ground trap and repositioning fallback)
-			case 'resetting_traps': {
-				const action: string = 'Maintaining traps';
-				if (profChinsUI.currentAction !== action) {
-					setCurrentAction(action);
-				}
-
-				// resetTraps() handles:
-				// 1. Player repositioning if on a trap location
-				// 2. Ground trap handling as fallback when no regular traps to reset
-				// 3. Normal trap resetting
-				tryResetTraps();
-
-				// After reset completes, return to main maintenance
-				if (!utilState.resetInProgress) {
-					state.mainState = 'maintaining_traps';
-				}
-				break;
-			}
-
-			// Maintenance loop - continue checking for work
-			case 'maintaining_traps': {
-				// Loop back to awaiting_activity to check for more work
-				state.mainState = 'awaiting_activity';
-				break;
-			}
-
-			default: {
-				state.mainState = 'start_state';
-				break;
-			}
-		}
-	} catch {
-		log.printGameMessage('CRITICAL ERROR in stateManager.');
-		logger(state, 'all', 'stateManager', 'Critical error in stateManager.');
-		bot.terminate();
-	}
 }

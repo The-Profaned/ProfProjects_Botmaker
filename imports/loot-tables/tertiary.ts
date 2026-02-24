@@ -1,5 +1,6 @@
-import { ItemID } from '../types.js';
 import type { PriorityOverrides } from './loot-priority.js';
+
+const ItemID = net.runelite.api.ItemID;
 
 export const clueScrolls: number[] = [
 	ItemID.CLUE_SCROLL_BEGINNER as number,

@@ -1,5 +1,6 @@
-import { ItemID } from '../types.js';
 import type { PriorityOverrides } from './loot-priority.js';
+
+const ItemID = net.runelite.api.ItemID;
 
 const resourceIds: number[] = [
 	ItemID.COINS_995 as number,

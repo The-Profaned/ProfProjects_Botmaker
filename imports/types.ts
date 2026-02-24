@@ -1,15 +1,15 @@
 // State type definition
 export type State = {
-	failureOrigin: string;
-	failureCounts: Record<string, number>;
 	debugEnabled: boolean;
 	debugFullState: boolean;
 	gameTick: number;
-	lastFailureKey: string;
 	mainState: string;
 	subState: string;
 	scriptName: string;
 	timeout: number;
+	failureOrigin?: string;
+	failureCounts?: Record<string, number>;
+	lastFailureKey?: string;
 	scriptInitalized?: boolean;
 	uiCompleted?: boolean;
 	useStaminas?: boolean;

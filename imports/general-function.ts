@@ -44,6 +44,9 @@ export const onFailures = (
 ): void => {
 	const failureKey = `${failureLocation} - ${failureMessage}`;
 	logger(state, 'debug', 'onFailures', failureMessage);
+	if (!state.failureCounts) {
+		state.failureCounts = {};
+	}
 	state.failureCounts[failureKey] =
 		state.lastFailureKey === failureKey
 			? (state.failureCounts[failureKey] || 1) + 1

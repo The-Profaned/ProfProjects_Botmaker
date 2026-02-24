@@ -10,6 +10,96 @@ import { State } from './types.js';
 // Toggle collision debugging logs on/off - set to true to enable all tile collision logging
 const ENABLE_COLLISION_LOGGING = false;
 
+// Dangerous tile standing log controls
+// Master toggle: false = completely off
+const ENABLE_DANGEROUS_TILE_LOGGING = true;
+// Throttle toggle: true = at most once every DANGEROUS_TILE_LOG_INTERVAL_TICKS
+const ENABLE_DANGEROUS_TILE_THROTTLE = true;
+const DANGEROUS_TILE_LOG_INTERVAL_TICKS = 5;
+let lastDangerousTileLogTick = -DANGEROUS_TILE_LOG_INTERVAL_TICKS;
+
+const shouldLogDangerousTile = (state: State): boolean => {
+	if (!ENABLE_DANGEROUS_TILE_LOGGING) return false;
+	if (!ENABLE_DANGEROUS_TILE_THROTTLE) return true;
+
+	const ticksSinceLastDangerousTileLog =
+		state.gameTick - lastDangerousTileLogTick;
+	if (ticksSinceLastDangerousTileLog < DANGEROUS_TILE_LOG_INTERVAL_TICKS) {
+		return false;
+	}
+
+	lastDangerousTileLogTick = state.gameTick;
+	return true;
+};
+
+/**
+ * Check if line of sight between two tiles is blocked by specific objects.
+ * Uses Bresenham's line algorithm to check each tile along the path.
+ */
+export const isLineOfSightBlocked = (
+	state: State,
+	fromTile: net.runelite.api.coords.WorldPoint,
+	toTile: net.runelite.api.coords.WorldPoint,
+	blockingObjectIds: number[],
+): boolean => {
+	if (!bot?.objects || blockingObjectIds.length === 0) return false;
+
+	const x0 = fromTile.getX();
+	const y0 = fromTile.getY();
+	const x1 = toTile.getX();
+	const y1 = toTile.getY();
+
+	// Bresenham's line algorithm to get all tiles between two points
+	const dx = Math.abs(x1 - x0);
+	const dy = Math.abs(y1 - y0);
+	const sx = x0 < x1 ? 1 : -1;
+	const sy = y0 < y1 ? 1 : -1;
+	let err = dx - dy;
+
+	let x = x0;
+	let y = y0;
+
+	// Get all blocking objects once
+	const blockingObjects =
+		bot.objects.getTileObjectsWithIds(blockingObjectIds);
+	if (!blockingObjects || blockingObjects.length === 0) return false;
+
+	// Check each tile along the line (excluding start and end)
+	while (x !== x1 || y !== y1) {
+		// Check if any blocking object is on this tile
+		for (const obj of blockingObjects) {
+			if (!obj) continue;
+			const objLoc = obj.getWorldLocation();
+			const trueObjLoc = getWorldPoint(objLoc) ?? objLoc;
+
+			// Skip checking the exact start and end tiles
+			if ((x === x0 && y === y0) || (x === x1 && y === y1)) continue;
+
+			if (trueObjLoc.getX() === x && trueObjLoc.getY() === y) {
+				logger(
+					state,
+					'debug',
+					'isLineOfSightBlocked',
+					`LOS blocked at (${x}, ${y}) by object ${obj.getId()}`,
+				);
+				return true;
+			}
+		}
+
+		const e2 = 2 * err;
+		if (e2 > -dy) {
+			err -= dy;
+			x += sx;
+		}
+		if (e2 < dx) {
+			err += dx;
+			y += sy;
+		}
+	}
+
+	return false;
+};
+
 // Tile object-related utility functions
 export const getAction = (
 	tileObjectID: number,
@@ -386,8 +476,13 @@ export const getSafeTile = (
 		centerTile: net.runelite.api.coords.WorldPoint;
 		preferredDistance: number;
 		fallbackDistance?: number;
+		preferCounterClockwise?: boolean;
 	},
 	neverSelectTiles?: net.runelite.api.coords.WorldPoint[],
+	lineOfSightOptions?: {
+		targetTile: net.runelite.api.coords.WorldPoint;
+		blockingObjectIds: number[];
+	},
 ): net.runelite.api.coords.WorldPoint | null => {
 	logger(
 		state,
@@ -440,6 +535,7 @@ export const getSafeTile = (
 	const getPreferredDistanceTile = (
 		desiredDistance: number,
 		centerTile: net.runelite.api.coords.WorldPoint,
+		preferCounterClockwise: boolean,
 	): net.runelite.api.coords.WorldPoint | null => {
 		if (desiredDistance < 0) return null;
 
@@ -477,17 +573,35 @@ export const getSafeTile = (
 					neverSelectTiles.length > 0 &&
 					isInTileList(testTile, neverSelectTiles)
 				) {
-					logger(
-						state,
-						'debug',
-						'getPreferredDistanceTile',
-						`Tile (${testTile.getX()}, ${testTile.getY()}) is in neverSelectTiles, skipping`,
-					);
+					if (state.debugFullState) {
+						logger(
+							state,
+							'debug',
+							'getPreferredDistanceTile',
+							`Tile (${testTile.getX()}, ${testTile.getY()}) is in neverSelectTiles, skipping`,
+						);
+					}
 					continue;
 				}
 
 				if (!isTileWalkable(testTile, state)) {
 					continue;
+				}
+
+				// Check line of sight if options provided
+				if (lineOfSightOptions) {
+					const { targetTile, blockingObjectIds } =
+						lineOfSightOptions;
+					if (
+						isLineOfSightBlocked(
+							state,
+							testTile,
+							targetTile,
+							blockingObjectIds,
+						)
+					) {
+						continue;
+					}
 				}
 
 				validTiles.push(testTile);
@@ -533,16 +647,26 @@ export const getSafeTile = (
 			}
 		}
 
-		// Prefer clockwise tiles, fallback to counter-clockwise
-		const tilesToCheck: net.runelite.api.coords.WorldPoint[] =
-			clockwiseTiles.length > 0 ? clockwiseTiles : counterClockwiseTiles;
+		// Prefer clockwise tiles unless counter-clockwise is explicitly requested
+		let tilesToCheck: net.runelite.api.coords.WorldPoint[] = [];
+		if (preferCounterClockwise) {
+			tilesToCheck =
+				counterClockwiseTiles.length > 0
+					? counterClockwiseTiles
+					: clockwiseTiles;
+		} else {
+			tilesToCheck =
+				clockwiseTiles.length > 0
+					? clockwiseTiles
+					: counterClockwiseTiles;
+		}
 
 		if (state) {
 			logger(
 				state,
 				'debug',
 				'getPreferredDistanceTile',
-				`Clockwise tiles: ${clockwiseTiles.length}, Counter-clockwise: ${counterClockwiseTiles.length}, Checking: ${tilesToCheck.length}`,
+				`Clockwise tiles: ${clockwiseTiles.length}, Counter-clockwise: ${counterClockwiseTiles.length}, Checking: ${tilesToCheck.length}, Prefer CCW: ${preferCounterClockwise}`,
 			);
 		}
 
@@ -576,7 +700,8 @@ export const getSafeTile = (
 	// Before the search loop
 	if (
 		dangerousTiles.length > 0 &&
-		isInTileList(truePlayerLoc, dangerousTiles)
+		isInTileList(truePlayerLoc, dangerousTiles) &&
+		shouldLogDangerousTile(state)
 	) {
 		logger(
 			state,
@@ -584,13 +709,17 @@ export const getSafeTile = (
 			'getSafeTile',
 			'Player is standing on DangerousTiles.',
 		);
-		// Optionally: return null or allow searching for a safe tile anyway
 	}
 
 	if (preferredDistanceOptions) {
-		const { centerTile, preferredDistance, fallbackDistance } =
-			preferredDistanceOptions;
+		const {
+			centerTile,
+			preferredDistance,
+			fallbackDistance,
+			preferCounterClockwise,
+		} = preferredDistanceOptions;
 		const trueCenterTile = getWorldPoint(centerTile) ?? centerTile;
+		const preferCcw = preferCounterClockwise === true;
 
 		if (preferredDistance < 0) {
 			logger(
@@ -605,6 +734,7 @@ export const getSafeTile = (
 		const preferredTile = getPreferredDistanceTile(
 			preferredDistance,
 			trueCenterTile,
+			preferCcw,
 		);
 		if (preferredTile) {
 			logger(
@@ -616,23 +746,30 @@ export const getSafeTile = (
 			return preferredTile;
 		}
 
+		// Try multiple fallback distances in sequence (e.g., 8, 7, 6...)
 		const fallbackTarget =
 			typeof fallbackDistance === 'number'
 				? fallbackDistance
 				: preferredDistance - 1;
-		if (fallbackTarget >= 0) {
-			const fallbackTile = getPreferredDistanceTile(
-				fallbackTarget,
-				trueCenterTile,
-			);
-			if (fallbackTile) {
-				logger(
-					state,
-					'debug',
-					'getSafeTile',
-					`Found fallback-distance safe tile at (${fallbackTile.getX()}, ${fallbackTile.getY()})`,
+
+		// Try up to 3 additional fallback distances
+		for (let i = 0; i < 3; i++) {
+			const currentFallback = fallbackTarget - i;
+			if (currentFallback >= 0) {
+				const fallbackTile = getPreferredDistanceTile(
+					currentFallback,
+					trueCenterTile,
+					preferCcw,
 				);
-				return fallbackTile;
+				if (fallbackTile) {
+					logger(
+						state,
+						'debug',
+						'getSafeTile',
+						`Found fallback-distance (${currentFallback}) safe tile at (${fallbackTile.getX()}, ${fallbackTile.getY()})`,
+					);
+					return fallbackTile;
+				}
 			}
 		}
 
@@ -691,6 +828,22 @@ export const getSafeTile = (
 				// 4. Tile must be walkable (check collision map)
 				if (!isTileWalkable(testTile, state)) {
 					continue;
+				}
+
+				// 5. Check line of sight if options provided
+				if (lineOfSightOptions) {
+					const { targetTile, blockingObjectIds } =
+						lineOfSightOptions;
+					if (
+						isLineOfSightBlocked(
+							state,
+							testTile,
+							targetTile,
+							blockingObjectIds,
+						)
+					) {
+						continue;
+					}
 				}
 
 				// Tile is valid, add it to the collection

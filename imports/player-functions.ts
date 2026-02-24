@@ -4,7 +4,8 @@ import { checkPrayer, prayers, togglePrayer } from './prayer-functions.js';
 import {
 	getPrayerKeyForProjectile,
 	getClosestProjectile,
-	type TrackedProjectile,
+	getSortedProjectiles,
+	type ProjectileContainer,
 } from './projectile-functions.js';
 import { logger } from './logger.js';
 import { State } from './types.js';
@@ -14,6 +15,20 @@ import {
 	isInTileList,
 } from './tile-functions.js';
 import { getWorldPoint, isPlayerInArea } from './location-functions.js';
+
+// ============ Logging Toggles ============
+const ENABLE_PROJECTILE_QUEUE_LOGGING = true;
+const ENABLE_PROJECTILE_QUEUE_VERBOSE_LOGGING = false;
+
+const logProjectileQueue = (state: State, message: string): void => {
+	if (!ENABLE_PROJECTILE_QUEUE_LOGGING) return;
+	logger(state, 'debug', 'projectilePrayerQueue', message);
+};
+
+const logProjectileQueueVerbose = (state: State, message: string): void => {
+	if (!ENABLE_PROJECTILE_QUEUE_VERBOSE_LOGGING) return;
+	logger(state, 'debug', 'projectilePrayerQueue', message);
+};
 
 // Player-related utility functions
 
@@ -77,13 +92,14 @@ export const activatePrayerForThreat = (
 // Activate prayer for closest projectile
 export const activatePrayerForProjectile = (
 	state: State,
-	trackedProjectile: TrackedProjectile,
+	trackedProjectile: ProjectileContainer,
 ): boolean => {
-	const prayerKey = getPrayerKeyForProjectile(trackedProjectile.id);
+	const projId = trackedProjectile.getId();
+	const prayerKey = getPrayerKeyForProjectile(projId);
 	return activatePrayerForThreat(
 		state,
 		prayerKey,
-		`projectile ${trackedProjectile.id} hitting in ${trackedProjectile.ticksUntilHit} ticks`,
+		`projectile ${projId} hitting in ${trackedProjectile.getTicksUntilHit()} ticks`,
 	);
 };
 
@@ -104,9 +120,102 @@ export const activatePrayerForNPCAttack = (
 // Tracks last projectile time and only disables prayer if none seen for 3 seconds
 let lastProjectileSeenTick = 0;
 let lastActivatedPrayer: keyof typeof prayers | null = null;
+let lastQueuedProjectileId: number | null = null;
+let projectilePrayerQueue: number[] = [];
+
+const buildProjectileLookup = (
+	projectiles: ProjectileContainer[],
+): Map<number, ProjectileContainer> => {
+	const projectileLookup = new Map<number, ProjectileContainer>();
+	for (const projectile of projectiles) {
+		projectileLookup.set(projectile.getUniqueId(), projectile);
+	}
+	return projectileLookup;
+};
+
+const formatProjectileQueue = (
+	queue: number[],
+	projectileLookup: Map<number, ProjectileContainer>,
+): string => {
+	if (queue.length === 0) return 'empty';
+
+	return queue
+		.map((uniqueId, index) => {
+			const projectile = projectileLookup.get(uniqueId);
+			if (!projectile) return `${index + 1}:stale`;
+			return `${index + 1}:${projectile.getId()}@${projectile.getTicksUntilHit()}`;
+		})
+		.join(' -> ');
+};
+
+const syncProjectilePrayerQueue = (
+	state: State,
+	projectiles: ProjectileContainer[],
+): ProjectileContainer | null => {
+	if (projectiles.length === 0) {
+		if (projectilePrayerQueue.length > 0) {
+			logProjectileQueueVerbose(
+				state,
+				'No tracked projectiles remain. Clearing projectile prayer queue.',
+			);
+		}
+		projectilePrayerQueue = [];
+		lastQueuedProjectileId = null;
+		return null;
+	}
+
+	const currentProjectileIds = new Set<number>(
+		projectiles.map((projectile) => projectile.getUniqueId()),
+	);
+	const currentQueueLengthBeforeFilter = projectilePrayerQueue.length;
+
+	projectilePrayerQueue = projectilePrayerQueue.filter((id) =>
+		currentProjectileIds.has(id),
+	);
+
+	if (projectilePrayerQueue.length !== currentQueueLengthBeforeFilter) {
+		logProjectileQueueVerbose(
+			state,
+			`Removed ${currentQueueLengthBeforeFilter - projectilePrayerQueue.length} resolved projectile(s) from queue.`,
+		);
+	}
+
+	let addedToQueue = 0;
+	for (const projectile of projectiles) {
+		const uniqueId = projectile.getUniqueId();
+		if (projectilePrayerQueue.includes(uniqueId)) continue;
+		projectilePrayerQueue.push(uniqueId);
+		addedToQueue += 1;
+	}
+
+	const projectileLookup = buildProjectileLookup(projectiles);
+	if (addedToQueue > 0) {
+		logProjectileQueue(
+			state,
+			`Queued ${addedToQueue} projectile(s). Queue: ${formatProjectileQueue(projectilePrayerQueue, projectileLookup)}`,
+		);
+	}
+
+	while (projectilePrayerQueue.length > 0) {
+		const queuedId = projectilePrayerQueue[0];
+		const queuedProjectile = projectileLookup.get(queuedId) ?? null;
+		if (queuedProjectile) {
+			logProjectileQueueVerbose(
+				state,
+				`Queue head is projectile ${queuedProjectile.getId()} (${queuedProjectile.getTicksUntilHit()} tick(s) to hit). Queue: ${formatProjectileQueue(projectilePrayerQueue, projectileLookup)}`,
+			);
+			return queuedProjectile;
+		}
+		projectilePrayerQueue.shift();
+	}
+
+	lastQueuedProjectileId = null;
+	return null;
+};
 
 export const handleIncomingProjectiles = (state: State): boolean => {
 	const closest = getClosestProjectile();
+	const sortedProjectiles = getSortedProjectiles();
 	const currentTick = state.gameTick;
 	const DISABLE_DELAY_TICKS = 5; // 3 seconds at 0.6s per tick
 
@@ -114,42 +223,56 @@ export const handleIncomingProjectiles = (state: State): boolean => {
 	if (closest) {
 		lastProjectileSeenTick = currentTick;
 
-		const prayerKey = getPrayerKeyForProjectile(closest.id);
+		const queuedProjectile = syncProjectilePrayerQueue(
+			state,
+			sortedProjectiles,
+		);
+		if (!queuedProjectile) {
+			return false;
+		}
+
+		const prayerKey = getPrayerKeyForProjectile(queuedProjectile.getId());
 
 		if (!prayerKey) {
-			logger(
+			logProjectileQueue(
 				state,
-				'debug',
-				'handleIncomingProjectiles',
-				`No prayer mapped for projectile ID ${closest.id}`,
+				`No prayer mapped for queued projectile ID ${queuedProjectile.getId()}. Removing from queue.`,
+			);
+			const uniqueId = queuedProjectile.getUniqueId();
+			projectilePrayerQueue = projectilePrayerQueue.filter(
+				(id) => id !== uniqueId,
 			);
 			return false;
 		}
 
-		// Only log if prayer changed
-		if (lastActivatedPrayer !== prayerKey) {
-			logger(
+		const queueHeadChanged =
+			lastQueuedProjectileId !== queuedProjectile.getUniqueId();
+
+		// Only log if queue head projectile changed or prayer changed
+		if (queueHeadChanged || lastActivatedPrayer !== prayerKey) {
+			logProjectileQueue(
 				state,
-				'debug',
-				'handleIncomingProjectiles',
-				`Incoming projectile ID ${closest.id} in ${closest.ticksUntilHit} ticks. Activating ${prayerKey}`,
+				`Queue advanced to projectile ${queuedProjectile.getId()} (${queuedProjectile.getTicksUntilHit()} tick(s) to hit). Activating ${prayerKey}.`,
 			);
 		}
 
+		lastQueuedProjectileId = queuedProjectile.getUniqueId();
 		lastActivatedPrayer = prayerKey;
 		return togglePrayer(state, prayerKey);
 	}
+
+	projectilePrayerQueue = [];
+	lastQueuedProjectileId = null;
+	logProjectileQueueVerbose(state, 'No tracked projectiles this tick.');
 
 	// No projectile - check if enough time has passed to disable prayer
 	if (
 		lastActivatedPrayer &&
 		currentTick - lastProjectileSeenTick >= DISABLE_DELAY_TICKS
 	) {
-		logger(
+		logProjectileQueue(
 			state,
-			'debug',
-			'handleIncomingProjectiles',
-			`No projectile for 3s. Disabling ${lastActivatedPrayer}`,
+			`No projectile for 3s. Disabling ${lastActivatedPrayer}.`,
 		);
 		bot.prayer.togglePrayer(prayers[lastActivatedPrayer], true);
 		lastActivatedPrayer = null;
@@ -249,6 +372,7 @@ export const moveToSafeTile = (
 let lastMovementTarget: { x: number; y: number; tick: number } | null = null;
 
 // High-level function to handle dangerous tile detection and automatic movement to safety
+// collision data/BFS movement data (to be added)/radius search/distance coorelation to boss center
 export const avoidDangerousTiles = (
 	state: State,
 	options: {
@@ -259,7 +383,12 @@ export const avoidDangerousTiles = (
 		bossCenterTile?: net.runelite.api.coords.WorldPoint;
 		preferredBossDistance?: number;
 		fallbackBossDistance?: number;
+		preferCounterClockwise?: boolean;
 		neverSelectTiles?: net.runelite.api.coords.WorldPoint[];
+		lineOfSightCheck?: {
+			targetTile: net.runelite.api.coords.WorldPoint;
+			blockingObjectIds: number[];
+		};
 	},
 ): boolean => {
 	// Early return if bot APIs not ready
@@ -274,7 +403,9 @@ export const avoidDangerousTiles = (
 		bossCenterTile,
 		preferredBossDistance,
 		fallbackBossDistance,
+		preferCounterClockwise,
 		neverSelectTiles,
+		lineOfSightCheck,
 	} = options;
 	const searchRadius = options.searchRadius || 5;
 
@@ -329,6 +460,7 @@ export const avoidDangerousTiles = (
 					centerTile: bossCenterTile,
 					preferredDistance: preferredBossDistance,
 					fallbackDistance: fallbackBossDistance,
+					preferCounterClockwise: preferCounterClockwise === true,
 				}
 			: undefined;
 
@@ -348,6 +480,7 @@ export const avoidDangerousTiles = (
 		dangerousTileCoordinates,
 		preferredDistanceOptions,
 		neverSelectTiles,
+		lineOfSightCheck,
 	);
 
 	if (!safeTile) {
@@ -421,11 +554,11 @@ export const getWornEquipment = (state: State): Record<string, number> => {
 		3: 'weapon',
 		4: 'body',
 		5: 'shield',
-		7: 'legs',
-		9: 'hands',
-		10: 'feet',
-		12: 'ring',
-		13: 'ammo',
+		6: 'legs',
+		7: 'hands',
+		8: 'feet',
+		9: 'ring',
+		10: 'ammo',
 	};
 
 	for (const [slotIndex, slotName] of Object.entries(equipmentSlots)) {
@@ -640,23 +773,31 @@ export const castSpellOnNpc = (
 		return false;
 	}
 
-	// Use the first available spell from the array
-	const spellName: string = spellNames[0];
+	const spellName = spellNames[0];
 
-	(
-		bot.magic.castOnNpc as (
-			spellName: string,
-			npc: net.runelite.api.NPC,
-		) => void
-	)(spellName, targetNpc);
-	logger(
-		state,
-		'debug',
-		'castSpellOnNpc',
-		`Cast spell ${spellName} on NPC ${targetNpc.getName?.()}`,
-	);
-
-	return true;
+	try {
+		(
+			bot.magic.castOnNpc as (
+				spellName: string,
+				npc: net.runelite.api.NPC,
+			) => void
+		)(spellName, targetNpc);
+		logger(
+			state,
+			'debug',
+			'castSpellOnNpc',
+			`Requested spell cast ${spellName} on NPC ${targetNpc.getName?.()}`,
+		);
+		return true;
+	} catch (error) {
+		logger(
+			state,
+			'debug',
+			'castSpellOnNpc',
+			`Spell ${spellName} request failed: ${String(error)}`,
+		);
+		return false;
+	}
 };
 
 // Eat food from inventory by item IDs
@@ -952,9 +1093,9 @@ export const runBetweenTiles = (
 	tileB: { x: number; y: number },
 ): boolean => {
 	const player = client?.getLocalPlayer?.();
-	const playerLoc = player.getWorldLocation?.();
+	const playerLocRaw = player?.getWorldLocation?.();
 
-	if (!player || !playerLoc) {
+	if (!player || !playerLocRaw) {
 		logger(
 			state,
 			'debug',
@@ -964,8 +1105,13 @@ export const runBetweenTiles = (
 		return false;
 	}
 
-	// Check if player is at tile A
-	const isAtA = playerLoc.getX() === tileA.x && playerLoc.getY() === tileA.y;
+	// Get actual world point (handles instance conversion)
+	const playerLoc = getWorldPoint(playerLocRaw) ?? playerLocRaw;
+	const playerX = playerLoc.getX();
+	const playerY = playerLoc.getY();
+
+	// Check if player is at tile A (exact coordinate match)
+	const isAtA = playerX === tileA.x && playerY === tileA.y;
 
 	// Run to opposite tile
 	const targetTile = isAtA ? tileB : tileA;
@@ -973,7 +1119,14 @@ export const runBetweenTiles = (
 		? `Tile B (${tileB.x}, ${tileB.y})`
 		: `Tile A (${tileA.x}, ${tileA.y})`;
 
-	bot.walking.walkToWorldPoint(targetTile.x, targetTile.y);
+	logger(
+		state,
+		'debug',
+		'runBetweenTiles',
+		`Player at (${playerX}, ${playerY}) - atA: ${isAtA} - walking to ${targetDesc}`,
+	);
+
+	bot.walking.walkToTrueWorldPoint(targetTile.x, targetTile.y);
 	logger(state, 'debug', 'runBetweenTiles', `Walking to ${targetDesc}`);
 
 	return true;

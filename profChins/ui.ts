@@ -26,7 +26,6 @@ type PanelCache = {
 export let currentAction = 'Idle';
 export let totalChinsCaught = 0;
 export let lastHunterXp = 0;
-let botMakerLogOverlayReference: any = null;
 let botMakerMainOverlayReference: any = null;
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, no-empty */
@@ -58,6 +57,83 @@ const overlay = {
 		overlayTile.start();
 	},
 };
+
+function disableBotMakerOverlay(): void {
+	try {
+		const manager = overlay.manager;
+		if (!manager) {
+			return;
+		}
+		manager.removeIf((overlayItem: any): boolean => {
+			try {
+				if (!overlayItem || !overlayItem.getClass) {
+					return false;
+				}
+				const overlayClass = overlayItem.getClass();
+				if (!overlayClass) {
+					return false;
+				}
+				const overlayName = overlayClass.getName() as string;
+				if (!overlayName || !overlayName.includes('plugins.botmaker')) {
+					return false;
+				}
+				const layer = overlayItem.getLayer();
+				const position = overlayItem.getPosition();
+				if (
+					layer ===
+						net.runelite.client.ui.overlay.OverlayLayer
+							.UNDER_WIDGETS &&
+					position ===
+						net.runelite.client.ui.overlay.OverlayPosition
+							.BOTTOM_LEFT
+				) {
+					botMakerMainOverlayReference = overlayItem;
+					if (state) {
+						logger(
+							state,
+							'all',
+							'UI',
+							'Disabling BotMaker main overlay',
+						);
+					}
+					return true;
+				}
+				return false;
+			} catch {
+				return false;
+			}
+		});
+	} catch (error) {
+		if (state) {
+			logger(
+				state,
+				'all',
+				'UI',
+				'Error disabling BotMaker overlay: ' + String(error),
+			);
+		}
+	}
+}
+
+function enableBotMakerOverlay(): void {
+	try {
+		const manager = overlay.manager;
+		if (!manager) return;
+		if (botMakerMainOverlayReference) {
+			manager.add(botMakerMainOverlayReference);
+			botMakerMainOverlayReference = null;
+		}
+	} catch (error) {
+		if (state) {
+			logger(
+				state,
+				'all',
+				'UI',
+				'Error enabling BotMaker overlay: ' + String(error),
+			);
+		}
+	}
+}
 
 const overlayPanel = {
 	panel: null as any,
@@ -419,103 +495,6 @@ const overlayTile = {
 		this.tiles = null;
 	},
 };
-
-function disableBotMakerOverlay(): void {
-	try {
-		const manager = overlay.manager;
-		if (!manager) {
-			return;
-		}
-		manager.removeIf((overlayItem: any): boolean => {
-			try {
-				if (!overlayItem || !overlayItem.getClass) {
-					return false;
-				}
-				const overlayClass = overlayItem.getClass();
-				if (!overlayClass) {
-					return false;
-				}
-				const overlayName = overlayClass.getName() as string;
-				if (!overlayName || !overlayName.includes('plugins.botmaker')) {
-					return false;
-				}
-				const layer = overlayItem.getLayer();
-				const position = overlayItem.getPosition();
-				if (
-					layer ===
-						net.runelite.client.ui.overlay.OverlayLayer
-							.UNDER_WIDGETS &&
-					position ===
-						net.runelite.client.ui.overlay.OverlayPosition.TOP_LEFT
-				) {
-					botMakerLogOverlayReference = overlayItem;
-					if (state) {
-						logger(
-							state,
-							'all',
-							'UI',
-							'Disabling BotMaker log overlay',
-						);
-					}
-					return true;
-				}
-				if (
-					layer ===
-						net.runelite.client.ui.overlay.OverlayLayer
-							.UNDER_WIDGETS &&
-					position ===
-						net.runelite.client.ui.overlay.OverlayPosition
-							.BOTTOM_LEFT
-				) {
-					botMakerMainOverlayReference = overlayItem;
-					if (state) {
-						logger(
-							state,
-							'all',
-							'UI',
-							'Disabling BotMaker main overlay',
-						);
-					}
-					return true;
-				}
-				return false;
-			} catch {
-				return false;
-			}
-		});
-	} catch (error) {
-		if (state) {
-			logger(
-				state,
-				'all',
-				'UI',
-				'Error disabling BotMaker overlay: ' + String(error),
-			);
-		}
-	}
-}
-
-function enableBotMakerOverlay(): void {
-	try {
-		const manager = overlay.manager;
-		if (!manager) return;
-		if (botMakerLogOverlayReference) {
-			manager.add(botMakerLogOverlayReference);
-			botMakerLogOverlayReference = null;
-		}
-		if (botMakerMainOverlayReference) {
-			manager.add(botMakerMainOverlayReference);
-			botMakerMainOverlayReference = null;
-		}
-	} catch (error) {
-		logger(
-			state,
-			'all',
-			'UI',
-			'Error enabling BotMaker overlay: ' + String(error),
-		);
-	}
-}
 
 // Initialize UI with required dependencies
 export function initializeUI(

@@ -2,6 +2,7 @@
 export const object = {
 	boxTrapLayed: 9380,
 	boxTrap_Failed: 9385,
+	boxTrap_ShakingG: 9382,
 	boxTrap_Shaking: 9383,
 	leviHandHolds: 47593,
 };
@@ -15,8 +16,8 @@ export const dangerousObjectIds = {
 
 export function getObjectIdGroups() {
 	return {
-		boxTrap: [9380, 9385, 9383],
-		boxTrap_Shaking: [9383],
+		boxTrap: [9380, 9385, 9383, 9382],
+		boxTrap_Shaking: [9383, 9382],
 		boxTrap_Failed: [9385],
 		boxTrapLayed: [9380],
 	};

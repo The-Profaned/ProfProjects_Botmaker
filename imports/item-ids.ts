@@ -34,6 +34,7 @@ export const gear = {
 	bowfac: net.runelite.api.ItemID.BOW_OF_FAERDHINEN_C,
 	blowpipe: net.runelite.api.ItemID.TOXIC_BLOWPIPE,
 	rcbow: net.runelite.api.ItemID.RUNE_CROSSBOW,
+	rcbowOR: net.runelite.api.ItemID.RUNE_CROSSBOW_OR,
 };
 
 // Food Item ID's organized by delay type

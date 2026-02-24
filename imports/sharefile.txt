@@ -1,34 +1,899 @@
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6363) -> instance (2072, 6363)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6363) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6364) -> instance (2072, 6364)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6364) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6365) -> instance (2072, 6365)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6365) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6366) -> instance (2072, 6366)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6366) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6367) -> instance (2072, 6367)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6367) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6368) -> instance (2072, 6368)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6368) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6369) -> instance (2072, 6369)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6369) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6370) -> instance (2072, 6370)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6370) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6371) -> instance (2072, 6371)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6371) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6372) -> instance (2072, 6372)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6372) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2072, 6373) -> instance (2072, 6373)
-00:00:15 - [JS] [isTileWalkable] Tile (2072, 6373) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2073, 6363) -> instance (2073, 6363)
-00:00:15 - [JS] [isTileWalkable] Tile (2073, 6363) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2074, 6363) -> instance (2074, 6363)
-00:00:15 - [JS] [isTileWalkable] Tile (2074, 6363) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2075, 6363) -> instance (2075, 6363)
-00:00:15 - [JS] [isTileWalkable] Tile (2075, 6363) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [isTileWalkable] Instance: true world (2076, 6363) -> instance (2076, 6363)
-00:00:15 - [JS] [isTileWalkable] Tile (2076, 6363) outside loaded scene - no collision check available, assuming walkable
-00:00:15 - [JS] [getPreferredDistanceTile] Found 15 valid tiles at distance 9
-00:00:15 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 10, Checking: 5
-00:00:15 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6369) at distance 1 from player
-00:00:15 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6369)
+00:00:00 - Initialising script executor...
+00:00:00 - Preparing nodes for execution...
+00:00:00 - Preparing Sandboxed JS engine...
+00:00:00 - [JS] [ProjectileTracking] Configured to track IDs: 2487, 2488, 2489
+00:00:00 - [JS] Projectile tracking initialized for IDs: 2487, 2488, 2489
+00:00:00 - [JS] [ProjectileTracking] Tracking system ready for 3 projectile types
+00:00:00 - [JS] [script] profLeviathan started.
+00:00:00 - Starting execution...
+00:00:01 - [JS] UI completed. Starting script.
+00:00:01 - [JS] [stateManager] TRAVEL
+00:00:01 - [JS] [Travel] TRAVEL
+00:00:01 - [JS] [Travel] Interacting with hand holds, Preparing to murder Leviathan
+00:00:02 - [JS] [Travel] Waiting for handhold to disappear...
+00:00:04 - [JS] [Travel] Entered arena, starting combat!
+00:00:04 - [JS] [togglePrayer] rigour activation requested (state pending)
+00:00:04 - [JS] [togglePrayer] eagleEye activation requested (state pending)
+00:00:04 - [JS] [Travel] Could not activate entry ranged prayer (none available or prayer unavailable).
+00:00:05 - [JS] [stateManager] COMBAT
+00:00:05 - [JS] [attackTargetNpc] No NPC found with ID 12214
+00:00:05 - [JS] [attackTargetNpc] No NPC found with ID 12215
+00:00:05 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:05 - [JS] [manageStats] Health: 83, Prayer: 62, Can eat: true, Can drink: true
+00:00:06 - [JS] [manageStats] Health: 83, Prayer: 61, Can eat: true, Can drink: true
+00:00:07 - [JS] [pathfinderSpawnActionState] IDLE: Not currently in PATHFINDER_SPAWN sub-state.
+00:00:07 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:00:07 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:08 - [JS] [manageStats] Health: 83, Prayer: 61, Can eat: true, Can drink: true
+00:00:09 - [JS] [manageStats] Health: 83, Prayer: 61, Can eat: true, Can drink: true
+00:00:09 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47392, projectileId=2487, ticksUntilHit=5
+00:00:09 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:09 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:10 - [JS] [manageStats] Health: 83, Prayer: 60, Can eat: true, Can drink: true
+00:00:11 - [JS] [manageStats] Health: 83, Prayer: 60, Can eat: true, Can drink: true
+00:00:12 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:12 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47397, projectileId=2489, ticksUntilHit=3
+00:00:12 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:12 - [JS] [manageStats] Health: 83, Prayer: 59, Can eat: true, Can drink: true
+00:00:14 - [JS] [manageStats] Health: 83, Prayer: 59, Can eat: true, Can drink: true
+00:00:14 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:15 - [JS] [manageStats] Health: 83, Prayer: 58, Can eat: true, Can drink: true
+00:00:16 - [JS] [manageStats] Health: 83, Prayer: 57, Can eat: true, Can drink: true
+00:00:17 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:17 - [JS] [manageStats] Health: 83, Prayer: 57, Can eat: true, Can drink: true
+00:00:18 - [JS] [manageStats] Health: 83, Prayer: 56, Can eat: true, Can drink: true
+00:00:19 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:20 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47409, projectileId=2487, ticksUntilHit=3
+00:00:20 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:20 - [JS] [manageStats] Health: 83, Prayer: 56, Can eat: true, Can drink: true
+00:00:20 - [JS] [updateSpecialAttackTrigger] Roar detected (1/6). First trigger fired: false
+00:00:20 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:20 - [JS] [avoidDangerousTiles] Finding safe tile: 78 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:00:20 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:00:20 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:00:20 - [JS] [getPreferredDistanceTile] Found 14 valid tiles at distance 9
+00:00:20 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 9, Checking: 5, Prefer CCW: false
+00:00:20 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6369) at distance 1 from player
+00:00:20 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6369)
+00:00:20 - [JS] [avoidDangerousTiles] Detected 78 dangerous tiles. Moving to safety at (2072, 6369)
+00:00:20 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6369)
+00:00:21 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:21 - [JS] [manageStats] Health: 76, Prayer: 55, Can eat: true, Can drink: true
+00:00:21 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:21 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:00:21 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:22 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:22 - [JS] [manageStats] Health: 76, Prayer: 54, Can eat: true, Can drink: true
+00:00:23 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:23 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47415, projectileId=2489, ticksUntilHit=5
+00:00:23 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:23 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:23 - [JS] [manageStats] Health: 76, Prayer: 54, Can eat: true, Can drink: true
+00:00:24 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:24 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:24 - [JS] [detectSpecialAttackTypeEarly] Boulder detected in NORTH boundary at (2082, 6378). Locking in DEBRIS special.
+00:00:24 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:00:24 - [JS] [manageStats] Health: 76, Prayer: 53, Can eat: true, Can drink: true
+00:00:25 - [JS] [detectFallingObjects] Detected 16 falling/graphics objects
+00:00:26 - [JS] [detectFallingObjects] Detected 6 falling/graphics objects
+00:00:26 - [JS] [manageStats] Health: 76, Prayer: 53, Can eat: true, Can drink: true
+00:00:26 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47420, projectileId=2487, ticksUntilHit=2
+00:00:26 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:26 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:27 - [JS] [manageStats] Health: 76, Prayer: 52, Can eat: true, Can drink: true
+00:00:28 - [JS] [manageStats] Health: 76, Prayer: 52, Can eat: true, Can drink: true
+00:00:29 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47424, projectileId=2489, ticksUntilHit=2
+00:00:29 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:29 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:29 - [JS] [manageStats] Health: 76, Prayer: 51, Can eat: true, Can drink: true
+00:00:30 - [JS] [manageStats] Health: 76, Prayer: 50, Can eat: true, Can drink: true
+00:00:31 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47428, projectileId=2487, ticksUntilHit=2
+00:00:31 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:31 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:32 - [JS] [manageStats] Health: 76, Prayer: 50, Can eat: true, Can drink: true
+00:00:33 - [JS] [updateSpecialAttackTrigger] Roar detected (2/6). First trigger fired: false
+00:00:33 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:33 - [JS] [avoidDangerousTiles] Finding safe tile: 97 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:00:33 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:00:33 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:00:33 - [JS] [getPreferredDistanceTile] Found 10 valid tiles at distance 9
+00:00:33 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 5, Checking: 5, Prefer CCW: false
+00:00:33 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6370) at distance 1 from player
+00:00:33 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6370)
+00:00:33 - [JS] [avoidDangerousTiles] Detected 97 dangerous tiles. Moving to safety at (2072, 6370)
+00:00:33 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6370)
+00:00:33 - [JS] [manageStats] Health: 76, Prayer: 49, Can eat: true, Can drink: true
+00:00:33 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47432, projectileId=2489, ticksUntilHit=2
+00:00:33 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:33 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:33 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:00:33 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:34 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:34 - [JS] [manageStats] Health: 72, Prayer: 49, Can eat: true, Can drink: true
+00:00:35 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:35 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:35 - [JS] [manageStats] Health: 65, Prayer: 48, Can eat: true, Can drink: true
+00:00:36 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:36 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:36 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:36 - [JS] [manageStats] Health: 65, Prayer: 47, Can eat: true, Can drink: true
+00:00:37 - [JS] [detectFallingObjects] Detected 28 falling/graphics objects
+00:00:38 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:00:38 - [JS] [manageStats] Health: 65, Prayer: 47, Can eat: true, Can drink: true
+00:00:38 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47440, projectileId=2488, ticksUntilHit=2
+00:00:38 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:00:38 - [JS] [detectFallingObjects] Detected 8 falling/graphics objects
+00:00:38 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:39 - [JS] [manageStats] Health: 65, Prayer: 46, Can eat: true, Can drink: true
+00:00:39 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47442, projectileId=2487, ticksUntilHit=2
+00:00:39 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:40 - [JS] [manageStats] Health: 65, Prayer: 46, Can eat: true, Can drink: true
+00:00:41 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47444, projectileId=2489, ticksUntilHit=2
+00:00:41 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:41 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:41 - [JS] [manageStats] Health: 65, Prayer: 45, Can eat: true, Can drink: true
+00:00:42 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47446, projectileId=2487, ticksUntilHit=2
+00:00:42 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:42 - [JS] [manageStats] Health: 65, Prayer: 45, Can eat: true, Can drink: true
+00:00:43 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:44 - [JS] [manageStats] Health: 65, Prayer: 44, Can eat: true, Can drink: true
+00:00:45 - [JS] [manageStats] Health: 65, Prayer: 43, Can eat: true, Can drink: true
+00:00:45 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47452, projectileId=2489, ticksUntilHit=2
+00:00:45 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:45 - [JS] [updateSpecialAttackTrigger] Roar detected (3/6). First trigger fired: false
+00:00:45 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:45 - [JS] [avoidDangerousTiles] Finding safe tile: 78 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:00:45 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:00:45 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:00:45 - [JS] [getPreferredDistanceTile] Found 9 valid tiles at distance 9
+00:00:45 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 4, Checking: 5, Prefer CCW: false
+00:00:45 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6371) at distance 1 from player
+00:00:45 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6371)
+00:00:45 - [JS] [avoidDangerousTiles] Detected 78 dangerous tiles. Moving to safety at (2072, 6371)
+00:00:45 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6371)
+00:00:45 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:46 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:46 - [JS] [manageStats] Health: 60, Prayer: 43, Can eat: true, Can drink: true
+00:00:47 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:47 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:47 - [JS] [manageStats] Health: 60, Prayer: 42, Can eat: true, Can drink: true
+00:00:48 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:48 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:00:48 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:48 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47457, projectileId=2487, ticksUntilHit=3
+00:00:48 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:48 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:48 - [JS] [manageStats] Health: 61, Prayer: 42, Can eat: true, Can drink: true
+00:00:49 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:50 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:00:50 - [JS] [manageStats] Health: 61, Prayer: 41, Can eat: true, Can drink: true
+00:00:50 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47460, projectileId=2489, ticksUntilHit=1
+00:00:50 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:50 - [JS] [detectFallingObjects] Detected 10 falling/graphics objects
+00:00:50 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:51 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47461, projectileId=2487, ticksUntilHit=1
+00:00:51 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:51 - [JS] [detectFallingObjects] Detected 5 falling/graphics objects
+00:00:51 - [JS] [manageStats] Health: 61, Prayer: 40, Can eat: true, Can drink: true
+00:00:51 - [JS] [manageStats] Low prayer (40), drinking potion...
+00:00:51 - [JS] [drinkPotion] Drinking potion item ID 141 with 3 tick delay
+00:00:52 - [JS] [manageStats] Health: 55, Prayer: 65, Can eat: true, Can drink: false
+00:00:53 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47464, projectileId=2489, ticksUntilHit=1
+00:00:53 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:00:53 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:00:53 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:53 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47465, projectileId=2487, ticksUntilHit=1
+00:00:53 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:00:53 - [JS] [manageStats] Health: 55, Prayer: 64, Can eat: true, Can drink: true
+00:00:54 - [JS] [manageStats] Health: 55, Prayer: 64, Can eat: true, Can drink: true
+00:00:55 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:56 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:56 - [JS] [avoidDangerousTiles] Finding safe tile: 91 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:00:56 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:00:56 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:00:56 - [JS] [getPreferredDistanceTile] Found 8 valid tiles at distance 9
+00:00:56 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 3, Checking: 5, Prefer CCW: false
+00:00:56 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6372) at distance 1 from player
+00:00:56 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6372)
+00:00:56 - [JS] [avoidDangerousTiles] Detected 91 dangerous tiles. Moving to safety at (2072, 6372)
+00:00:56 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6372)
+00:00:56 - [JS] [manageStats] Health: 50, Prayer: 63, Can eat: true, Can drink: true
+00:00:56 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:57 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:57 - [JS] [manageStats] Health: 46, Prayer: 62, Can eat: true, Can drink: true
+00:00:57 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:57 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:00:57 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:00:58 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:58 - [JS] [manageStats] Health: 46, Prayer: 62, Can eat: true, Can drink: true
+00:00:59 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:59 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47475, projectileId=2488, ticksUntilHit=3
+00:00:59 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:00:59 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:00:59 - [JS] [manageStats] Health: 46, Prayer: 61, Can eat: true, Can drink: true
+00:01:00 - [JS] [detectFallingObjects] Detected 24 falling/graphics objects
+00:01:00 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:00 - [JS] [detectFallingObjects] Detected 17 falling/graphics objects
+00:01:00 - [JS] [manageStats] Health: 46, Prayer: 61, Can eat: true, Can drink: true
+00:01:01 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47478, projectileId=2489, ticksUntilHit=1
+00:01:01 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:01 - [JS] [detectFallingObjects] Detected 7 falling/graphics objects
+00:01:02 - [JS] [manageStats] Health: 46, Prayer: 60, Can eat: true, Can drink: true
+00:01:02 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47480, projectileId=2488, ticksUntilHit=1
+00:01:02 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:02 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:03 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47481, projectileId=2489, ticksUntilHit=1
+00:01:03 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:03 - [JS] [manageStats] Health: 46, Prayer: 60, Can eat: true, Can drink: true
+00:01:03 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47482, projectileId=2488, ticksUntilHit=1
+00:01:03 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:04 - [JS] [manageStats] Health: 46, Prayer: 59, Can eat: true, Can drink: true
+00:01:05 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:05 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47485, projectileId=2489, ticksUntilHit=1
+00:01:05 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:05 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:05 - [JS] [avoidDangerousTiles] Finding safe tile: 74 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:01:05 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:01:05 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:01:05 - [JS] [getPreferredDistanceTile] Found 7 valid tiles at distance 9
+00:01:05 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 2, Checking: 5, Prefer CCW: false
+00:01:05 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6373) at distance 1 from player
+00:01:05 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6373)
+00:01:05 - [JS] [avoidDangerousTiles] Detected 74 dangerous tiles. Moving to safety at (2072, 6373)
+00:01:05 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6373)
+00:01:05 - [JS] [manageStats] Health: 46, Prayer: 58, Can eat: true, Can drink: true
+00:01:06 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:06 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:06 - [JS] [manageStats] Health: 39, Prayer: 58, Can eat: true, Can drink: true
+00:01:06 - [JS] [manageStats] Low health (39), eating...
+00:01:06 - [JS] [eatFood] Found food 385, attempting to eat
+00:01:06 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:01:07 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:07 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:07 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:08 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:08 - [JS] [manageStats] Health: 59, Prayer: 57, Can eat: false, Can drink: true
+00:01:08 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:09 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47491, projectileId=2487, ticksUntilHit=2
+00:01:09 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:09 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:09 - [JS] [manageStats] Health: 59, Prayer: 57, Can eat: true, Can drink: true
+00:01:09 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:09 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:10 - [JS] [detectFallingObjects] Detected 13 falling/graphics objects
+00:01:10 - [JS] [manageStats] Health: 59, Prayer: 56, Can eat: true, Can drink: true
+00:01:11 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47494, projectileId=2489, ticksUntilHit=1
+00:01:11 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:11 - [JS] [detectFallingObjects] Detected 6 falling/graphics objects
+00:01:11 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47495, projectileId=2487, ticksUntilHit=1
+00:01:11 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:11 - [JS] [manageStats] Health: 59, Prayer: 55, Can eat: true, Can drink: true
+00:01:12 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47496, projectileId=2489, ticksUntilHit=1
+00:01:12 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:12 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:12 - [JS] [manageStats] Health: 59, Prayer: 55, Can eat: true, Can drink: true
+00:01:13 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47498, projectileId=2488, ticksUntilHit=1
+00:01:13 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:14 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47499, projectileId=2489, ticksUntilHit=1
+00:01:14 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:14 - [JS] [manageStats] Health: 59, Prayer: 54, Can eat: true, Can drink: true
+00:01:14 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47500, projectileId=2488, ticksUntilHit=1
+00:01:14 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:14 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:15 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:15 - [JS] [avoidDangerousTiles] Finding safe tile: 103 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:01:15 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:01:15 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:01:15 - [JS] [getPreferredDistanceTile] Found 4 valid tiles at distance 9
+00:01:15 - [JS] [getPreferredDistanceTile] Clockwise tiles: 4, Counter-clockwise: 0, Checking: 4, Prefer CCW: false
+00:01:15 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6374) at distance 1 from player
+00:01:15 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6374)
+00:01:15 - [JS] [avoidDangerousTiles] Detected 103 dangerous tiles. Moving to safety at (2072, 6374)
+00:01:15 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6374)
+00:01:15 - [JS] [manageStats] Health: 59, Prayer: 54, Can eat: true, Can drink: true
+00:01:15 - [JS] [updateSpecialAttackTrigger] Roar detected (4/6). First trigger fired: false
+00:01:15 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:16 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:16 - [JS] [manageStats] Health: 54, Prayer: 53, Can eat: true, Can drink: true
+00:01:17 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:17 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:17 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:17 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:17 - [JS] [manageStats] Health: 54, Prayer: 53, Can eat: true, Can drink: true
+00:01:18 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:18 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:18 - [JS] [manageStats] Health: 54, Prayer: 52, Can eat: true, Can drink: true
+00:01:19 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47508, projectileId=2487, ticksUntilHit=1
+00:01:19 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:19 - [JS] [detectFallingObjects] Detected 29 falling/graphics objects
+00:01:19 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:20 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47509, projectileId=2488, ticksUntilHit=1
+00:01:20 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:20 - [JS] [detectFallingObjects] Detected 19 falling/graphics objects
+00:01:20 - [JS] [manageStats] Health: 54, Prayer: 51, Can eat: true, Can drink: true
+00:01:20 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47510, projectileId=2487, ticksUntilHit=1
+00:01:20 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:20 - [JS] [detectFallingObjects] Detected 13 falling/graphics objects
+00:01:21 - [JS] [detectFallingObjects] Detected 8 falling/graphics objects
+00:01:21 - [JS] [manageStats] Health: 54, Prayer: 51, Can eat: true, Can drink: true
+00:01:21 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47512, projectileId=2488, ticksUntilHit=1
+00:01:21 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:21 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:22 - [JS] [manageStats] Health: 54, Prayer: 50, Can eat: true, Can drink: true
+00:01:23 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47515, projectileId=2487, ticksUntilHit=1
+00:01:23 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:23 - [JS] [manageStats] Health: 54, Prayer: 50, Can eat: true, Can drink: true
+00:01:24 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:24 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:24 - [JS] [avoidDangerousTiles] Finding safe tile: 82 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:01:24 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:01:24 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:01:24 - [JS] [getPreferredDistanceTile] Found 5 valid tiles at distance 9
+00:01:24 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 0, Checking: 5, Prefer CCW: false
+00:01:24 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6375) at distance 1 from player
+00:01:24 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6375)
+00:01:24 - [JS] [avoidDangerousTiles] Detected 82 dangerous tiles. Moving to safety at (2072, 6375)
+00:01:24 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6375)
+00:01:24 - [JS] [manageStats] Health: 54, Prayer: 49, Can eat: true, Can drink: true
+00:01:25 - [JS] [updateSpecialAttackTrigger] Roar detected (5/6). First trigger fired: false
+00:01:25 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:26 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:26 - [JS] [manageStats] Health: 47, Prayer: 48, Can eat: true, Can drink: true
+00:01:26 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:26 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:26 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:27 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:27 - [JS] [manageStats] Health: 47, Prayer: 48, Can eat: true, Can drink: true
+00:01:27 - [JS] [projectileManager] Disabling prayer protRange after 5 ticks
+00:01:27 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:28 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47523, projectileId=2487, ticksUntilHit=1
+00:01:28 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:28 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:28 - [JS] [manageStats] Health: 47, Prayer: 47, Can eat: true, Can drink: true
+00:01:29 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47524, projectileId=2488, ticksUntilHit=1
+00:01:29 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:29 - [JS] [detectFallingObjects] Detected 18 falling/graphics objects
+00:01:29 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:29 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47525, projectileId=2489, ticksUntilHit=1
+00:01:29 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:29 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:29 - [JS] [manageStats] Health: 47, Prayer: 47, Can eat: true, Can drink: true
+00:01:30 - [JS] [detectFallingObjects] Detected 8 falling/graphics objects
+00:01:30 - [JS] [detectFallingObjects] Detected 2 falling/graphics objects
+00:01:30 - [JS] [manageStats] Health: 47, Prayer: 46, Can eat: true, Can drink: true
+00:01:31 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:32 - [JS] [manageStats] Health: 47, Prayer: 46, Can eat: true, Can drink: true
+00:01:33 - [JS] [manageStats] Health: 47, Prayer: 45, Can eat: true, Can drink: true
+00:01:33 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47532, projectileId=2487, ticksUntilHit=1
+00:01:33 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:33 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:34 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47533, projectileId=2488, ticksUntilHit=1
+00:01:34 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:34 - [JS] [manageStats] Health: 47, Prayer: 44, Can eat: true, Can drink: true
+00:01:35 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:35 - [JS] [avoidDangerousTiles] Finding safe tile: 101 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:01:35 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:01:35 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:01:35 - [JS] [getPreferredDistanceTile] Found 5 valid tiles at distance 9
+00:01:35 - [JS] [getPreferredDistanceTile] Clockwise tiles: 5, Counter-clockwise: 0, Checking: 5, Prefer CCW: false
+00:01:35 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6376) at distance 1 from player
+00:01:35 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6376)
+00:01:35 - [JS] [avoidDangerousTiles] Detected 101 dangerous tiles. Moving to safety at (2072, 6376)
+00:01:35 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6376)
+00:01:35 - [JS] [manageStats] Health: 47, Prayer: 44, Can eat: true, Can drink: true
+00:01:36 - [JS] [updateSpecialAttackTrigger] Roar detected (6/6). First trigger fired: false
+00:01:36 - [JS] [updateSpecialAttackTrigger] Roar threshold reached (6/6) — triggering shadow spell cast!
+00:01:36 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:36 - [JS] [updateSpecialAttackTrigger] Special attack trigger consumed - returning to attack manager
+00:01:36 - [JS] [attackManager] God Mode enabled: special trigger ignored (no shadow spell cast).
+00:01:36 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:36 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:36 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:36 - [JS] [manageStats] Health: 43, Prayer: 43, Can eat: true, Can drink: true
+00:01:36 - [JS] [manageStats] Low health (43), eating...
+00:01:36 - [JS] [eatFood] Found food 385, attempting to eat
+00:01:36 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:01:37 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:38 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:38 - [JS] [manageStats] Health: 63, Prayer: 43, Can eat: false, Can drink: true
+00:01:38 - [JS] [projectileManager] Disabling prayer protMelee after 5 ticks
+00:01:38 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:38 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:38 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:39 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47541, projectileId=2488, ticksUntilHit=1
+00:01:39 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:39 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:39 - [JS] [manageStats] Health: 63, Prayer: 42, Can eat: true, Can drink: true
+00:01:39 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:01:40 - [JS] [detectFallingObjects] Detected 25 falling/graphics objects
+00:01:40 - [JS] [manageStats] Health: 63, Prayer: 42, Can eat: true, Can drink: true
+00:01:41 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47544, projectileId=2489, ticksUntilHit=1
+00:01:41 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:41 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:01:41 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:41 - [JS] [detectFallingObjects] Detected 7 falling/graphics objects
+00:01:41 - [JS] [manageStats] Health: 63, Prayer: 41, Can eat: true, Can drink: true
+00:01:42 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47546, projectileId=2487, ticksUntilHit=1
+00:01:42 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:42 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47547, projectileId=2489, ticksUntilHit=1
+00:01:42 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:42 - [JS] [manageStats] Health: 63, Prayer: 41, Can eat: true, Can drink: true
+00:01:43 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47548, projectileId=2488, ticksUntilHit=1
+00:01:43 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:43 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:44 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47549, projectileId=2489, ticksUntilHit=1
+00:01:44 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:44 - [JS] [manageStats] Health: 63, Prayer: 40, Can eat: true, Can drink: true
+00:01:44 - [JS] [manageStats] Low prayer (40), drinking potion...
+00:01:44 - [JS] [drinkPotion] Drinking potion item ID 143 with 3 tick delay
+00:01:44 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47550, projectileId=2487, ticksUntilHit=1
+00:01:44 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:45 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47551, projectileId=2489, ticksUntilHit=1
+00:01:45 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:45 - [JS] [manageStats] Health: 63, Prayer: 64, Can eat: true, Can drink: false
+00:01:45 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:45 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:46 - [JS] [manageStats] Health: 63, Prayer: 64, Can eat: true, Can drink: true
+00:01:47 - [JS] [manageStats] Health: 63, Prayer: 63, Can eat: true, Can drink: true
+00:01:48 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:48 - [JS] [avoidDangerousTiles] Finding safe tile: 88 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:01:48 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:01:48 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:01:48 - [JS] [getPreferredDistanceTile] Found 9 valid tiles at distance 9
+00:01:48 - [JS] [getPreferredDistanceTile] Clockwise tiles: 9, Counter-clockwise: 0, Checking: 9, Prefer CCW: false
+00:01:48 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6377) at distance 1 from player
+00:01:48 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6377)
+00:01:48 - [JS] [avoidDangerousTiles] Detected 88 dangerous tiles. Moving to safety at (2072, 6377)
+00:01:48 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6377)
+00:01:48 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:48 - [JS] [updateSpecialAttackTrigger] Roar detected (1/6). First trigger fired: false
+00:01:48 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:48 - [JS] [manageStats] Health: 58, Prayer: 63, Can eat: true, Can drink: true
+00:01:49 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:50 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:50 - [JS] [manageStats] Health: 58, Prayer: 62, Can eat: true, Can drink: true
+00:01:50 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:50 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:01:50 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:51 - [JS] [projectileManager] Disabling prayer protMage after 5 ticks
+00:01:51 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:51 - [JS] [manageStats] Health: 58, Prayer: 61, Can eat: true, Can drink: true
+00:01:51 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47562, projectileId=2488, ticksUntilHit=1
+00:01:51 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:51 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:52 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47563, projectileId=2487, ticksUntilHit=1
+00:01:52 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:52 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:01:52 - [JS] [manageStats] Health: 58, Prayer: 61, Can eat: true, Can drink: true
+00:01:53 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47564, projectileId=2488, ticksUntilHit=1
+00:01:53 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:53 - [JS] [detectFallingObjects] Detected 11 falling/graphics objects
+00:01:53 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:53 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47565, projectileId=2489, ticksUntilHit=1
+00:01:53 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:53 - [JS] [detectFallingObjects] Detected 8 falling/graphics objects
+00:01:53 - [JS] [manageStats] Health: 58, Prayer: 60, Can eat: true, Can drink: true
+00:01:54 - [JS] [detectFallingObjects] Detected 4 falling/graphics objects
+00:01:54 - [JS] [manageStats] Health: 58, Prayer: 60, Can eat: true, Can drink: true
+00:01:55 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47568, projectileId=2487, ticksUntilHit=1
+00:01:55 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:55 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:56 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47569, projectileId=2489, ticksUntilHit=1
+00:01:56 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:56 - [JS] [manageStats] Health: 58, Prayer: 59, Can eat: true, Can drink: true
+00:01:56 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47570, projectileId=2487, ticksUntilHit=1
+00:01:56 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:57 - [JS] [manageStats] Health: 58, Prayer: 59, Can eat: true, Can drink: true
+00:01:57 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47572, projectileId=2489, ticksUntilHit=1
+00:01:57 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:57 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:01:58 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47573, projectileId=2488, ticksUntilHit=1
+00:01:58 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:01:58 - [JS] [manageStats] Health: 58, Prayer: 58, Can eat: true, Can drink: true
+00:01:59 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47574, projectileId=2489, ticksUntilHit=1
+00:01:59 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:01:59 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47575, projectileId=2487, ticksUntilHit=1
+00:01:59 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:01:59 - [JS] [manageStats] Health: 58, Prayer: 57, Can eat: true, Can drink: true
+00:02:00 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:00 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:00 - [JS] [avoidDangerousTiles] Finding safe tile: 95 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:02:00 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:02:00 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:02:01 - [JS] [getPreferredDistanceTile] Found 8 valid tiles at distance 9
+00:02:01 - [JS] [getPreferredDistanceTile] Clockwise tiles: 8, Counter-clockwise: 0, Checking: 8, Prefer CCW: false
+00:02:01 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6378) at distance 1 from player
+00:02:01 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6378)
+00:02:01 - [JS] [avoidDangerousTiles] Detected 95 dangerous tiles. Moving to safety at (2072, 6378)
+00:02:01 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6378)
+00:02:01 - [JS] [manageStats] Health: 58, Prayer: 57, Can eat: true, Can drink: true
+00:02:01 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:02 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:02 - [JS] [manageStats] Health: 54, Prayer: 56, Can eat: true, Can drink: true
+00:02:02 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:02 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:02 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:03 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:03 - [JS] [manageStats] Health: 54, Prayer: 56, Can eat: true, Can drink: true
+00:02:03 - [JS] [projectileManager] Disabling prayer protRange after 5 ticks
+00:02:03 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:04 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47583, projectileId=2488, ticksUntilHit=1
+00:02:04 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:04 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:04 - [JS] [manageStats] Health: 54, Prayer: 55, Can eat: true, Can drink: true
+00:02:05 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:05 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:05 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47585, projectileId=2489, ticksUntilHit=1
+00:02:05 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:05 - [JS] [detectFallingObjects] Detected 16 falling/graphics objects
+00:02:05 - [JS] [manageStats] Health: 54, Prayer: 55, Can eat: true, Can drink: true
+00:02:06 - [JS] [detectFallingObjects] Detected 11 falling/graphics objects
+00:02:06 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47587, projectileId=2488, ticksUntilHit=1
+00:02:06 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:06 - [JS] [detectFallingObjects] Detected 6 falling/graphics objects
+00:02:06 - [JS] [manageStats] Health: 54, Prayer: 54, Can eat: true, Can drink: true
+00:02:07 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47588, projectileId=2489, ticksUntilHit=1
+00:02:07 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:07 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:08 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47589, projectileId=2487, ticksUntilHit=1
+00:02:08 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:08 - [JS] [manageStats] Health: 54, Prayer: 54, Can eat: true, Can drink: true
+00:02:08 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47590, projectileId=2488, ticksUntilHit=1
+00:02:08 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:09 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47591, projectileId=2489, ticksUntilHit=1
+00:02:09 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:09 - [JS] [manageStats] Health: 54, Prayer: 53, Can eat: true, Can drink: true
+00:02:09 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47592, projectileId=2488, ticksUntilHit=1
+00:02:09 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:09 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:10 - [JS] [manageStats] Health: 54, Prayer: 52, Can eat: true, Can drink: true
+00:02:11 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47594, projectileId=2489, ticksUntilHit=1
+00:02:11 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:11 - [JS] [manageStats] Health: 54, Prayer: 52, Can eat: true, Can drink: true
+00:02:12 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47596, projectileId=2488, ticksUntilHit=1
+00:02:12 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:12 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:12 - [JS] [manageStats] Health: 54, Prayer: 51, Can eat: true, Can drink: true
+00:02:13 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:13 - [JS] [avoidDangerousTiles] Finding safe tile: 78 dangerous tiles, 0 never-select tiles, searchRadius: 5
+00:02:13 - [JS] [getSafeTile] Searching for safe tile within 5 tiles.
+00:02:13 - [JS] [getSafeTile] Player is standing on DangerousTiles.
+00:02:13 - [JS] [getPreferredDistanceTile] Found 7 valid tiles at distance 9
+00:02:13 - [JS] [getPreferredDistanceTile] Clockwise tiles: 7, Counter-clockwise: 0, Checking: 7, Prefer CCW: false
+00:02:13 - [JS] [getPreferredDistanceTile] Selected tile (2072, 6379) at distance 1 from player
+00:02:13 - [JS] [getSafeTile] Found preferred-distance safe tile at (2072, 6379)
+00:02:13 - [JS] [avoidDangerousTiles] Detected 78 dangerous tiles. Moving to safety at (2072, 6379)
+00:02:13 - [JS] [moveToSafeTile] Moving to safe tile (2072, 6379)
+00:02:14 - [JS] [updateSpecialAttackTrigger] Roar detected (2/6). First trigger fired: false
+00:02:14 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:14 - [JS] [manageStats] Health: 47, Prayer: 51, Can eat: true, Can drink: true
+00:02:14 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:14 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:14 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:15 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:15 - [JS] [manageStats] Health: 47, Prayer: 50, Can eat: true, Can drink: true
+00:02:15 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:16 - [JS] [projectileManager] Disabling prayer protMelee after 5 ticks
+00:02:16 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:16 - [JS] [manageStats] Health: 47, Prayer: 49, Can eat: true, Can drink: true
+00:02:17 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47604, projectileId=2489, ticksUntilHit=1
+00:02:17 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:17 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:17 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:17 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:17 - [JS] [manageStats] Health: 47, Prayer: 49, Can eat: true, Can drink: true
+00:02:18 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47606, projectileId=2487, ticksUntilHit=1
+00:02:18 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:18 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:18 - [JS] [detectFallingObjects] Detected 10 falling/graphics objects
+00:02:18 - [JS] [manageStats] Health: 47, Prayer: 48, Can eat: true, Can drink: true
+00:02:19 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47608, projectileId=2489, ticksUntilHit=1
+00:02:19 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:19 - [JS] [detectFallingObjects] Detected 3 falling/graphics objects
+00:02:19 - [JS] [Combat] Attacking Leviathan (primary: 12214, fallback: 12215)
+00:02:20 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47609, projectileId=2487, ticksUntilHit=1
+00:02:20 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:20 - [JS] [pathfinderSpawnManager] Leviathan at 25% health. Starting north staging for pathfinder spawn.
+00:02:20 - [JS] [pathfinderSpawnActionState] MOVING_TO_SPAWN: Waiting for 20% gate while staging north at 25% health.
+00:02:21 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47611, projectileId=2488, ticksUntilHit=1
+00:02:21 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:21 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47612, projectileId=2489, ticksUntilHit=1
+00:02:21 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:22 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47613, projectileId=2487, ticksUntilHit=1
+00:02:22 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:23 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47615, projectileId=2489, ticksUntilHit=1
+00:02:23 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:25 - [JS] [projectileManager] Attempting to toggle prayer: protMelee at tick 47618, projectileId=2488, ticksUntilHit=1
+00:02:25 - [JS] [togglePrayer] protMelee activation requested (state pending)
+00:02:26 - [JS] [updateSpecialAttackTrigger] Roar detected (3/6). First trigger fired: false
+00:02:26 - [JS] [pathfinderSpawnActionState] AT_SPAWN_WAITING_20_GATE: Leviathan at 19% health. Holding north until pathfinder spawns.
+00:02:27 - [JS] [eatFood] Found food 385, attempting to eat
+00:02:27 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:02:27 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4361)
+00:02:27 - [JS] [detectFallingObjects] Detected 19 falling/graphics objects
+00:02:27 - [JS] [pathfinderTracking] Front tile select: chosen (2078, 6377), excluded closest (2078, 6376), candidates=4
+00:02:27 - [JS] [pathfinderTracking] Moving to front tile. Target: (2078, 6377)
+00:02:28 - [JS] [pathfinderSpawnActionState] IDLE: Not currently in PATHFINDER_SPAWN sub-state.
+00:02:28 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4361)
+00:02:29 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47624, projectileId=2489, ticksUntilHit=5
+00:02:29 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:29 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4361)
+00:02:29 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:29 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:29 - [JS] [pathfinderTrackingManager] Pathfinder found at (12091, 4361)
+00:02:30 - [JS] [pathfinderTrackingManager] Pathfinder found at (12092, 4361)
+00:02:30 - [JS] [detectFallingObjects] Detected 19 falling/graphics objects
+00:02:30 - [JS] [pathfinderTracking] Front tile select: chosen (2079, 6377), excluded closest (2079, 6376), candidates=4
+00:02:30 - [JS] [pathfinderTracking] Moving to front tile. Target: (2079, 6377)
+00:02:30 - [JS] [pathfinderTrackingManager] Pathfinder found at (12093, 4361)
+00:02:31 - [JS] [pathfinderTrackingManager] Pathfinder found at (12094, 4361)
+00:02:31 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:31 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:31 - [JS] [detectFallingObjects] Detected 23 falling/graphics objects
+00:02:31 - [JS] [pathfinderTracking] Front tile select: chosen (2081, 6379), excluded closest (2081, 6376), candidates=4
+00:02:31 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2081, 6379)
+00:02:32 - [JS] [pathfinderTrackingManager] Pathfinder found at (12095, 4361)
+00:02:32 - [JS] [pathfinderTrackingManager] Pathfinder found at (12096, 4361)
+00:02:33 - [JS] [pathfinderTrackingManager] Pathfinder found at (12097, 4361)
+00:02:33 - [JS] [detectFallingObjects] Detected 16 falling/graphics objects
+00:02:33 - [JS] [pathfinderTracking] Front tile select: chosen (2084, 6380), excluded closest (2084, 6376), candidates=4
+00:02:33 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2084, 6380)
+00:02:33 - [JS] [pathfinderTrackingManager] Pathfinder found at (12098, 4361)
+00:02:33 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:33 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:34 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47633, projectileId=2487, ticksUntilHit=2
+00:02:34 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:34 - [JS] [pathfinderTrackingManager] Pathfinder found at (12099, 4361)
+00:02:34 - [JS] [detectFallingObjects] Detected 16 falling/graphics objects
+00:02:34 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6380), excluded closest (2086, 6376), candidates=4
+00:02:34 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6380)
+00:02:35 - [JS] [pathfinderTrackingManager] Pathfinder found at (12100, 4361)
+00:02:35 - [JS] [drinkPotion] Drinking potion item ID 2434 with 3 tick delay
+00:02:35 - [JS] [pathfinderTrackingManager] Pathfinder found at (12101, 4361)
+00:02:35 - [JS] [detectFallingObjects] Detected 10 falling/graphics objects
+00:02:35 - [JS] [pathfinderTracking] Front tile select: chosen (2087, 6379), excluded closest (2087, 6376), candidates=4
+00:02:35 - [JS] [pathfinderTracking] Moving to front tile. Target: (2087, 6379)
+00:02:36 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4361)
+00:02:36 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:36 - [JS] [pathfinderTrackingManager] Attacking leviathan while re-positioning to pathfinder safe area.
+00:02:36 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47637, projectileId=2489, ticksUntilHit=2
+00:02:36 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:36 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4360)
+00:02:36 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:02:36 - [JS] [pathfinderTracking] Front tile select: chosen (2085, 6375), excluded closest (2084, 6375), candidates=4
+00:02:36 - [JS] [pathfinderTracking] Moving to front tile. Target: (2085, 6375)
+00:02:37 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4359)
+00:02:38 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4358)
+00:02:38 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:02:38 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6374), excluded closest (2085, 6374), candidates=4
+00:02:38 - [JS] [pathfinderTracking] Moving to front tile. Target: (2086, 6374)
+00:02:38 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4357)
+00:02:38 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:38 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:39 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4356)
+00:02:39 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:02:39 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6372), excluded closest (2085, 6372), candidates=4
+00:02:39 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6372)
+00:02:39 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4355)
+00:02:40 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4354)
+00:02:41 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4353)
+00:02:41 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:41 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:41 - [JS] [detectFallingObjects] Detected 27 falling/graphics objects
+00:02:41 - [JS] [pathfinderTracking] Front tile select: chosen (2089, 6369), excluded closest (2085, 6369), candidates=4
+00:02:41 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2089, 6369)
+00:02:41 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4352)
+00:02:42 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4351)
+00:02:42 - [JS] [detectFallingObjects] Detected 4 falling/graphics objects
+00:02:42 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6367), excluded closest (2085, 6367), candidates=4
+00:02:42 - [JS] [pathfinderTracking] Moving to front tile. Target: (2086, 6367)
+00:02:42 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4350)
+00:02:43 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4349)
+00:02:43 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:43 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:44 - [JS] [pathfinderTrackingManager] Pathfinder found at (12101, 4349)
+00:02:44 - [JS] [pathfinderTrackingManager] Pathfinder found at (12100, 4349)
+00:02:45 - [JS] [pathfinderTrackingManager] Pathfinder found at (12099, 4349)
+00:02:45 - [JS] [pathfinderTrackingManager] Pathfinder found at (12098, 4349)
+00:02:45 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:46 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47653, projectileId=2487, ticksUntilHit=2
+00:02:46 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:46 - [JS] [eatFood] Found food 385, attempting to eat
+00:02:46 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:02:46 - [JS] [pathfinderTrackingManager] Pathfinder found at (12097, 4349)
+00:02:46 - [JS] [detectFallingObjects] Detected 20 falling/graphics objects
+00:02:46 - [JS] [pathfinderTracking] Front tile select: chosen (2081, 6365), excluded closest (2081, 6368), candidates=4
+00:02:46 - [JS] [pathfinderTracking] Moving to front tile. Target: (2081, 6365)
+00:02:47 - [JS] [pathfinderTrackingManager] Pathfinder found at (12096, 4349)
+00:02:47 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47655, projectileId=2489, ticksUntilHit=2
+00:02:47 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:47 - [JS] [pathfinderTrackingManager] Pathfinder found at (12095, 4349)
+00:02:47 - [JS] [detectFallingObjects] Detected 14 falling/graphics objects
+00:02:47 - [JS] [pathfinderTracking] Front tile select: chosen (2079, 6364), excluded closest (2079, 6368), candidates=4
+00:02:47 - [JS] [pathfinderTracking] Moving to front tile. Target: (2079, 6364)
+00:02:48 - [JS] [comboEat] Eating normal food item ID 385
+00:02:48 - [JS] [comboEat] Combo eating item ID 3144 with 3 tick delay
+00:02:48 - [JS] [pathfinderTrackingManager] Pathfinder found at (12094, 4349)
+00:02:48 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:48 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:48 - [JS] [pathfinderTrackingManager] Pathfinder found at (12093, 4349)
+00:02:48 - [JS] [detectFallingObjects] Detected 19 falling/graphics objects
+00:02:48 - [JS] [pathfinderTracking] Front tile select: chosen (2077, 6364), excluded closest (2077, 6368), candidates=4
+00:02:48 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2077, 6364)
+00:02:49 - [JS] [pathfinderTrackingManager] Pathfinder found at (12092, 4349)
+00:02:50 - [JS] [eatFood] Found food 385, attempting to eat
+00:02:50 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:02:50 - [JS] [pathfinderTrackingManager] Pathfinder found at (12091, 4349)
+00:02:50 - [JS] [detectFallingObjects] Detected 19 falling/graphics objects
+00:02:50 - [JS] [pathfinderTracking] Front tile select: chosen (2075, 6364), excluded closest (2075, 6368), candidates=4
+00:02:50 - [JS] [pathfinderTracking] Moving to front tile. Target: (2075, 6364)
+00:02:50 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4349)
+00:02:50 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:50 - [JS] [pathfinderTrackingManager] Attacking leviathan while re-positioning to pathfinder safe area.
+00:02:51 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4350)
+00:02:51 - [JS] [detectFallingObjects] Detected 19 falling/graphics objects
+00:02:51 - [JS] [pathfinderTracking] Front tile select: chosen (2075, 6369), excluded closest (2078, 6369), candidates=4
+00:02:51 - [JS] [pathfinderTracking] Moving to front tile. Target: (2075, 6369)
+00:02:51 - [JS] [eatFood] Found food 385, attempting to eat
+00:02:51 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:02:51 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4351)
+00:02:52 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47663, projectileId=2487, ticksUntilHit=2
+00:02:52 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:52 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4352)
+00:02:53 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4353)
+00:02:53 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:53 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:53 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4354)
+00:02:53 - [JS] [detectFallingObjects] Detected 12 falling/graphics objects
+00:02:53 - [JS] [pathfinderTracking] Front tile select: chosen (2074, 6372), excluded closest (2077, 6372), candidates=4
+00:02:53 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2074, 6372)
+00:02:54 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4355)
+00:02:54 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47667, projectileId=2489, ticksUntilHit=2
+00:02:54 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:54 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4356)
+00:02:55 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4357)
+00:02:55 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:55 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:55 - [JS] [detectFallingObjects] Detected 30 falling/graphics objects
+00:02:55 - [JS] [pathfinderTracking] Front tile select: chosen (2073, 6375), excluded closest (2077, 6375), candidates=4
+00:02:55 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2073, 6375)
+00:02:56 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47669, projectileId=2487, ticksUntilHit=2
+00:02:56 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:56 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4358)
+00:02:56 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4359)
+00:02:56 - [JS] [detectFallingObjects] Detected 30 falling/graphics objects
+00:02:56 - [JS] [pathfinderTracking] Front tile select: chosen (2076, 6377), excluded closest (2077, 6377), candidates=4
+00:02:56 - [JS] [pathfinderTracking] Moving to front tile. Target: (2076, 6377)
+00:02:57 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47671, projectileId=2489, ticksUntilHit=2
+00:02:57 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:02:57 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4360)
+00:02:57 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4361)
+00:02:57 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:02:58 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:02:58 - [JS] [pathfinderTrackingManager] Pathfinder found at (12091, 4361)
+00:02:59 - [JS] [pathfinderTrackingManager] Pathfinder found at (12092, 4361)
+00:02:59 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47675, projectileId=2487, ticksUntilHit=2
+00:02:59 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:02:59 - [JS] [pathfinderTrackingManager] Pathfinder found at (12093, 4361)
+00:02:59 - [JS] [detectFallingObjects] Detected 22 falling/graphics objects
+00:02:59 - [JS] [pathfinderTracking] Front tile select: chosen (2079, 6377), excluded closest (2079, 6376), candidates=4
+00:02:59 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2079, 6377)
+00:03:00 - [JS] [pathfinderTrackingManager] Pathfinder found at (12094, 4361)
+00:03:00 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:00 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:00 - [JS] [pathfinderTrackingManager] Pathfinder found at (12095, 4361)
+00:03:00 - [JS] [detectFallingObjects] Detected 26 falling/graphics objects
+00:03:00 - [JS] [pathfinderTracking] Front tile select: chosen (2081, 6377), excluded closest (2081, 6376), candidates=4
+00:03:00 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2081, 6377)
+00:03:01 - [JS] [pathfinderTrackingManager] Pathfinder found at (12096, 4361)
+00:03:02 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47679, projectileId=2489, ticksUntilHit=2
+00:03:02 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:03:02 - [JS] [pathfinderTrackingManager] Pathfinder found at (12097, 4361)
+00:03:02 - [JS] [pathfinderTrackingManager] Pathfinder found at (12098, 4361)
+00:03:02 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:02 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:02 - [JS] [detectFallingObjects] Detected 26 falling/graphics objects
+00:03:02 - [JS] [pathfinderTracking] Front tile select: chosen (2084, 6380), excluded closest (2084, 6376), candidates=4
+00:03:02 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2084, 6380)
+00:03:03 - [JS] [pathfinderTrackingManager] Pathfinder found at (12099, 4361)
+00:03:03 - [JS] [pathfinderTrackingManager] Pathfinder found at (12100, 4361)
+00:03:03 - [JS] [detectFallingObjects] Detected 26 falling/graphics objects
+00:03:03 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6380), excluded closest (2086, 6376), candidates=4
+00:03:03 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6380)
+00:03:04 - [JS] [pathfinderTrackingManager] Pathfinder found at (12101, 4361)
+00:03:05 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4361)
+00:03:05 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:05 - [JS] [pathfinderTrackingManager] Attacking leviathan while re-positioning to pathfinder safe area.
+00:03:05 - [JS] [detectFallingObjects] Detected 26 falling/graphics objects
+00:03:05 - [JS] [pathfinderTracking] Front tile select: chosen (2088, 6378), excluded closest (2088, 6376), candidates=4
+00:03:05 - [JS] [pathfinderTracking] Moving to front tile. Target: (2088, 6378)
+00:03:05 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47685, projectileId=2487, ticksUntilHit=2
+00:03:05 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:03:05 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4360)
+00:03:06 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4359)
+00:03:06 - [JS] [detectFallingObjects] Detected 9 falling/graphics objects
+00:03:06 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6375), excluded closest (2085, 6375), candidates=4
+00:03:06 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6375)
+00:03:06 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47687, projectileId=2489, ticksUntilHit=2
+00:03:06 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:03:06 - [JS] [eatFood] Found food 385, attempting to eat
+00:03:06 - [JS] [eatFood] Ate food item ID 385 with 3 tick delay
+00:03:06 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4358)
+00:03:07 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4357)
+00:03:07 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:07 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:08 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47689, projectileId=2487, ticksUntilHit=2
+00:03:08 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:03:08 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4356)
+00:03:08 - [JS] [detectFallingObjects] Detected 16 falling/graphics objects
+00:03:08 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6372), excluded closest (2085, 6372), candidates=4
+00:03:08 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6372)
+00:03:08 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4355)
+00:03:09 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47691, projectileId=2489, ticksUntilHit=2
+00:03:09 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:03:09 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4354)
+00:03:09 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4353)
+00:03:09 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:09 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:09 - [JS] [detectFallingObjects] Detected 16 falling/graphics objects
+00:03:09 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6369), excluded closest (2085, 6369), candidates=4
+00:03:09 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6369)
+00:03:10 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4352)
+00:03:11 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4351)
+00:03:11 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4350)
+00:03:11 - [JS] [detectFallingObjects] Detected 13 falling/graphics objects
+00:03:11 - [JS] [pathfinderTracking] Front tile select: chosen (2086, 6366), excluded closest (2085, 6366), candidates=4
+00:03:11 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2086, 6366)
+00:03:12 - [JS] [pathfinderTrackingManager] Pathfinder found at (12102, 4349)
+00:03:12 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:12 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:12 - [JS] [pathfinderTrackingManager] Pathfinder found at (12101, 4349)
+00:03:13 - [JS] [pathfinderTrackingManager] Pathfinder found at (12100, 4349)
+00:03:14 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47699, projectileId=2487, ticksUntilHit=2
+00:03:14 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:03:14 - [JS] [pathfinderTrackingManager] Pathfinder found at (12099, 4349)
+00:03:14 - [JS] [detectFallingObjects] Detected 12 falling/graphics objects
+00:03:14 - [JS] [pathfinderTracking] Front tile select: chosen (2083, 6364), excluded closest (2083, 6368), candidates=4
+00:03:14 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2083, 6364)
+00:03:14 - [JS] [pathfinderTrackingManager] Pathfinder found at (12098, 4349)
+00:03:14 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:14 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:15 - [JS] [pathfinderTrackingManager] Pathfinder found at (12097, 4349)
+00:03:15 - [JS] [detectFallingObjects] Detected 12 falling/graphics objects
+00:03:15 - [JS] [pathfinderTracking] Front tile select: chosen (2081, 6365), excluded closest (2081, 6368), candidates=4
+00:03:15 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2081, 6365)
+00:03:15 - [JS] [pathfinderTrackingManager] Pathfinder found at (12096, 4349)
+00:03:16 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47703, projectileId=2489, ticksUntilHit=2
+00:03:16 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:03:16 - [JS] [pathfinderTrackingManager] Pathfinder found at (12095, 4349)
+00:03:17 - [JS] [pathfinderTrackingManager] Pathfinder found at (12094, 4349)
+00:03:17 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:17 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:17 - [JS] [detectFallingObjects] Detected 12 falling/graphics objects
+00:03:17 - [JS] [pathfinderTracking] Front tile select: chosen (2078, 6365), excluded closest (2078, 6368), candidates=4
+00:03:17 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2078, 6365)
+00:03:17 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47705, projectileId=2487, ticksUntilHit=2
+00:03:17 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:03:17 - [JS] [pathfinderTrackingManager] Pathfinder found at (12093, 4349)
+00:03:18 - [JS] [pathfinderTrackingManager] Pathfinder found at (12092, 4349)
+00:03:18 - [JS] [projectileManager] Attempting to toggle prayer: protMage at tick 47707, projectileId=2489, ticksUntilHit=2
+00:03:18 - [JS] [togglePrayer] protMage activation requested (state pending)
+00:03:18 - [JS] [pathfinderTrackingManager] Pathfinder found at (12091, 4349)
+00:03:19 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:03:19 - [JS] [pathfinderTracking] Front tile select: chosen (2075, 6365), excluded closest (2075, 6368), candidates=4
+00:03:19 - [JS] [pathfinderTracking] Repositioning to front tile. Target: (2075, 6365)
+00:03:19 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4349)
+00:03:19 - [JS] [attackTargetNpc] Attacking NPC 12214 at 12094, 4353, 0
+00:03:19 - [JS] [pathfinderTrackingManager] Attacking leviathan on cooldown during pathfinder tracking.
+00:03:20 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4350)
+00:03:20 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4351)
+00:03:21 - [JS] [projectileManager] Attempting to toggle prayer: protRange at tick 47711, projectileId=2487, ticksUntilHit=2
+00:03:21 - [JS] [togglePrayer] protRange activation requested (state pending)
+00:03:21 - [JS] [pathfinderTrackingManager] Pathfinder found at (12090, 4352)
+00:03:21 - [JS] [detectFallingObjects] Detected 15 falling/graphics objects
+00:03:21 - [JS] [pathfinderTracking] Front tile select: chosen (2074, 6370), excluded closest (2077, 6370), candidates=4
+00:03:21 - [JS] [pathfinderTracking] Moving to front tile. Target: (2074, 6370)
+00:03:21 - [JS] [pathfinderTrackingManager] Leviathan health reached 0% during pathfinder tracking.
+00:03:22 - [JS] [stateManager] LOOTING
+00:03:22 - [JS] [Looting] LOOTING
+00:03:25 - [JS] [script] profLeviathan ended.
